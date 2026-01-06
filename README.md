@@ -1,6 +1,25 @@
-# all-about-book
-技术栈约定：
-前端 React + TypeScript + Vite。第一阶段只做本地存储跑通；第二阶段再接 Supabase 做登录、多端同步与封面存储；接 AI 通过后端中转，不在前端暴露 key。
+# All About Book
 
-协作约定：
-所有改动以任务卡为单位提交 PR；不在同一个 PR 里顺手重构或更换栈；样式方案保持统一，不混用多套体系。
+Personal reading tracker scaffolded with React + TypeScript + Vite. This Stage 1
+implementation focuses on local book management and persistence.
+
+## Stage 1 Scope
+- React + TypeScript + Vite foundation.
+- React Router navigation for Home, Books, and Book Detail pages.
+- Book CRUD (create, edit, delete, view) with localStorage persistence.
+- Cover handling via a **cover image URL string** stored locally.
+- Placeholder sections for upcoming modules (check-ins, quotes, review/recap).
+
+## Tech Stack Notes
+- Frontend: React + TypeScript + Vite.
+- Stage 1 uses local storage only.
+- Stage 2 will add Supabase for auth, sync, and cover storage.
+- AI integration will be handled through a backend proxy (no keys in frontend).
+
+## Getting Started
+```bash
+npm install
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
