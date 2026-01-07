@@ -125,12 +125,17 @@ function HomePage() {
   }
 
   const handleExportMarkdown = () => {
-    const { books: dataBooks, checkIns: dataCheckIns, excerpts } =
-      createBackupPayload()
+    const {
+      books: dataBooks,
+      checkIns: dataCheckIns,
+      excerpts,
+      discussions,
+    } = createBackupPayload()
     const content = buildMarkdownArchive(
       dataBooks,
       excerpts,
       dataCheckIns,
+      discussions,
     )
     const filename = `all-about-book-archive-${formatDate(
       new Date(),
@@ -143,12 +148,17 @@ function HomePage() {
   }
 
   const handleExportHtml = () => {
-    const { books: dataBooks, checkIns: dataCheckIns, excerpts } =
-      createBackupPayload()
+    const {
+      books: dataBooks,
+      checkIns: dataCheckIns,
+      excerpts,
+      discussions,
+    } = createBackupPayload()
     const content = buildHtmlArchive(
       dataBooks,
       excerpts,
       dataCheckIns,
+      discussions,
     )
     const filename = `all-about-book-archive-${formatDate(
       new Date(),
@@ -175,7 +185,7 @@ function HomePage() {
         return
       }
 
-      const confirmMessage = `导入将覆盖现有数据（书籍 ${result.data.books.length} 本、书摘 ${result.data.excerpts.length} 条、打卡 ${result.data.checkIns.length} 条），确定继续吗？`
+      const confirmMessage = `导入将覆盖现有数据（书籍 ${result.data.books.length} 本、书摘 ${result.data.excerpts.length} 条、打卡 ${result.data.checkIns.length} 条、讨论 ${result.data.discussions.length} 条），确定继续吗？`
       if (!window.confirm(confirmMessage)) return
 
       applyBackupPayload(result.data)
