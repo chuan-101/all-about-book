@@ -2,11 +2,54 @@ import type { Book } from '../types/book'
 
 const STORAGE_KEY = 'all-about-book:books'
 
+const normalizeString = (value: unknown): string =>
+  typeof value === 'string' ? value : ''
+
+const normalizeBook = (book: Partial<Book>): Book => {
+  const now = new Date().toISOString()
+  const status =
+    book.status === 'reading' ||
+    book.status === 'finished' ||
+    book.status === 'paused' ||
+    book.status === 'unread'
+      ? book.status
+      : 'unread'
+
+  const rating =
+    typeof book.rating === 'number' && !Number.isNaN(book.rating)
+      ? book.rating
+      : undefined
+
+  return {
+    id: normalizeString(book.id) || crypto.randomUUID(),
+    title: normalizeString(book.title),
+    author: normalizeString(book.author),
+    translator: normalizeString(book.translator),
+    genre: normalizeString(book.genre),
+    status,
+    cover: normalizeString(book.cover),
+    createdAt:
+      typeof book.createdAt === 'string' && book.createdAt
+        ? book.createdAt
+        : now,
+    updatedAt:
+      typeof book.updatedAt === 'string' && book.updatedAt
+        ? book.updatedAt
+        : now,
+    progress: book.progress,
+    startDate: normalizeString(book.startDate),
+    endDate: normalizeString(book.endDate),
+    rating,
+    notes: normalizeString(book.notes),
+  }
+}
+
 const safeParse = (raw: string | null): Book[] => {
   if (!raw) return []
   try {
-    const parsed = JSON.parse(raw) as Book[]
-    return Array.isArray(parsed) ? parsed : []
+    const parsed = JSON.parse(raw) as Partial<Book>[]
+    if (!Array.isArray(parsed)) return []
+    return parsed.map((book) => normalizeBook(book))
   } catch {
     return []
   }
