@@ -10,6 +10,16 @@ implementation focuses on local book management and persistence.
 - Cover handling via a **cover image URL string** stored locally.
 - Placeholder sections for upcoming modules (check-ins, quotes, review/recap).
 
+## Backup & Archive (Export / Import)
+The Home page includes a **Data Backup & Archive** card with four actions:
+- **Export Backup (JSON):** downloads `all-about-book-backup-YYYY-MM-DD.json` for full restore.
+- **Import Backup (JSON):** select a backup file, confirm overwrite, and restore data.
+- **Export Archive (Markdown):** downloads `all-about-book-archive-YYYY-MM-DD.md`.
+- **Export Archive (HTML):** downloads `all-about-book-archive-YYYY-MM-DD.html` for printing.
+
+Import will replace existing local data (books, check-ins, excerpts). Keep your
+backup file safe.
+
 ## Tech Stack Notes
 - Frontend: React + TypeScript + Vite.
 - Stage 1 uses local storage only.

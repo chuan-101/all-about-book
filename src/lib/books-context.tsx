@@ -14,6 +14,7 @@ type BooksContextValue = {
   upsert: (book: Book) => void
   remove: (id: string) => void
   getById: (id: string) => Book | undefined
+  refresh: () => void
 }
 
 const BooksContext = createContext<BooksContextValue | undefined>(undefined)
@@ -36,14 +37,19 @@ export function BooksProvider({ children }: { children: ReactNode }) {
     [books],
   )
 
+  const refresh = useCallback(() => {
+    setBooks(getBooks())
+  }, [])
+
   const value = useMemo(
     () => ({
       books,
       upsert: handleUpsert,
       remove: handleRemove,
       getById,
+      refresh,
     }),
-    [books, getById, handleRemove, handleUpsert],
+    [books, getById, handleRemove, handleUpsert, refresh],
   )
 
   return <BooksContext.Provider value={value}>{children}</BooksContext.Provider>
