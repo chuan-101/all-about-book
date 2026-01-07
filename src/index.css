@@ -215,6 +215,23 @@ select {
   flex-wrap: wrap;
 }
 
+.notice {
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+.notice.success {
+  background: #ecfdf3;
+  color: #027a48;
+}
+
+.notice.error {
+  background: #fef3f2;
+  color: #b42318;
+}
+
 .button {
   border: none;
   border-radius: 999px;

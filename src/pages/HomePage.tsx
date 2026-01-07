@@ -1,6 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useBooks } from '../lib/books-context'
+import {
+  applyBackupPayload,
+  buildHtmlArchive,
+  buildMarkdownArchive,
+  createBackupPayload,
+  parseBackupPayload,
+} from '../lib/backup'
 import { getReadingSessions } from '../lib/reading-sessions-storage'
 import type { ReadingSession } from '../types/reading-session'
 
@@ -12,11 +19,15 @@ const formatDate = (date: Date) => {
 }
 
 function HomePage() {
-  const { books } = useBooks()
+  const { books, refresh } = useBooks()
   const totalBooks = books.length
   const readingBooks = books.filter((book) => book.status === 'reading')
   const finishedBooks = books.filter((book) => book.status === 'finished')
   const [checkIns, setCheckIns] = useState<ReadingSession[]>([])
+  const [backupStatus, setBackupStatus] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
   const currentYear = new Date().getFullYear()
 
   useEffect(() => {
@@ -82,6 +93,107 @@ function HomePage() {
       ),
     [checkIns, currentYear],
   )
+
+  const downloadFile = (
+    content: string,
+    filename: string,
+    type: string,
+  ) => {
+    const blob = new Blob([content], { type })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportBackup = () => {
+    const payload = createBackupPayload()
+    const filename = `all-about-book-backup-${formatDate(
+      new Date(),
+    )}.json`
+    downloadFile(
+      JSON.stringify(payload, null, 2),
+      filename,
+      'application/json',
+    )
+    setBackupStatus({
+      type: 'success',
+      message: '备份已导出为 JSON 文件。',
+    })
+  }
+
+  const handleExportMarkdown = () => {
+    const { books: dataBooks, checkIns: dataCheckIns, excerpts } =
+      createBackupPayload()
+    const content = buildMarkdownArchive(
+      dataBooks,
+      excerpts,
+      dataCheckIns,
+    )
+    const filename = `all-about-book-archive-${formatDate(
+      new Date(),
+    )}.md`
+    downloadFile(content, filename, 'text/markdown')
+    setBackupStatus({
+      type: 'success',
+      message: 'Markdown 归档已生成。',
+    })
+  }
+
+  const handleExportHtml = () => {
+    const { books: dataBooks, checkIns: dataCheckIns, excerpts } =
+      createBackupPayload()
+    const content = buildHtmlArchive(
+      dataBooks,
+      excerpts,
+      dataCheckIns,
+    )
+    const filename = `all-about-book-archive-${formatDate(
+      new Date(),
+    )}.html`
+    downloadFile(content, filename, 'text/html')
+    setBackupStatus({
+      type: 'success',
+      message: 'HTML 归档已生成。',
+    })
+  }
+
+  const handleImportBackup = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setBackupStatus(null)
+
+    try {
+      const content = await file.text()
+      const result = parseBackupPayload(content)
+      if (!result.ok) {
+        setBackupStatus({ type: 'error', message: result.message })
+        return
+      }
+
+      const confirmMessage = `导入将覆盖现有数据（书籍 ${result.data.books.length} 本、书摘 ${result.data.excerpts.length} 条、打卡 ${result.data.checkIns.length} 条），确定继续吗？`
+      if (!window.confirm(confirmMessage)) return
+
+      applyBackupPayload(result.data)
+      refresh()
+      setCheckIns(getReadingSessions())
+      setBackupStatus({
+        type: 'success',
+        message: '备份导入成功，数据已恢复。',
+      })
+    } catch {
+      setBackupStatus({
+        type: 'error',
+        message: '导入失败，请稍后重试。',
+      })
+    } finally {
+      event.target.value = ''
+    }
+  }
 
   return (
     <section className="stack">
@@ -200,6 +312,41 @@ function HomePage() {
         <p className="muted">
           年度概览显示所有书籍的打卡日期，后续可扩展查看详情。
         </p>
+      </div>
+
+      <div className="card stack">
+        <div className="card-header">
+          <h3>数据备份与归档</h3>
+        </div>
+        <p className="muted">
+          导出 JSON 备份以便完整恢复，同时支持 Markdown/HTML
+          归档便于查看与打印。
+        </p>
+        <div className="actions">
+          <button className="button primary" onClick={handleExportBackup}>
+            导出备份 (JSON)
+          </button>
+          <label className="button ghost">
+            导入备份 (JSON)
+            <input
+              type="file"
+              accept="application/json"
+              onChange={handleImportBackup}
+              hidden
+            />
+          </label>
+          <button className="button" onClick={handleExportMarkdown}>
+            导出归档 (Markdown)
+          </button>
+          <button className="button" onClick={handleExportHtml}>
+            导出归档 (HTML)
+          </button>
+        </div>
+        {backupStatus ? (
+          <p className={`notice ${backupStatus.type}`}>
+            {backupStatus.message}
+          </p>
+        ) : null}
       </div>
     </section>
   )

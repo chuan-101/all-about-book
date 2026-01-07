@@ -41,7 +41,7 @@ export const getExcerpts = (): Excerpt[] => {
   return safeParse(window.localStorage.getItem(STORAGE_KEY))
 }
 
-const saveExcerpts = (excerpts: Excerpt[]): void => {
+export const saveExcerpts = (excerpts: Excerpt[]): void => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(excerpts))
 }

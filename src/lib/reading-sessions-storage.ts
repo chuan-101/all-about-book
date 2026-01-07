@@ -17,7 +17,7 @@ export const getReadingSessions = (): ReadingSession[] => {
   return safeParse(window.localStorage.getItem(STORAGE_KEY))
 }
 
-const saveReadingSessions = (sessions: ReadingSession[]): void => {
+export const saveReadingSessions = (sessions: ReadingSession[]): void => {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
 }
