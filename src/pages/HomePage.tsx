@@ -23,7 +23,7 @@ function HomePage() {
     setCheckIns(getReadingSessions())
   }, [])
 
-  const yearCells = useMemo(() => {
+  const heatmapLayout = useMemo(() => {
     const yearStart = new Date(currentYear, 0, 1)
     const yearEnd = new Date(currentYear, 11, 31)
     const dayMs = 24 * 60 * 60 * 1000
@@ -31,27 +31,44 @@ function HomePage() {
       Math.round((yearEnd.getTime() - yearStart.getTime()) / dayMs) + 1
     const startOffset = yearStart.getDay()
     const totalCells = Math.ceil((startOffset + daysInYear) / 7) * 7
+    const weekColumns = totalCells / 7
 
-    return Array.from({ length: totalCells }, (_, index) => {
+    const cells = Array.from({ length: totalCells }, (_, index) => {
       const dayIndex = index - startOffset
       if (dayIndex < 0 || dayIndex >= daysInYear) return null
       return new Date(currentYear, 0, 1 + dayIndex)
     })
-  }, [currentYear])
 
-  const monthLabels = useMemo(() => {
-    const yearStart = new Date(currentYear, 0, 1)
-    const startOffset = yearStart.getDay()
-
-    return Array.from({ length: 12 }, (_, index) => {
+    const monthLabels = Array.from({ length: 12 }, (_, index) => {
       const monthStart = new Date(currentYear, index, 1)
       const dayIndex = Math.round(
-        (monthStart.getTime() - yearStart.getTime()) /
-          (24 * 60 * 60 * 1000),
+        (monthStart.getTime() - yearStart.getTime()) / dayMs,
       )
-      const column = Math.floor((startOffset + dayIndex) / 7) + 1
-      return { label: `${index + 1}月`, column }
+      const startColumn =
+        Math.floor((startOffset + dayIndex) / 7) + 1
+      const nextMonthStart =
+        index === 11
+          ? null
+          : new Date(currentYear, index + 1, 1)
+      const nextDayIndex = nextMonthStart
+        ? Math.round(
+            (nextMonthStart.getTime() - yearStart.getTime()) /
+              dayMs,
+          )
+        : null
+      const nextStartColumn = nextDayIndex === null
+        ? weekColumns + 1
+        : Math.floor((startOffset + nextDayIndex) / 7) + 1
+      const endColumn = Math.max(startColumn + 1, nextStartColumn)
+
+      return {
+        label: `${index + 1}月`,
+        startColumn,
+        endColumn,
+      }
     })
+
+    return { cells, monthLabels, weekColumns }
   }, [currentYear])
 
   const checkInDates = useMemo(
@@ -128,24 +145,34 @@ function HomePage() {
           <span className="muted">{currentYear}</span>
         </div>
         <div className="heatmap-container">
-          <div className="heatmap-months">
-            {monthLabels.map((month) => (
+          <div
+            className="heatmap-grid"
+            style={{
+              gridTemplateColumns: `repeat(${heatmapLayout.weekColumns}, 12px)`,
+            }}
+          >
+            {heatmapLayout.monthLabels.map((month) => (
               <span
                 key={month.label}
                 className="heatmap-month-label"
-                style={{ gridColumn: month.column }}
+                style={{
+                  gridColumn: `${month.startColumn} / ${month.endColumn}`,
+                  gridRow: 1,
+                }}
               >
                 {month.label}
               </span>
             ))}
-          </div>
-          <div className="year-heatmap">
-            {yearCells.map((date, index) => {
+            {heatmapLayout.cells.map((date, index) => {
+              const column = Math.floor(index / 7) + 1
+              const row = (index % 7) + 2
+
               if (!date) {
                 return (
                   <div
                     key={`empty-${index}`}
                     className="heatmap-cell empty"
+                    style={{ gridColumn: column, gridRow: row }}
                   />
                 )
               }
@@ -159,6 +186,7 @@ function HomePage() {
                   className={`heatmap-cell${
                     isActive ? ' active' : ''
                   }`}
+                  style={{ gridColumn: column, gridRow: row }}
                   title={
                     isActive
                       ? `${dateString} 有打卡`
