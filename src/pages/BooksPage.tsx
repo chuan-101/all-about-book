@@ -17,10 +17,13 @@ function BooksPage() {
 
   const handleSubmit = (values: BookFormValues) => {
     const now = new Date().toISOString()
+    const ratingValue =
+      values.rating.trim() === '' ? undefined : Number(values.rating)
     const nextBook: Book = editingBook
       ? {
           ...editingBook,
           ...values,
+          rating: ratingValue,
           updatedAt: now,
         }
       : {
@@ -28,6 +31,7 @@ function BooksPage() {
           createdAt: now,
           updatedAt: now,
           ...values,
+          rating: ratingValue,
         }
 
     upsert(nextBook)
@@ -90,7 +94,25 @@ function BooksPage() {
                       {book.genre ? (
                         <span className="chip ghost">{book.genre}</span>
                       ) : null}
+                      {book.rating ? (
+                        <span className="chip ghost">
+                          评分 {book.rating}
+                        </span>
+                      ) : null}
+                      {book.startDate ? (
+                        <span className="chip ghost">
+                          开始 {book.startDate}
+                        </span>
+                      ) : null}
+                      {book.endDate ? (
+                        <span className="chip ghost">
+                          结束 {book.endDate}
+                        </span>
+                      ) : null}
                     </div>
+                    {book.notes ? (
+                      <p className="muted">{book.notes}</p>
+                    ) : null}
                   </div>
                 </div>
                 <div className="actions">

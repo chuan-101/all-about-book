@@ -11,6 +11,8 @@ export type BookFormValues = {
   cover: string
   startDate: string
   endDate: string
+  rating: string
+  notes: string
 }
 
 type BookFormProps = {
@@ -20,7 +22,7 @@ type BookFormProps = {
   submitLabel?: string
 }
 
-const statusOptions: BookStatus[] = ['unread', 'reading', 'finished', 'paused']
+const statusOptions: BookStatus[] = ['unread', 'reading', 'paused', 'finished']
 const statusLabels: Record<BookStatus, string> = {
   unread: '未读',
   reading: '在读',
@@ -39,10 +41,15 @@ function BookForm({
     author: initialValues?.author ?? '',
     translator: initialValues?.translator ?? '',
     genre: initialValues?.genre ?? '',
-    status: initialValues?.status ?? 'reading',
+    status: initialValues?.status ?? 'unread',
     cover: initialValues?.cover ?? '',
     startDate: initialValues?.startDate ?? '',
     endDate: initialValues?.endDate ?? '',
+    rating:
+      initialValues?.rating !== undefined
+        ? String(initialValues.rating)
+        : '',
+    notes: initialValues?.notes ?? '',
   })
 
   useEffect(() => {
@@ -51,15 +58,22 @@ function BookForm({
       author: initialValues?.author ?? '',
       translator: initialValues?.translator ?? '',
       genre: initialValues?.genre ?? '',
-      status: initialValues?.status ?? 'reading',
+      status: initialValues?.status ?? 'unread',
       cover: initialValues?.cover ?? '',
       startDate: initialValues?.startDate ?? '',
       endDate: initialValues?.endDate ?? '',
+      rating:
+        initialValues?.rating !== undefined
+          ? String(initialValues.rating)
+          : '',
+      notes: initialValues?.notes ?? '',
     })
   }, [initialValues])
 
   const handleChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = event.target
     setValues((prev) => ({ ...prev, [name]: value }))
@@ -135,7 +149,31 @@ function BookForm({
             onChange={handleChange}
           />
         </label>
+        <label className="field">
+          <span>评分</span>
+          <select name="rating" value={values.rating} onChange={handleChange}>
+            <option value="">未评分</option>
+            {Array.from({ length: 5 }, (_, index) => {
+              const value = String(index + 1)
+              return (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              )
+            })}
+          </select>
+        </label>
       </div>
+      <label className="field">
+        <span>笔记</span>
+        <textarea
+          name="notes"
+          rows={4}
+          value={values.notes}
+          onChange={handleChange}
+          placeholder="写下读书笔记或想法"
+        />
+      </label>
       <div className="form-actions">
         <button type="submit" className="button primary">
           {submitLabel}
