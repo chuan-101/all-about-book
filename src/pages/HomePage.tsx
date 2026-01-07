@@ -39,6 +39,21 @@ function HomePage() {
     })
   }, [currentYear])
 
+  const monthLabels = useMemo(() => {
+    const yearStart = new Date(currentYear, 0, 1)
+    const startOffset = yearStart.getDay()
+
+    return Array.from({ length: 12 }, (_, index) => {
+      const monthStart = new Date(currentYear, index, 1)
+      const dayIndex = Math.round(
+        (monthStart.getTime() - yearStart.getTime()) /
+          (24 * 60 * 60 * 1000),
+      )
+      const column = Math.floor((startOffset + dayIndex) / 7) + 1
+      return { label: `${index + 1}月`, column }
+    })
+  }, [currentYear])
+
   const checkInDates = useMemo(
     () =>
       new Set(
@@ -112,34 +127,47 @@ function HomePage() {
           <h3>年度打卡</h3>
           <span className="muted">{currentYear}</span>
         </div>
-        <div className="year-heatmap">
-          {yearCells.map((date, index) => {
-            if (!date) {
+        <div className="heatmap-container">
+          <div className="heatmap-months">
+            {monthLabels.map((month) => (
+              <span
+                key={month.label}
+                className="heatmap-month-label"
+                style={{ gridColumn: month.column }}
+              >
+                {month.label}
+              </span>
+            ))}
+          </div>
+          <div className="year-heatmap">
+            {yearCells.map((date, index) => {
+              if (!date) {
+                return (
+                  <div
+                    key={`empty-${index}`}
+                    className="heatmap-cell empty"
+                  />
+                )
+              }
+
+              const dateString = formatDate(date)
+              const isActive = checkInDates.has(dateString)
+
               return (
                 <div
-                  key={`empty-${index}`}
-                  className="heatmap-cell empty"
+                  key={dateString}
+                  className={`heatmap-cell${
+                    isActive ? ' active' : ''
+                  }`}
+                  title={
+                    isActive
+                      ? `${dateString} 有打卡`
+                      : `${dateString} 无打卡`
+                  }
                 />
               )
-            }
-
-            const dateString = formatDate(date)
-            const isActive = checkInDates.has(dateString)
-
-            return (
-              <div
-                key={dateString}
-                className={`heatmap-cell${
-                  isActive ? ' active' : ''
-                }`}
-                title={
-                  isActive
-                    ? `${dateString} 有打卡`
-                    : `${dateString} 无打卡`
-                }
-              />
-            )
-          })}
+            })}
+          </div>
         </div>
         <p className="muted">
           年度概览显示所有书籍的打卡日期，后续可扩展查看详情。

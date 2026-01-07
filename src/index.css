@@ -421,6 +421,24 @@ select {
   padding: 0.5rem 0;
 }
 
+.heatmap-container {
+  overflow-x: auto;
+}
+
+.heatmap-months {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 12px;
+  gap: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: #667085;
+}
+
+.heatmap-month-label {
+  white-space: nowrap;
+}
+
 .heatmap-cell {
   width: 12px;
   height: 12px;
