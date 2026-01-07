@@ -111,6 +111,13 @@ select {
   justify-content: space-between;
 }
 
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .section-title {
   margin-bottom: 0.75rem;
 }
@@ -461,4 +468,110 @@ select {
 
 .heatmap-cell.empty {
   background: transparent;
+}
+
+.print-view {
+  display: none;
+  color: #111827;
+}
+
+.print-header h1 {
+  margin: 0.25rem 0 0;
+  font-size: 1.8rem;
+}
+
+.print-eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.print-author {
+  margin: 0.35rem 0 0;
+  color: #4b5563;
+}
+
+.print-meta {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.print-section {
+  margin-top: 1.75rem;
+}
+
+.print-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.print-excerpt {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.print-excerpt-date {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.print-excerpt p {
+  margin: 0.35rem 0 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.print-muted {
+  margin: 0.5rem 0 0;
+  color: #6b7280;
+}
+
+.print-checkins {
+  columns: 2;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .header,
+  .screen-only,
+  .button,
+  .form,
+  input,
+  textarea,
+  select,
+  .actions,
+  .calendar-header,
+  .calendar-weekdays,
+  .calendar-grid,
+  .nav {
+    display: none !important;
+  }
+
+  .main {
+    padding: 0;
+  }
+
+  .container {
+    width: 100%;
+    padding: 0;
+  }
+
+  .print-view {
+    display: block;
+  }
 }
