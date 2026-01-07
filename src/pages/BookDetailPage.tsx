@@ -6,7 +6,12 @@ import {
   updateExcerpt,
   upsertExcerpt,
 } from '../lib/excerpts-storage'
+import {
+  addMessage,
+  getMessagesByBookId,
+} from '../lib/discussion-storage'
 import type { Excerpt } from '../types/excerpt'
+import type { DiscussionMessage } from '../types/discussion'
 import type { ReadingSession } from '../types/reading-session'
 import { useBooks } from '../lib/books-context'
 import {
@@ -38,6 +43,10 @@ function BookDetailPage() {
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
   const [excerpts, setExcerpts] = useState<Excerpt[]>([])
   const [newExcerptContent, setNewExcerptContent] = useState('')
+  const [discussionMessages, setDiscussionMessages] = useState<
+    DiscussionMessage[]
+  >([])
+  const [newMessageContent, setNewMessageContent] = useState('')
   const [editingExcerptId, setEditingExcerptId] = useState<string | null>(
     null,
   )
@@ -51,6 +60,11 @@ function BookDetailPage() {
   useEffect(() => {
     if (!book) return
     setExcerpts(getExcerptsByBookId(book.id))
+  }, [book])
+
+  useEffect(() => {
+    if (!book) return
+    setDiscussionMessages(getMessagesByBookId(book.id))
   }, [book])
 
   const monthStart = useMemo(
@@ -107,6 +121,11 @@ function BookDetailPage() {
     setExcerpts(getExcerptsByBookId(book.id))
   }
 
+  const refreshDiscussions = () => {
+    if (!book) return
+    setDiscussionMessages(getMessagesByBookId(book.id))
+  }
+
   const handleCreateExcerpt = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!book) return
@@ -122,6 +141,24 @@ function BookDetailPage() {
     upsertExcerpt(nextExcerpt)
     setNewExcerptContent('')
     refreshExcerpts()
+  }
+
+  const handleCreateDiscussion = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!book) return
+    const content = newMessageContent.trim()
+    if (!content) return
+    const now = new Date().toISOString()
+    const message: DiscussionMessage = {
+      id: crypto.randomUUID(),
+      bookId: book.id,
+      role: 'me',
+      content,
+      createdAt: now,
+    }
+    addMessage(message)
+    setNewMessageContent('')
+    refreshDiscussions()
   }
 
   const handleStartEdit = (excerpt: Excerpt) => {
@@ -437,8 +474,55 @@ function BookDetailPage() {
           )}
         </div>
         <div className="card stack">
-          <h3>读后感</h3>
-          <p className="muted">即将上线：总结和评分。</p>
+          <div className="card-header">
+            <h3>与 Syzygy 讨论</h3>
+            <span className="muted">{discussionMessages.length} 条</span>
+          </div>
+          <p className="muted">
+            后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
+          </p>
+          {discussionMessages.length === 0 ? (
+            <p className="muted">暂无讨论，先写下你的想法吧。</p>
+          ) : (
+            <ul className="list">
+              {discussionMessages.map((message) => (
+                <li key={message.id} className="list-item">
+                  <div className="list-item-main">
+                    <p className="muted">
+                      {formatExcerptDate(message.createdAt)} ·{' '}
+                      {message.role === 'me' ? '我' : 'Syzygy'}
+                    </p>
+                    <p>{message.content}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form className="form" onSubmit={handleCreateDiscussion}>
+            <label className="field">
+              <span>我的想法</span>
+              <textarea
+                rows={3}
+                value={newMessageContent}
+                onChange={(event) =>
+                  setNewMessageContent(event.target.value)
+                }
+                placeholder="写下你的想法或问题"
+              />
+            </label>
+            <div className="form-actions">
+              <button type="submit" className="button primary">
+                发送
+              </button>
+              <button
+                type="button"
+                className="button ghost"
+                disabled
+              >
+                让 Syzygy 回复（即将上线）
+              </button>
+            </div>
+          </form>
         </div>
       </section>
       <section className="print-view">
