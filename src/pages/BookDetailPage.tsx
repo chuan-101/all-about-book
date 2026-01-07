@@ -173,7 +173,8 @@ function BookDetailPage() {
           <h3>阅读打卡</h3>
           <span className="muted">{sessions.length} 次</span>
         </div>
-        <div className="calendar-toolbar">
+        <div className="calendar-header">
+          <strong className="calendar-title">{monthLabel}</strong>
           <div className="calendar-nav">
             <button
               className="button ghost"
@@ -190,7 +191,6 @@ function BookDetailPage() {
             >
               上个月
             </button>
-            <strong className="calendar-title">{monthLabel}</strong>
             <button
               className="button ghost"
               type="button"
@@ -206,14 +206,14 @@ function BookDetailPage() {
             >
               下个月
             </button>
+            <button
+              className="button"
+              type="button"
+              onClick={() => setCurrentMonth(new Date())}
+            >
+              今天
+            </button>
           </div>
-          <button
-            className="button"
-            type="button"
-            onClick={() => setCurrentMonth(new Date())}
-          >
-            回到今天
-          </button>
         </div>
         <div className="calendar-weekdays">
           {weekDays.map((day) => (

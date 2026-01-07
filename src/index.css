@@ -338,7 +338,7 @@ select {
   padding-bottom: 0;
 }
 
-.calendar-toolbar {
+.calendar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
