@@ -61,6 +61,24 @@ function BookDetailPage() {
             <span>译者</span>
             <strong>{book.translator || '未设置'}</strong>
           </div>
+          {book.startDate ? (
+            <div className="info-row">
+              <span>开始日期</span>
+              <strong>{book.startDate}</strong>
+            </div>
+          ) : null}
+          {book.endDate ? (
+            <div className="info-row">
+              <span>结束日期</span>
+              <strong>{book.endDate}</strong>
+            </div>
+          ) : null}
+          {book.rating ? (
+            <div className="info-row">
+              <span>评分</span>
+              <strong>{book.rating}</strong>
+            </div>
+          ) : null}
           <div className="info-row">
             <span>创建时间</span>
             <strong>{new Date(book.createdAt).toLocaleString()}</strong>
@@ -71,6 +89,13 @@ function BookDetailPage() {
           </div>
         </div>
       </div>
+
+      {book.notes ? (
+        <div className="card stack">
+          <h3>笔记</h3>
+          <p>{book.notes}</p>
+        </div>
+      ) : null}
 
       <div className="card stack">
         <h3>阅读打卡</h3>
