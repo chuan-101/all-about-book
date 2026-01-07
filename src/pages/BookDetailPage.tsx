@@ -157,14 +157,6 @@ function BookDetailPage() {
       minute: '2-digit',
     })
 
-  const sortedCheckIns = useMemo(
-    () =>
-      Array.from(new Set(sessions.map((session) => session.date))).sort(
-        (a, b) => a.localeCompare(b),
-      ),
-    [sessions],
-  )
-
   if (!book) {
     return (
       <section className="stack">
@@ -475,18 +467,6 @@ function BookDetailPage() {
                   </div>
                   <p>{excerpt.content}</p>
                 </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        <section className="print-section">
-          <h2>打卡日期</h2>
-          {sortedCheckIns.length === 0 ? (
-            <p className="print-muted">暂无打卡记录。</p>
-          ) : (
-            <ul className="print-list print-checkins">
-              {sortedCheckIns.map((date) => (
-                <li key={date}>{date}</li>
               ))}
             </ul>
           )}
