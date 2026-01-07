@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import {
+  deleteExcerpt,
+  getExcerptsByBookId,
+  updateExcerpt,
+  upsertExcerpt,
+} from '../lib/excerpts-storage'
+import type { Excerpt } from '../types/excerpt'
 import type { ReadingSession } from '../types/reading-session'
 import { useBooks } from '../lib/books-context'
 import {
@@ -29,10 +36,21 @@ function BookDetailPage() {
   const book = bookId ? getById(bookId) : undefined
   const [sessions, setSessions] = useState<ReadingSession[]>([])
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
+  const [excerpts, setExcerpts] = useState<Excerpt[]>([])
+  const [newExcerptContent, setNewExcerptContent] = useState('')
+  const [editingExcerptId, setEditingExcerptId] = useState<string | null>(
+    null,
+  )
+  const [editingContent, setEditingContent] = useState('')
 
   useEffect(() => {
     if (!book) return
     setSessions(getCheckInsByBook(book.id))
+  }, [book])
+
+  useEffect(() => {
+    if (!book) return
+    setExcerpts(getExcerptsByBookId(book.id))
   }, [book])
 
   const monthStart = useMemo(
@@ -83,6 +101,61 @@ function BookDetailPage() {
   }
 
   const todayString = formatDate(new Date())
+
+  const refreshExcerpts = () => {
+    if (!book) return
+    setExcerpts(getExcerptsByBookId(book.id))
+  }
+
+  const handleCreateExcerpt = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!book) return
+    const content = newExcerptContent.trim()
+    if (!content) return
+    const now = new Date().toISOString()
+    const nextExcerpt: Excerpt = {
+      id: crypto.randomUUID(),
+      bookId: book.id,
+      content,
+      createdAt: now,
+    }
+    upsertExcerpt(nextExcerpt)
+    setNewExcerptContent('')
+    refreshExcerpts()
+  }
+
+  const handleStartEdit = (excerpt: Excerpt) => {
+    setEditingExcerptId(excerpt.id)
+    setEditingContent(excerpt.content)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingExcerptId(null)
+    setEditingContent('')
+  }
+
+  const handleSaveEdit = (id: string) => {
+    const content = editingContent.trim()
+    if (!content) return
+    updateExcerpt(id, { content })
+    refreshExcerpts()
+    handleCancelEdit()
+  }
+
+  const handleDeleteExcerpt = (id: string) => {
+    if (!window.confirm('确定要删除这条书摘吗？')) return
+    deleteExcerpt(id)
+    refreshExcerpts()
+  }
+
+  const formatExcerptDate = (value: string) =>
+    new Date(value).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
 
   if (!book) {
     return (
@@ -257,8 +330,101 @@ function BookDetailPage() {
         </p>
       </div>
       <div className="card stack">
-        <h3>书摘</h3>
-        <p className="muted">即将上线：保存精彩段落。</p>
+        <div className="card-header">
+          <h3>书摘</h3>
+          <span className="muted">{excerpts.length} 条</span>
+        </div>
+        <form className="form" onSubmit={handleCreateExcerpt}>
+          <label className="field">
+            <span>新增书摘</span>
+            <textarea
+              rows={3}
+              value={newExcerptContent}
+              onChange={(event) =>
+                setNewExcerptContent(event.target.value)
+              }
+              placeholder="记录喜欢的句子或段落"
+            />
+          </label>
+          <div className="form-actions">
+            <button type="submit" className="button primary">
+              保存书摘
+            </button>
+          </div>
+        </form>
+        {excerpts.length === 0 ? (
+          <p className="muted">暂无书摘，先记录第一条吧。</p>
+        ) : (
+          <ul className="list">
+            {excerpts.map((excerpt) => {
+              const isEditing = editingExcerptId === excerpt.id
+              return (
+                <li key={excerpt.id} className="list-item">
+                  <div className="list-item-main">
+                    {isEditing ? (
+                      <label className="field">
+                        <span>编辑书摘</span>
+                        <textarea
+                          rows={3}
+                          value={editingContent}
+                          onChange={(event) =>
+                            setEditingContent(event.target.value)
+                          }
+                        />
+                      </label>
+                    ) : (
+                      <div>
+                        <p className="muted">
+                          {formatExcerptDate(excerpt.createdAt)}
+                        </p>
+                        <p>{excerpt.content}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="actions">
+                    {isEditing ? (
+                      <>
+                        <button
+                          className="button primary"
+                          type="button"
+                          onClick={() => handleSaveEdit(excerpt.id)}
+                        >
+                          保存
+                        </button>
+                        <button
+                          className="button ghost"
+                          type="button"
+                          onClick={handleCancelEdit}
+                        >
+                          取消
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="button ghost"
+                          type="button"
+                          onClick={() => handleStartEdit(excerpt)}
+                        >
+                          编辑
+                        </button>
+                        <button
+                          className="button danger"
+                          type="button"
+                          onClick={() =>
+                            handleDeleteExcerpt(excerpt.id)
+                          }
+                        >
+                          删除
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
       <div className="card stack">
         <h3>读后感</h3>
