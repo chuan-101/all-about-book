@@ -1,5 +1,20 @@
+import type { ChangeEvent, FormEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import type { ReadingSession } from '../types/reading-session'
 import { useBooks } from '../lib/books-context'
+import {
+  deleteReadingSession,
+  getSessionsByBookId,
+  upsertReadingSession,
+} from '../lib/reading-sessions-storage'
+
+type SessionFormValues = {
+  date: string
+  pagesRead: string
+  chaptersRead: string
+  comment: string
+}
 
 const statusLabels = {
   unread: '未读',
@@ -12,6 +27,72 @@ function BookDetailPage() {
   const { bookId } = useParams()
   const { getById } = useBooks()
   const book = bookId ? getById(bookId) : undefined
+  const [sessions, setSessions] = useState<ReadingSession[]>([])
+  const [sessionValues, setSessionValues] = useState<SessionFormValues>({
+    date: '',
+    pagesRead: '',
+    chaptersRead: '',
+    comment: '',
+  })
+
+  useEffect(() => {
+    if (!book) return
+    setSessions(getSessionsByBookId(book.id))
+  }, [book])
+
+  const sortedSessions = useMemo(
+    () => [...sessions].sort((a, b) => b.date.localeCompare(a.date)),
+    [sessions],
+  )
+
+  const handleSessionChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = event.target
+    setSessionValues((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSessionSubmit = (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault()
+    if (!book) return
+    if (!sessionValues.date) return
+
+    const pagesRead =
+      sessionValues.pagesRead.trim() === ''
+        ? undefined
+        : Number(sessionValues.pagesRead)
+    const chaptersRead =
+      sessionValues.chaptersRead.trim() === ''
+        ? undefined
+        : Number(sessionValues.chaptersRead)
+
+    const nextSession: ReadingSession = {
+      id: crypto.randomUUID(),
+      bookId: book.id,
+      date: sessionValues.date,
+      pagesRead,
+      chaptersRead,
+      comment: sessionValues.comment.trim() || undefined,
+      createdAt: new Date().toISOString(),
+    }
+
+    upsertReadingSession(nextSession)
+    setSessions(getSessionsByBookId(book.id))
+    setSessionValues({
+      date: '',
+      pagesRead: '',
+      chaptersRead: '',
+      comment: '',
+    })
+  }
+
+  const handleSessionDelete = (id: string) => {
+    if (!book) return
+    deleteReadingSession(id)
+    setSessions(getSessionsByBookId(book.id))
+  }
 
   if (!book) {
     return (
@@ -98,8 +179,99 @@ function BookDetailPage() {
       ) : null}
 
       <div className="card stack">
-        <h3>阅读打卡</h3>
-        <p className="muted">即将上线：记录阅读进度和笔记。</p>
+        <div className="card-header">
+          <h3>阅读打卡</h3>
+          <span className="muted">{sessions.length} 条</span>
+        </div>
+        <form className="form" onSubmit={handleSessionSubmit}>
+          <div className="form-grid">
+            <label className="field">
+              <span>日期 *</span>
+              <input
+                type="date"
+                name="date"
+                value={sessionValues.date}
+                onChange={handleSessionChange}
+                required
+              />
+            </label>
+            <label className="field">
+              <span>页数</span>
+              <input
+                type="number"
+                min="0"
+                name="pagesRead"
+                value={sessionValues.pagesRead}
+                onChange={handleSessionChange}
+                placeholder="可选"
+              />
+            </label>
+            <label className="field">
+              <span>章节数</span>
+              <input
+                type="number"
+                min="0"
+                name="chaptersRead"
+                value={sessionValues.chaptersRead}
+                onChange={handleSessionChange}
+                placeholder="可选"
+              />
+            </label>
+          </div>
+          <label className="field">
+            <span>备注</span>
+            <textarea
+              name="comment"
+              rows={3}
+              value={sessionValues.comment}
+              onChange={handleSessionChange}
+              placeholder="记录当日阅读感受"
+            />
+          </label>
+          <div className="form-actions">
+            <button type="submit" className="button primary">
+              添加记录
+            </button>
+          </div>
+        </form>
+        {sortedSessions.length === 0 ? (
+          <p className="muted">还没有阅读记录，先添加第一条吧。</p>
+        ) : (
+          <ul className="list">
+            {sortedSessions.map((session) => (
+              <li key={session.id} className="list-item">
+                <div className="list-item-main">
+                  <div>
+                    <strong>{session.date}</strong>
+                    <div className="metadata">
+                      {session.pagesRead !== undefined ? (
+                        <span className="chip ghost">
+                          {session.pagesRead} 页
+                        </span>
+                      ) : null}
+                      {session.chaptersRead !== undefined ? (
+                        <span className="chip ghost">
+                          {session.chaptersRead} 章
+                        </span>
+                      ) : null}
+                    </div>
+                    {session.comment ? (
+                      <p className="muted">{session.comment}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="actions">
+                  <button
+                    className="button danger"
+                    onClick={() => handleSessionDelete(session.id)}
+                  >
+                    删除
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       <div className="card stack">
         <h3>书摘</h3>
