@@ -1,20 +1,11 @@
-import type { ChangeEvent, FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import type { ReadingSession } from '../types/reading-session'
 import { useBooks } from '../lib/books-context'
 import {
-  deleteReadingSession,
-  getSessionsByBookId,
-  upsertReadingSession,
+  getCheckInsByBook,
+  toggleCheckIn,
 } from '../lib/reading-sessions-storage'
-
-type SessionFormValues = {
-  date: string
-  pagesRead: string
-  chaptersRead: string
-  comment: string
-}
 
 const statusLabels = {
   unread: '未读',
@@ -23,76 +14,75 @@ const statusLabels = {
   paused: '暂停',
 } as const
 
+const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+
+const formatDate = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 function BookDetailPage() {
   const { bookId } = useParams()
   const { getById } = useBooks()
   const book = bookId ? getById(bookId) : undefined
   const [sessions, setSessions] = useState<ReadingSession[]>([])
-  const [sessionValues, setSessionValues] = useState<SessionFormValues>({
-    date: '',
-    pagesRead: '',
-    chaptersRead: '',
-    comment: '',
-  })
+  const [currentMonth, setCurrentMonth] = useState(() => new Date())
 
   useEffect(() => {
     if (!book) return
-    setSessions(getSessionsByBookId(book.id))
+    setSessions(getCheckInsByBook(book.id))
   }, [book])
 
-  const sortedSessions = useMemo(
-    () => [...sessions].sort((a, b) => b.date.localeCompare(a.date)),
+  const monthStart = useMemo(
+    () =>
+      new Date(
+        currentMonth.getFullYear(),
+        currentMonth.getMonth(),
+        1,
+      ),
+    [currentMonth],
+  )
+
+  const monthLabel = useMemo(
+    () =>
+      monthStart.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+      }),
+    [monthStart],
+  )
+
+  const calendarDays = useMemo(() => {
+    const year = monthStart.getFullYear()
+    const month = monthStart.getMonth()
+    const firstDay = monthStart.getDay()
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const totalCells = Math.ceil(
+      (firstDay + daysInMonth) / 7,
+    ) * 7
+
+    return Array.from({ length: totalCells }, (_, index) => {
+      const dayNumber = index - firstDay + 1
+      if (dayNumber < 1 || dayNumber > daysInMonth) return null
+      return new Date(year, month, dayNumber)
+    })
+  }, [monthStart])
+
+  const checkInDates = useMemo(
+    () => new Set(sessions.map((session) => session.date)),
     [sessions],
   )
 
-  const handleSessionChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = event.target
-    setSessionValues((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSessionSubmit = (
-    event: FormEvent<HTMLFormElement>,
-  ) => {
-    event.preventDefault()
+  const handleToggleCheckIn = (date: Date) => {
     if (!book) return
-    if (!sessionValues.date) return
-
-    const pagesRead =
-      sessionValues.pagesRead.trim() === ''
-        ? undefined
-        : Number(sessionValues.pagesRead)
-    const chaptersRead =
-      sessionValues.chaptersRead.trim() === ''
-        ? undefined
-        : Number(sessionValues.chaptersRead)
-
-    const nextSession: ReadingSession = {
-      id: crypto.randomUUID(),
-      bookId: book.id,
-      date: sessionValues.date,
-      pagesRead,
-      chaptersRead,
-      comment: sessionValues.comment.trim() || undefined,
-      createdAt: new Date().toISOString(),
-    }
-
-    upsertReadingSession(nextSession)
-    setSessions(getSessionsByBookId(book.id))
-    setSessionValues({
-      date: '',
-      pagesRead: '',
-      chaptersRead: '',
-      comment: '',
-    })
+    const dateString = formatDate(date)
+    toggleCheckIn(book.id, dateString)
+    setSessions(getCheckInsByBook(book.id))
   }
 
-  const handleSessionDelete = (id: string) => {
-    if (!book) return
-    deleteReadingSession(id)
-    setSessions(getSessionsByBookId(book.id))
-  }
+  const todayString = formatDate(new Date())
 
   if (!book) {
     return (
@@ -181,97 +171,90 @@ function BookDetailPage() {
       <div className="card stack">
         <div className="card-header">
           <h3>阅读打卡</h3>
-          <span className="muted">{sessions.length} 条</span>
+          <span className="muted">{sessions.length} 次</span>
         </div>
-        <form className="form" onSubmit={handleSessionSubmit}>
-          <div className="form-grid">
-            <label className="field">
-              <span>日期 *</span>
-              <input
-                type="date"
-                name="date"
-                value={sessionValues.date}
-                onChange={handleSessionChange}
-                required
-              />
-            </label>
-            <label className="field">
-              <span>页数</span>
-              <input
-                type="number"
-                min="0"
-                name="pagesRead"
-                value={sessionValues.pagesRead}
-                onChange={handleSessionChange}
-                placeholder="可选"
-              />
-            </label>
-            <label className="field">
-              <span>章节数</span>
-              <input
-                type="number"
-                min="0"
-                name="chaptersRead"
-                value={sessionValues.chaptersRead}
-                onChange={handleSessionChange}
-                placeholder="可选"
-              />
-            </label>
-          </div>
-          <label className="field">
-            <span>备注</span>
-            <textarea
-              name="comment"
-              rows={3}
-              value={sessionValues.comment}
-              onChange={handleSessionChange}
-              placeholder="记录当日阅读感受"
-            />
-          </label>
-          <div className="form-actions">
-            <button type="submit" className="button primary">
-              添加记录
+        <div className="calendar-toolbar">
+          <div className="calendar-nav">
+            <button
+              className="button ghost"
+              type="button"
+              onClick={() =>
+                setCurrentMonth(
+                  new Date(
+                    monthStart.getFullYear(),
+                    monthStart.getMonth() - 1,
+                    1,
+                  ),
+                )
+              }
+            >
+              上个月
+            </button>
+            <strong className="calendar-title">{monthLabel}</strong>
+            <button
+              className="button ghost"
+              type="button"
+              onClick={() =>
+                setCurrentMonth(
+                  new Date(
+                    monthStart.getFullYear(),
+                    monthStart.getMonth() + 1,
+                    1,
+                  ),
+                )
+              }
+            >
+              下个月
             </button>
           </div>
-        </form>
-        {sortedSessions.length === 0 ? (
-          <p className="muted">还没有阅读记录，先添加第一条吧。</p>
-        ) : (
-          <ul className="list">
-            {sortedSessions.map((session) => (
-              <li key={session.id} className="list-item">
-                <div className="list-item-main">
-                  <div>
-                    <strong>{session.date}</strong>
-                    <div className="metadata">
-                      {session.pagesRead !== undefined ? (
-                        <span className="chip ghost">
-                          {session.pagesRead} 页
-                        </span>
-                      ) : null}
-                      {session.chaptersRead !== undefined ? (
-                        <span className="chip ghost">
-                          {session.chaptersRead} 章
-                        </span>
-                      ) : null}
-                    </div>
-                    {session.comment ? (
-                      <p className="muted">{session.comment}</p>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="actions">
-                  <button
-                    className="button danger"
-                    onClick={() => handleSessionDelete(session.id)}
-                  >
-                    删除
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+          <button
+            className="button"
+            type="button"
+            onClick={() => setCurrentMonth(new Date())}
+          >
+            回到今天
+          </button>
+        </div>
+        <div className="calendar-weekdays">
+          {weekDays.map((day) => (
+            <span key={day}>{day}</span>
+          ))}
+        </div>
+        <div className="calendar-grid">
+          {calendarDays.map((date, index) => {
+            if (!date) {
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className="calendar-day empty"
+                />
+              )
+            }
+
+            const dateString = formatDate(date)
+            const isChecked = checkInDates.has(dateString)
+            const isToday = dateString === todayString
+
+            return (
+              <button
+                key={dateString}
+                type="button"
+                className={`calendar-day${isChecked ? ' checked' : ''}${
+                  isToday ? ' today' : ''
+                }`}
+                onClick={() => handleToggleCheckIn(date)}
+              >
+                <span className="calendar-date">{date.getDate()}</span>
+                {isChecked ? (
+                  <span className="calendar-dot" />
+                ) : null}
+              </button>
+            )
+          })}
+        </div>
+        <p className="muted">
+          点击日期即可切换打卡状态，已有打卡会显示标记。
+        </p>
       </div>
       <div className="card stack">
         <h3>书摘</h3>
