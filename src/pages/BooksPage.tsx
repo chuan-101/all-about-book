@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import BookForm, { BookFormValues } from '../components/BookForm'
+import BookForm, { type BookFormValues } from '../components/BookForm'
 import { useBooks } from '../lib/books-context'
 import type { Book } from '../types/book'
 
