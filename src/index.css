@@ -337,3 +337,119 @@ select {
   border-bottom: none;
   padding-bottom: 0;
 }
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.calendar-title {
+  font-size: 1.1rem;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  text-align: center;
+  font-weight: 600;
+  color: #667085;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.calendar-day {
+  position: relative;
+  background: #f8f9fc;
+  border: 1px solid #e3e7f0;
+  border-radius: 12px;
+  min-height: 64px;
+  padding: 0.4rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.calendar-day.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+.calendar-day.checked {
+  border-color: #1c1f2a;
+  background: #eef2ff;
+}
+
+.calendar-day.today {
+  box-shadow: inset 0 0 0 2px rgba(28, 31, 42, 0.3);
+}
+
+.calendar-date {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.calendar-dot {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 0.6rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1c1f2a;
+}
+
+.year-heatmap {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 4px;
+  padding: 0.5rem 0;
+}
+
+.heatmap-container {
+  overflow-x: auto;
+}
+
+.heatmap-months {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 12px;
+  gap: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: #667085;
+}
+
+.heatmap-month-label {
+  white-space: nowrap;
+}
+
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: #eef2f6;
+}
+
+.heatmap-cell.active {
+  background: #1c1f2a;
+}
+
+.heatmap-cell.empty {
+  background: transparent;
+}
