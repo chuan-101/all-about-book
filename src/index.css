@@ -427,8 +427,7 @@ select {
 
 .heatmap-months {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 12px;
+  grid-template-columns: repeat(54, 12px);
   gap: 4px;
   margin-bottom: 0.5rem;
   font-size: 0.75rem;
