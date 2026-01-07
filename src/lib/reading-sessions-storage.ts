@@ -28,6 +28,42 @@ export const getSessionsByBookId = (bookId: string): ReadingSession[] =>
 export const getSessionsByDate = (date: string): ReadingSession[] =>
   getReadingSessions().filter((session) => session.date === date)
 
+export const getCheckInsByBook = (bookId: string): ReadingSession[] =>
+  getSessionsByBookId(bookId)
+
+export const getCheckInsByDate = (date: string): ReadingSession[] =>
+  getSessionsByDate(date)
+
+export const hasCheckIn = (bookId: string, date: string): boolean =>
+  getReadingSessions().some(
+    (session) => session.bookId === bookId && session.date === date,
+  )
+
+export const toggleCheckIn = (bookId: string, date: string): void => {
+  const sessions = getReadingSessions()
+  const hasExisting = sessions.some(
+    (session) => session.bookId === bookId && session.date === date,
+  )
+
+  if (hasExisting) {
+    const next = sessions.filter(
+      (session) =>
+        !(session.bookId === bookId && session.date === date),
+    )
+    saveReadingSessions(next)
+    return
+  }
+
+  const nextSession: ReadingSession = {
+    id: crypto.randomUUID(),
+    bookId,
+    date,
+    createdAt: new Date().toISOString(),
+  }
+
+  saveReadingSessions([nextSession, ...sessions])
+}
+
 export const upsertReadingSession = (session: ReadingSession): void => {
   const sessions = getReadingSessions()
   const index = sessions.findIndex((item) => item.id === session.id)
