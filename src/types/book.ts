@@ -1,4 +1,4 @@
-export type BookStatus = 'reading' | 'finished' | 'paused'
+export type BookStatus = 'reading' | 'finished' | 'paused' | 'unread'
 
 export type ProgressKind = 'page' | 'percent' | 'chapter'
 
@@ -18,4 +18,8 @@ export interface Book {
   createdAt: string
   updatedAt: string
   progress?: BookProgress
+  startDate?: string
+  endDate?: string
+  rating?: number
+  notes?: string
 }
