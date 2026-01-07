@@ -6,14 +6,14 @@ function Layout() {
       <header className="header">
         <div className="container header-content">
           <div>
-            <p className="eyebrow">All About Book</p>
-            <h1 className="title">Personal Reading Tracker</h1>
+            <p className="eyebrow">阅读记录</p>
+            <h1 className="title">我的读书追踪器</h1>
           </div>
           <nav className="nav">
             <NavLink to="/" end>
-              Home
+              首页
             </NavLink>
-            <NavLink to="/books">Books</NavLink>
+            <NavLink to="/books">书架</NavLink>
           </nav>
         </div>
       </header>
