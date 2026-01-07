@@ -9,6 +9,8 @@ export type BookFormValues = {
   genre: string
   status: BookStatus
   cover: string
+  startDate: string
+  endDate: string
 }
 
 type BookFormProps = {
@@ -18,7 +20,7 @@ type BookFormProps = {
   submitLabel?: string
 }
 
-const statusOptions: BookStatus[] = ['reading', 'finished', 'paused']
+const statusOptions: BookStatus[] = ['unread', 'reading', 'finished', 'paused']
 
 function BookForm({
   initialValues,
@@ -33,6 +35,8 @@ function BookForm({
     genre: initialValues?.genre ?? '',
     status: initialValues?.status ?? 'reading',
     cover: initialValues?.cover ?? '',
+    startDate: initialValues?.startDate ?? '',
+    endDate: initialValues?.endDate ?? '',
   })
 
   useEffect(() => {
@@ -43,6 +47,8 @@ function BookForm({
       genre: initialValues?.genre ?? '',
       status: initialValues?.status ?? 'reading',
       cover: initialValues?.cover ?? '',
+      startDate: initialValues?.startDate ?? '',
+      endDate: initialValues?.endDate ?? '',
     })
   }, [initialValues])
 
@@ -103,6 +109,24 @@ function BookForm({
             value={values.cover}
             onChange={handleChange}
             placeholder="https://..."
+          />
+        </label>
+        <label className="field">
+          <span>Start date</span>
+          <input
+            type="date"
+            name="startDate"
+            value={values.startDate}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="field">
+          <span>End date</span>
+          <input
+            type="date"
+            name="endDate"
+            value={values.endDate}
+            onChange={handleChange}
           />
         </label>
       </div>
