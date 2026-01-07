@@ -4,6 +4,13 @@ import BookForm, { BookFormValues } from '../components/BookForm'
 import { useBooks } from '../lib/books-context'
 import type { Book } from '../types/book'
 
+const statusLabels: Record<Book['status'], string> = {
+  unread: '未读',
+  reading: '在读',
+  finished: '已读完',
+  paused: '暂停',
+}
+
 function BooksPage() {
   const { books, remove, upsert } = useBooks()
   const [editingBook, setEditingBook] = useState<Book | null>(null)
@@ -30,15 +37,15 @@ function BooksPage() {
   return (
     <section className="stack">
       <div>
-        <h2>Books</h2>
+        <h2>书架</h2>
         <p className="muted">
-          Add and manage your reading list. All changes persist locally.
+          添加和管理你的书单，所有数据保存在本地。
         </p>
       </div>
 
       <div>
         <h3 className="section-title">
-          {editingBook ? 'Edit book' : 'Add a new book'}
+          {editingBook ? '编辑书籍' : '添加新书'}
         </h3>
         <BookForm
           initialValues={editingBook ?? undefined}
@@ -46,17 +53,17 @@ function BooksPage() {
           onCancel={
             editingBook ? () => setEditingBook(null) : undefined
           }
-          submitLabel={editingBook ? 'Update book' : 'Add book'}
+          submitLabel={editingBook ? '更新' : '添加'}
         />
       </div>
 
       <div className="card stack">
         <div className="card-header">
-          <h3>Library</h3>
-          <span className="muted">{books.length} books</span>
+          <h3>我的书架</h3>
+          <span className="muted">{books.length} 本</span>
         </div>
         {books.length === 0 ? (
-          <p className="muted">No books yet. Add your first title above.</p>
+          <p className="muted">还没有书，在上方添加你的第一本吧。</p>
         ) : (
           <ul className="list">
             {books.map((book) => (
@@ -69,15 +76,17 @@ function BooksPage() {
                       className="cover"
                     />
                   ) : (
-                    <div className="cover placeholder">No cover</div>
+                    <div className="cover placeholder">暂无封面</div>
                   )}
                   <div>
                     <strong>{book.title}</strong>
                     <p className="muted">
-                      {book.author || 'Unknown author'}
+                      {book.author || '作者未知'}
                     </p>
                     <div className="metadata">
-                      <span className="chip">{book.status}</span>
+                      <span className="chip">
+                        {statusLabels[book.status]}
+                      </span>
                       {book.genre ? (
                         <span className="chip ghost">{book.genre}</span>
                       ) : null}
@@ -86,19 +95,19 @@ function BooksPage() {
                 </div>
                 <div className="actions">
                   <Link className="button ghost" to={`/books/${book.id}`}>
-                    View details
+                    查看详情
                   </Link>
                   <button
                     className="button ghost"
                     onClick={() => setEditingBook(book)}
                   >
-                    Edit
+                    编辑
                   </button>
                   <button
                     className="button danger"
                     onClick={() => remove(book.id)}
                   >
-                    Delete
+                    删除
                   </button>
                 </div>
               </li>

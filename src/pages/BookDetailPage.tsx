@@ -1,6 +1,13 @@
 import { Link, useParams } from 'react-router-dom'
 import { useBooks } from '../lib/books-context'
 
+const statusLabels = {
+  unread: '未读',
+  reading: '在读',
+  finished: '已读完',
+  paused: '暂停',
+} as const
+
 function BookDetailPage() {
   const { bookId } = useParams()
   const { getById } = useBooks()
@@ -9,13 +16,12 @@ function BookDetailPage() {
   if (!book) {
     return (
       <section className="stack">
-        <h2>Book not found</h2>
+        <h2>未找到此书</h2>
         <p className="muted">
-          We could not locate that book. Head back to the library to choose a
-          different title.
+          无法找到这本书，请返回书架选择其他标题。
         </p>
         <Link className="button primary" to="/books">
-          Back to books
+          返回书架
         </Link>
       </section>
     )
@@ -25,12 +31,12 @@ function BookDetailPage() {
     <section className="stack">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Book detail</p>
+          <p className="eyebrow">书籍详情</p>
           <h2>{book.title}</h2>
-          <p className="muted">{book.author || 'Unknown author'}</p>
+          <p className="muted">{book.author || '作者未知'}</p>
         </div>
         <Link className="button ghost" to="/books">
-          Back to books
+          返回书架
         </Link>
       </div>
 
@@ -39,44 +45,44 @@ function BookDetailPage() {
           {book.cover ? (
             <img src={book.cover} alt={`${book.title} cover`} />
           ) : (
-            <div className="cover placeholder large">No cover</div>
+            <div className="cover placeholder large">暂无封面</div>
           )}
         </div>
         <div className="card detail-info">
           <div className="info-row">
-            <span>Status</span>
-            <strong>{book.status}</strong>
+            <span>状态</span>
+            <strong>{statusLabels[book.status]}</strong>
           </div>
           <div className="info-row">
-            <span>Genre/Type</span>
-            <strong>{book.genre || 'Not set'}</strong>
+            <span>类型</span>
+            <strong>{book.genre || '未设置'}</strong>
           </div>
           <div className="info-row">
-            <span>Translator</span>
-            <strong>{book.translator || 'Not set'}</strong>
+            <span>译者</span>
+            <strong>{book.translator || '未设置'}</strong>
           </div>
           <div className="info-row">
-            <span>Created</span>
+            <span>创建时间</span>
             <strong>{new Date(book.createdAt).toLocaleString()}</strong>
           </div>
           <div className="info-row">
-            <span>Updated</span>
+            <span>更新时间</span>
             <strong>{new Date(book.updatedAt).toLocaleString()}</strong>
           </div>
         </div>
       </div>
 
       <div className="card stack">
-        <h3>Reading check-ins</h3>
-        <p className="muted">Coming next: log progress updates and notes.</p>
+        <h3>阅读打卡</h3>
+        <p className="muted">即将上线：记录阅读进度和笔记。</p>
       </div>
       <div className="card stack">
-        <h3>Quotes & highlights</h3>
-        <p className="muted">Coming next: save memorable passages.</p>
+        <h3>书摘</h3>
+        <p className="muted">即将上线：保存精彩段落。</p>
       </div>
       <div className="card stack">
-        <h3>Review & recap</h3>
-        <p className="muted">Coming next: summarize and rate the book.</p>
+        <h3>读后感</h3>
+        <p className="muted">即将上线：总结和评分。</p>
       </div>
     </section>
   )

@@ -9,6 +9,8 @@ export type BookFormValues = {
   genre: string
   status: BookStatus
   cover: string
+  startDate: string
+  endDate: string
 }
 
 type BookFormProps = {
@@ -18,13 +20,19 @@ type BookFormProps = {
   submitLabel?: string
 }
 
-const statusOptions: BookStatus[] = ['reading', 'finished', 'paused']
+const statusOptions: BookStatus[] = ['unread', 'reading', 'finished', 'paused']
+const statusLabels: Record<BookStatus, string> = {
+  unread: '未读',
+  reading: '在读',
+  finished: '已读完',
+  paused: '暂停',
+}
 
 function BookForm({
   initialValues,
   onSubmit,
   onCancel,
-  submitLabel = 'Save book',
+  submitLabel = '保存',
 }: BookFormProps) {
   const [values, setValues] = useState<BookFormValues>({
     title: initialValues?.title ?? '',
@@ -33,6 +41,8 @@ function BookForm({
     genre: initialValues?.genre ?? '',
     status: initialValues?.status ?? 'reading',
     cover: initialValues?.cover ?? '',
+    startDate: initialValues?.startDate ?? '',
+    endDate: initialValues?.endDate ?? '',
   })
 
   useEffect(() => {
@@ -43,6 +53,8 @@ function BookForm({
       genre: initialValues?.genre ?? '',
       status: initialValues?.status ?? 'reading',
       cover: initialValues?.cover ?? '',
+      startDate: initialValues?.startDate ?? '',
+      endDate: initialValues?.endDate ?? '',
     })
   }, [initialValues])
 
@@ -62,7 +74,7 @@ function BookForm({
     <form className="card form" onSubmit={handleSubmit}>
       <div className="form-grid">
         <label className="field">
-          <span>Title *</span>
+          <span>书名 *</span>
           <input
             name="title"
             value={values.title}
@@ -71,11 +83,11 @@ function BookForm({
           />
         </label>
         <label className="field">
-          <span>Author</span>
+          <span>作者</span>
           <input name="author" value={values.author} onChange={handleChange} />
         </label>
         <label className="field">
-          <span>Translator</span>
+          <span>译者</span>
           <input
             name="translator"
             value={values.translator}
@@ -83,26 +95,44 @@ function BookForm({
           />
         </label>
         <label className="field">
-          <span>Genre/Type</span>
+          <span>类型</span>
           <input name="genre" value={values.genre} onChange={handleChange} />
         </label>
         <label className="field">
-          <span>Status</span>
+          <span>状态</span>
           <select name="status" value={values.status} onChange={handleChange}>
             {statusOptions.map((option) => (
               <option key={option} value={option}>
-                {option}
+                {statusLabels[option]}
               </option>
             ))}
           </select>
         </label>
         <label className="field">
-          <span>Cover URL</span>
+          <span>封面链接</span>
           <input
             name="cover"
             value={values.cover}
             onChange={handleChange}
             placeholder="https://..."
+          />
+        </label>
+        <label className="field">
+          <span>开始日期</span>
+          <input
+            type="date"
+            name="startDate"
+            value={values.startDate}
+            onChange={handleChange}
+          />
+        </label>
+        <label className="field">
+          <span>结束日期</span>
+          <input
+            type="date"
+            name="endDate"
+            value={values.endDate}
+            onChange={handleChange}
           />
         </label>
       </div>
@@ -112,7 +142,7 @@ function BookForm({
         </button>
         {onCancel ? (
           <button type="button" className="button ghost" onClick={onCancel}>
-            Cancel
+            取消
           </button>
         ) : null}
       </div>

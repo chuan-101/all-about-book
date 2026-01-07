@@ -11,37 +11,37 @@ function HomePage() {
     <section className="stack">
       <div className="page-header">
         <div>
-          <h2>Dashboard</h2>
+          <h2>仪表盘</h2>
           <p className="muted">
-            Track what you are reading and keep your library organized.
+            记录你的阅读进度，管理你的书架。
           </p>
         </div>
         <Link className="button primary" to="/books">
-          Manage books
+          管理书籍
         </Link>
       </div>
 
       <div className="stats-grid">
         <div className="card stat">
-          <span className="stat-label">Total books</span>
+          <span className="stat-label">书籍总数</span>
           <span className="stat-value">{totalBooks}</span>
         </div>
         <div className="card stat">
-          <span className="stat-label">Currently reading</span>
+          <span className="stat-label">在读</span>
           <span className="stat-value">{readingBooks.length}</span>
         </div>
         <div className="card stat">
-          <span className="stat-label">Finished</span>
+          <span className="stat-label">已读完</span>
           <span className="stat-value">{finishedBooks.length}</span>
         </div>
       </div>
 
       <div className="card">
         <div className="card-header">
-          <h3>Currently Reading</h3>
+          <h3>正在阅读</h3>
         </div>
         {readingBooks.length === 0 ? (
-          <p className="muted">No active reads yet. Add a book to get going.</p>
+          <p className="muted">还没有在读的书，去添加一本吧。</p>
         ) : (
           <ul className="list">
             {readingBooks.map((book) => (
@@ -49,13 +49,13 @@ function HomePage() {
                 <div>
                   <strong>{book.title}</strong>
                   <p className="muted">
-                    {book.author || 'Unknown author'}
+                    {book.author || '作者未知'}
                   </p>
                 </div>
                 <span className="chip">
                   {book.progress
                     ? `${book.progress.value} ${book.progress.kind}`
-                    : 'Progress: TBD'}
+                    : '进度：待记录'}
                 </span>
               </li>
             ))}
