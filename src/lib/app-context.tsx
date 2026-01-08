@@ -94,7 +94,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let ignore = false
     const loadSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession()
+        const { data, error } = await supabase!.auth.getSession()
         if (ignore) return
         if (error) {
           setAuthWarning('无法读取登录信息，将继续使用本地数据。')
