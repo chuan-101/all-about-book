@@ -357,6 +357,14 @@ export const buildMarkdownArchive = (
           new Date(b.createdAt).getTime(),
       )
 
+    const bookDiscussions = discussions
+      .filter((message) => message.bookId === book.id)
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime(),
+      )
+
     lines.push('### 打卡')
     if (bookCheckIns.length === 0) {
       lines.push('- 无')
@@ -370,7 +378,7 @@ export const buildMarkdownArchive = (
     if (bookDiscussions.length === 0) {
       lines.push('- 无')
     } else {
-      bookDiscussions.forEach((message) => {
+      bookDiscussions.forEach((message: DiscussionMessage) => {
         const content = message.content.replace(/\s+/g, ' ').trim()
         lines.push(
           `- [${formatExcerptDate(message.createdAt)}] ${
@@ -408,6 +416,13 @@ export const buildHtmlArchive = (
             new Date(a.date).getTime() -
             new Date(b.date).getTime(),
         )
+      const bookDiscussions = discussions
+        .filter((message) => message.bookId === book.id)
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() -
+            new Date(b.createdAt).getTime(),
+        )
 
       const metaItems = buildBookMeta(book)
         .map((item) => `<span>${escapeHtml(item)}</span>`)
@@ -442,7 +457,7 @@ export const buildHtmlArchive = (
           ? '<li>无</li>'
           : bookDiscussions
               .map(
-                (message) =>
+                (message: DiscussionMessage) =>
                   `<li><strong>${escapeHtml(
                     formatExcerptDate(message.createdAt),
                   )}</strong> ${escapeHtml(
