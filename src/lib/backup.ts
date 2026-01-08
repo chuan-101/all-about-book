@@ -1,6 +1,8 @@
 import type { Book, BookProgress } from '../types/book'
+import type { DiscussionMessage } from '../types/discussion'
 import type { Excerpt } from '../types/excerpt'
 import type { ReadingSession } from '../types/reading-session'
+import { getDiscussions, saveDiscussions } from './discussion-storage'
 import { getExcerpts, saveExcerpts } from './excerpts-storage'
 import { getReadingSessions, saveReadingSessions } from './reading-sessions-storage'
 import { getBooks, saveBooks } from './storage'
@@ -17,6 +19,7 @@ export type BackupPayload = {
   books: Book[]
   checkIns: ReadingSession[]
   excerpts: Excerpt[]
+  discussions: DiscussionMessage[]
 }
 
 type ParseResult =
@@ -131,6 +134,27 @@ const normalizeReadingSession = (
   }
 }
 
+const normalizeDiscussion = (
+  message: Partial<DiscussionMessage>,
+): DiscussionMessage => {
+  const now = new Date().toISOString()
+  const createdAt =
+    typeof message.createdAt === 'string' && message.createdAt
+      ? message.createdAt
+      : now
+
+  return {
+    id: normalizeString(message.id) || crypto.randomUUID(),
+    bookId: normalizeString(message.bookId),
+    role:
+      message.role === 'me' || message.role === 'syzygy'
+        ? message.role
+        : 'me',
+    content: normalizeString(message.content),
+    createdAt,
+  }
+}
+
 const normalizeBooks = (value: unknown): Book[] =>
   Array.isArray(value) ? value.map((item) => normalizeBook(item)) : []
 
@@ -140,6 +164,11 @@ const normalizeExcerpts = (value: unknown): Excerpt[] =>
 const normalizeCheckIns = (value: unknown): ReadingSession[] =>
   Array.isArray(value)
     ? value.map((item) => normalizeReadingSession(item))
+    : []
+
+const normalizeDiscussions = (value: unknown): DiscussionMessage[] =>
+  Array.isArray(value)
+    ? value.map((item) => normalizeDiscussion(item))
     : []
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -153,6 +182,7 @@ export const createBackupPayload = (): BackupPayload => ({
   books: normalizeBooks(getBooks()),
   checkIns: normalizeCheckIns(getReadingSessions()),
   excerpts: normalizeExcerpts(getExcerpts()),
+  discussions: normalizeDiscussions(getDiscussions()),
 })
 
 export const parseBackupPayload = (raw: string): ParseResult => {
@@ -212,6 +242,7 @@ export const parseBackupPayload = (raw: string): ParseResult => {
       books: normalizeBooks(parsed.books),
       checkIns: normalizeCheckIns(checkInsSource),
       excerpts: normalizeExcerpts(parsed.excerpts),
+      discussions: normalizeDiscussions(parsed.discussions),
     },
   }
 }
@@ -220,6 +251,7 @@ export const applyBackupPayload = (payload: BackupPayload): void => {
   saveBooks(payload.books)
   saveReadingSessions(payload.checkIns)
   saveExcerpts(payload.excerpts)
+  saveDiscussions(payload.discussions)
 }
 
 const statusLabels: Record<Book['status'], string> = {
@@ -227,6 +259,11 @@ const statusLabels: Record<Book['status'], string> = {
   reading: '在读',
   finished: '已读完',
   paused: '暂停',
+}
+
+const discussionRoleLabels: Record<DiscussionMessage['role'], string> = {
+  me: '我',
+  syzygy: 'Syzygy',
 }
 
 const formatExcerptDate = (value: string): string => {
@@ -267,6 +304,7 @@ export const buildMarkdownArchive = (
   books: Book[],
   excerpts: Excerpt[],
   checkIns: ReadingSession[],
+  discussions: DiscussionMessage[],
 ): string => {
   const lines: string[] = ['# All About Book · 书摘归档', '']
 
@@ -304,12 +342,34 @@ export const buildMarkdownArchive = (
           new Date(a.date).getTime() - new Date(b.date).getTime(),
       )
 
+    const bookDiscussions = discussions
+      .filter((message) => message.bookId === book.id)
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime(),
+      )
+
     lines.push('### 打卡')
     if (bookCheckIns.length === 0) {
       lines.push('- 无')
     } else {
       bookCheckIns.forEach((session) => {
         lines.push(`- ${formatCheckInDate(session.date)}`)
+      })
+    }
+
+    lines.push('### 讨论')
+    if (bookDiscussions.length === 0) {
+      lines.push('- 无')
+    } else {
+      bookDiscussions.forEach((message: DiscussionMessage) => {
+        const content = message.content.replace(/\s+/g, ' ').trim()
+        lines.push(
+          `- [${formatExcerptDate(message.createdAt)}] ${
+            discussionRoleLabels[message.role]
+          }：${content}`,
+        )
       })
     }
 
@@ -323,6 +383,7 @@ export const buildHtmlArchive = (
   books: Book[],
   excerpts: Excerpt[],
   checkIns: ReadingSession[],
+  discussions: DiscussionMessage[],
 ): string => {
   const sections = books
     .map((book) => {
@@ -339,6 +400,13 @@ export const buildHtmlArchive = (
           (a, b) =>
             new Date(a.date).getTime() -
             new Date(b.date).getTime(),
+        )
+      const bookDiscussions = discussions
+        .filter((message) => message.bookId === book.id)
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() -
+            new Date(b.createdAt).getTime(),
         )
 
       const metaItems = buildBookMeta(book)
@@ -369,6 +437,20 @@ export const buildHtmlArchive = (
               )
               .join('')
 
+      const discussionItems =
+        bookDiscussions.length === 0
+          ? '<li>无</li>'
+          : bookDiscussions
+              .map(
+                (message: DiscussionMessage) =>
+                  `<li><strong>${escapeHtml(
+                    formatExcerptDate(message.createdAt),
+                  )}</strong> ${escapeHtml(
+                    discussionRoleLabels[message.role],
+                  )}：${escapeHtml(message.content)}</li>`,
+              )
+              .join('')
+
       return `<section class="book">
   <h2>《${escapeHtml(book.title || '未命名')}》 - ${escapeHtml(
         book.author || '作者未知',
@@ -383,6 +465,8 @@ export const buildHtmlArchive = (
   <ul>${excerptItems}</ul>
   <h3>打卡</h3>
   <ul>${checkInItems}</ul>
+  <h3>讨论</h3>
+  <ul>${discussionItems}</ul>
 </section>`
     })
     .join('')
