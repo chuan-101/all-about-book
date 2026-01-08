@@ -341,29 +341,6 @@ export const buildMarkdownArchive = (
           (a, b) =>
             new Date(a.date).getTime() - new Date(b.date).getTime(),
         )
-      const bookDiscussions = discussions
-        .filter((message) => message.bookId === book.id)
-        .sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() -
-            new Date(b.createdAt).getTime(),
-        )
-
-    const bookDiscussions = discussions
-      .filter((message) => message.bookId === book.id)
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() -
-          new Date(b.createdAt).getTime(),
-      )
-
-    const bookDiscussions = discussions
-      .filter((message) => message.bookId === book.id)
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() -
-          new Date(b.createdAt).getTime(),
-      )
 
     const bookDiscussions = discussions.filter(
       (message) => message.bookId === book.id,
