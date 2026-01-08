@@ -2,15 +2,18 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import App from './App.tsx'
+import { AppProvider } from './lib/app-context.tsx'
 import { BooksProvider } from './lib/books-context.tsx'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>
-      <BooksProvider>
-        <App />
-      </BooksProvider>
+      <AppProvider>
+        <BooksProvider>
+          <App />
+        </BooksProvider>
+      </AppProvider>
     </HashRouter>
   </StrictMode>,
 )
