@@ -13,6 +13,7 @@ import {
 import type { Excerpt } from '../types/excerpt'
 import type { DiscussionMessage } from '../types/discussion'
 import type { ReadingSession } from '../types/reading-session'
+import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
 import {
   getCheckInsByBook,
@@ -37,8 +38,17 @@ const formatDate = (date: Date) => {
 
 function BookDetailPage() {
   const { bookId } = useParams()
-  const { getById } = useBooks()
-  const book = bookId ? getById(bookId) : undefined
+  const { books: localBooks } = useBooks()
+  const {
+    isCloudMode,
+    cloudBooks,
+    cloudCheckIns,
+    cloudExcerpts,
+    cloudDiscussions,
+    cloudLoading,
+  } = useAppData()
+  const books = isCloudMode ? cloudBooks : localBooks
+  const book = bookId ? books.find((item) => item.id === bookId) : undefined
   const [sessions, setSessions] = useState<ReadingSession[]>([])
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
   const [excerpts, setExcerpts] = useState<Excerpt[]>([])
@@ -53,19 +63,46 @@ function BookDetailPage() {
   const [editingContent, setEditingContent] = useState('')
 
   useEffect(() => {
-    if (!book) return
+    if (!book || isCloudMode) return
     setSessions(getCheckInsByBook(book.id))
-  }, [book])
+  }, [book, isCloudMode])
 
   useEffect(() => {
-    if (!book) return
+    if (!book || isCloudMode) return
     setExcerpts(getExcerptsByBookId(book.id))
-  }, [book])
+  }, [book, isCloudMode])
 
   useEffect(() => {
-    if (!book) return
+    if (!book || isCloudMode) return
     setDiscussionMessages(getMessagesByBookId(book.id))
-  }, [book])
+  }, [book, isCloudMode])
+
+  useEffect(() => {
+    if (!isCloudMode) return
+    setEditingExcerptId(null)
+    setEditingContent('')
+  }, [isCloudMode])
+
+  const displaySessions = useMemo(() => {
+    if (!book) return []
+    return isCloudMode
+      ? cloudCheckIns.filter((session) => session.bookId === book.id)
+      : sessions
+  }, [book, cloudCheckIns, isCloudMode, sessions])
+
+  const displayExcerpts = useMemo(() => {
+    if (!book) return []
+    return isCloudMode
+      ? cloudExcerpts.filter((excerpt) => excerpt.bookId === book.id)
+      : excerpts
+  }, [book, cloudExcerpts, excerpts, isCloudMode])
+
+  const displayDiscussions = useMemo(() => {
+    if (!book) return []
+    return isCloudMode
+      ? cloudDiscussions.filter((message) => message.bookId === book.id)
+      : discussionMessages
+  }, [book, cloudDiscussions, discussionMessages, isCloudMode])
 
   const monthStart = useMemo(
     () =>
@@ -103,12 +140,12 @@ function BookDetailPage() {
   }, [monthStart])
 
   const checkInDates = useMemo(
-    () => new Set(sessions.map((session) => session.date)),
-    [sessions],
+    () => new Set(displaySessions.map((session) => session.date)),
+    [displaySessions],
   )
 
   const handleToggleCheckIn = (date: Date) => {
-    if (!book) return
+    if (!book || isCloudMode) return
     const dateString = formatDate(date)
     toggleCheckIn(book.id, dateString)
     setSessions(getCheckInsByBook(book.id))
@@ -117,18 +154,18 @@ function BookDetailPage() {
   const todayString = formatDate(new Date())
 
   const refreshExcerpts = () => {
-    if (!book) return
+    if (!book || isCloudMode) return
     setExcerpts(getExcerptsByBookId(book.id))
   }
 
   const refreshDiscussions = () => {
-    if (!book) return
+    if (!book || isCloudMode) return
     setDiscussionMessages(getMessagesByBookId(book.id))
   }
 
   const handleCreateExcerpt = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!book) return
+    if (!book || isCloudMode) return
     const content = newExcerptContent.trim()
     if (!content) return
     const now = new Date().toISOString()
@@ -145,7 +182,7 @@ function BookDetailPage() {
 
   const handleCreateDiscussion = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!book) return
+    if (!book || isCloudMode) return
     const content = newMessageContent.trim()
     if (!content) return
     const now = new Date().toISOString()
@@ -162,6 +199,7 @@ function BookDetailPage() {
   }
 
   const handleStartEdit = (excerpt: Excerpt) => {
+    if (isCloudMode) return
     setEditingExcerptId(excerpt.id)
     setEditingContent(excerpt.content)
   }
@@ -172,6 +210,7 @@ function BookDetailPage() {
   }
 
   const handleSaveEdit = (id: string) => {
+    if (isCloudMode) return
     const content = editingContent.trim()
     if (!content) return
     updateExcerpt(id, { content })
@@ -180,6 +219,7 @@ function BookDetailPage() {
   }
 
   const handleDeleteExcerpt = (id: string) => {
+    if (isCloudMode) return
     if (!window.confirm('确定要删除这条书摘吗？')) return
     deleteExcerpt(id)
     refreshExcerpts()
@@ -193,6 +233,15 @@ function BookDetailPage() {
       hour: '2-digit',
       minute: '2-digit',
     })
+
+  if (!book && isCloudMode && cloudLoading) {
+    return (
+      <section className="stack">
+        <h2>加载中...</h2>
+        <p className="muted">正在加载云端书籍详情。</p>
+      </section>
+    )
+  }
 
   if (!book) {
     return (
@@ -216,6 +265,9 @@ function BookDetailPage() {
             <p className="eyebrow">书籍详情</p>
             <h2>{book.title}</h2>
             <p className="muted">{book.author || '作者未知'}</p>
+            {isCloudMode ? (
+              <p className="notice info">云端数据仅供查看。</p>
+            ) : null}
           </div>
           <div className="page-header-actions">
             <button
@@ -291,7 +343,7 @@ function BookDetailPage() {
         <div className="card stack">
           <div className="card-header">
             <h3>阅读打卡</h3>
-            <span className="muted">{sessions.length} 次</span>
+            <span className="muted">{displaySessions.length} 次</span>
           </div>
           <div className="calendar-header">
             <strong className="calendar-title">{monthLabel}</strong>
@@ -363,11 +415,10 @@ function BookDetailPage() {
                     isToday ? ' today' : ''
                   }`}
                   onClick={() => handleToggleCheckIn(date)}
+                  disabled={isCloudMode}
                 >
                   <span className="calendar-date">{date.getDate()}</span>
-                  {isChecked ? (
-                    <span className="calendar-dot" />
-                  ) : null}
+                  {isChecked ? <span className="calendar-dot" /> : null}
                 </button>
               )
             })}
@@ -379,31 +430,35 @@ function BookDetailPage() {
         <div className="card stack">
           <div className="card-header">
             <h3>书摘</h3>
-            <span className="muted">{excerpts.length} 条</span>
+            <span className="muted">{displayExcerpts.length} 条</span>
           </div>
-          <form className="form" onSubmit={handleCreateExcerpt}>
-            <label className="field">
-              <span>新增书摘</span>
-              <textarea
-                rows={3}
-                value={newExcerptContent}
-                onChange={(event) =>
-                  setNewExcerptContent(event.target.value)
-                }
-                placeholder="记录喜欢的句子或段落"
-              />
-            </label>
-            <div className="form-actions">
-              <button type="submit" className="button primary">
-                保存书摘
-              </button>
-            </div>
-          </form>
-          {excerpts.length === 0 ? (
+          {isCloudMode ? (
+            <p className="notice info">云端模式下暂不支持编辑书摘。</p>
+          ) : (
+            <form className="form" onSubmit={handleCreateExcerpt}>
+              <label className="field">
+                <span>新增书摘</span>
+                <textarea
+                  rows={3}
+                  value={newExcerptContent}
+                  onChange={(event) =>
+                    setNewExcerptContent(event.target.value)
+                  }
+                  placeholder="记录喜欢的句子或段落"
+                />
+              </label>
+              <div className="form-actions">
+                <button type="submit" className="button primary">
+                  保存书摘
+                </button>
+              </div>
+            </form>
+          )}
+          {displayExcerpts.length === 0 ? (
             <p className="muted">暂无书摘，先记录第一条吧。</p>
           ) : (
             <ul className="list">
-              {excerpts.map((excerpt) => {
+              {displayExcerpts.map((excerpt) => {
                 const isEditing = editingExcerptId === excerpt.id
                 return (
                   <li key={excerpt.id} className="list-item">
@@ -428,45 +483,47 @@ function BookDetailPage() {
                         </div>
                       )}
                     </div>
-                    <div className="actions">
-                      {isEditing ? (
-                        <>
-                          <button
-                            className="button primary"
-                            type="button"
-                            onClick={() => handleSaveEdit(excerpt.id)}
-                          >
-                            保存
-                          </button>
-                          <button
-                            className="button ghost"
-                            type="button"
-                            onClick={handleCancelEdit}
-                          >
-                            取消
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            className="button ghost"
-                            type="button"
-                            onClick={() => handleStartEdit(excerpt)}
-                          >
-                            编辑
-                          </button>
-                          <button
-                            className="button danger"
-                            type="button"
-                            onClick={() =>
-                              handleDeleteExcerpt(excerpt.id)
-                            }
-                          >
-                            删除
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    {isCloudMode ? null : (
+                      <div className="actions">
+                        {isEditing ? (
+                          <>
+                            <button
+                              className="button primary"
+                              type="button"
+                              onClick={() => handleSaveEdit(excerpt.id)}
+                            >
+                              保存
+                            </button>
+                            <button
+                              className="button ghost"
+                              type="button"
+                              onClick={handleCancelEdit}
+                            >
+                              取消
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className="button ghost"
+                              type="button"
+                              onClick={() => handleStartEdit(excerpt)}
+                            >
+                              编辑
+                            </button>
+                            <button
+                              className="button danger"
+                              type="button"
+                              onClick={() =>
+                                handleDeleteExcerpt(excerpt.id)
+                              }
+                            >
+                              删除
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </li>
                 )
               })}
@@ -476,16 +533,16 @@ function BookDetailPage() {
         <div className="card stack">
           <div className="card-header">
             <h3>与 Syzygy 讨论</h3>
-            <span className="muted">{discussionMessages.length} 条</span>
+            <span className="muted">{displayDiscussions.length} 条</span>
           </div>
           <p className="muted">
             后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
           </p>
-          {discussionMessages.length === 0 ? (
+          {displayDiscussions.length === 0 ? (
             <p className="muted">暂无讨论，先写下你的想法吧。</p>
           ) : (
             <ul className="list">
-              {discussionMessages.map((message) => (
+              {displayDiscussions.map((message) => (
                 <li key={message.id} className="list-item">
                   <div className="list-item-main">
                     <p className="muted">
@@ -498,31 +555,35 @@ function BookDetailPage() {
               ))}
             </ul>
           )}
-          <form className="form" onSubmit={handleCreateDiscussion}>
-            <label className="field">
-              <span>我的想法</span>
-              <textarea
-                rows={3}
-                value={newMessageContent}
-                onChange={(event) =>
-                  setNewMessageContent(event.target.value)
-                }
-                placeholder="写下你的想法或问题"
-              />
-            </label>
-            <div className="form-actions">
-              <button type="submit" className="button primary">
-                发送
-              </button>
-              <button
-                type="button"
-                className="button ghost"
-                disabled
-              >
-                让 Syzygy 回复（即将上线）
-              </button>
-            </div>
-          </form>
+          {isCloudMode ? (
+            <p className="notice info">云端模式下暂不支持发送讨论。</p>
+          ) : (
+            <form className="form" onSubmit={handleCreateDiscussion}>
+              <label className="field">
+                <span>我的想法</span>
+                <textarea
+                  rows={3}
+                  value={newMessageContent}
+                  onChange={(event) =>
+                    setNewMessageContent(event.target.value)
+                  }
+                  placeholder="写下你的想法或问题"
+                />
+              </label>
+              <div className="form-actions">
+                <button type="submit" className="button primary">
+                  发送
+                </button>
+                <button
+                  type="button"
+                  className="button ghost"
+                  disabled
+                >
+                  让 Syzygy 回复（即将上线）
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </section>
       <section className="print-view">
@@ -540,11 +601,11 @@ function BookDetailPage() {
         </header>
         <section className="print-section">
           <h2>书摘</h2>
-          {excerpts.length === 0 ? (
+          {displayExcerpts.length === 0 ? (
             <p className="print-muted">暂无书摘。</p>
           ) : (
             <ul className="print-list">
-              {excerpts.map((excerpt) => (
+              {displayExcerpts.map((excerpt) => (
                 <li key={excerpt.id} className="print-excerpt">
                   <div className="print-excerpt-date">
                     {formatExcerptDate(excerpt.createdAt)}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
 import {
   applyBackupPayload,
@@ -19,7 +20,10 @@ const formatDate = (date: Date) => {
 }
 
 function HomePage() {
-  const { books, refresh } = useBooks()
+  const { books: localBooks, refresh } = useBooks()
+  const { isCloudMode, cloudBooks, cloudCheckIns, cloudLoading } =
+    useAppData()
+  const books = isCloudMode ? cloudBooks : localBooks
   const totalBooks = books.length
   const readingBooks = books.filter((book) => book.status === 'reading')
   const finishedBooks = books.filter((book) => book.status === 'finished')
@@ -31,8 +35,11 @@ function HomePage() {
   const currentYear = new Date().getFullYear()
 
   useEffect(() => {
+    if (isCloudMode) return
     setCheckIns(getReadingSessions())
-  }, [])
+  }, [isCloudMode])
+
+  const displayCheckIns = isCloudMode ? cloudCheckIns : checkIns
 
   const heatmapLayout = useMemo(() => {
     const yearStart = new Date(currentYear, 0, 1)
@@ -85,13 +92,13 @@ function HomePage() {
   const checkInDates = useMemo(
     () =>
       new Set(
-        checkIns
+        displayCheckIns
           .filter((session) =>
             session.date.startsWith(`${currentYear}-`),
           )
           .map((session) => session.date),
       ),
-    [checkIns, currentYear],
+    [displayCheckIns, currentYear],
   )
 
   const downloadFile = (
@@ -109,6 +116,14 @@ function HomePage() {
   }
 
   const handleExportBackup = () => {
+    if (isCloudMode) {
+      setBackupStatus({
+        type: 'error',
+        message: '云端模式下暂不支持备份导出。',
+      })
+      return
+    }
+
     const payload = createBackupPayload()
     const filename = `all-about-book-backup-${formatDate(
       new Date(),
@@ -125,6 +140,14 @@ function HomePage() {
   }
 
   const handleExportMarkdown = () => {
+    if (isCloudMode) {
+      setBackupStatus({
+        type: 'error',
+        message: '云端模式下暂不支持归档导出。',
+      })
+      return
+    }
+
     const {
       books: dataBooks,
       checkIns: dataCheckIns,
@@ -148,6 +171,14 @@ function HomePage() {
   }
 
   const handleExportHtml = () => {
+    if (isCloudMode) {
+      setBackupStatus({
+        type: 'error',
+        message: '云端模式下暂不支持归档导出。',
+      })
+      return
+    }
+
     const {
       books: dataBooks,
       checkIns: dataCheckIns,
@@ -173,6 +204,15 @@ function HomePage() {
   const handleImportBackup = async (
     event: ChangeEvent<HTMLInputElement>,
   ) => {
+    if (isCloudMode) {
+      setBackupStatus({
+        type: 'error',
+        message: '云端模式下暂不支持导入备份。',
+      })
+      event.target.value = ''
+      return
+    }
+
     const file = event.target.files?.[0]
     if (!file) return
     setBackupStatus(null)
@@ -213,6 +253,12 @@ function HomePage() {
           <p className="muted">
             记录你的阅读进度，管理你的书架。
           </p>
+          <p className="muted">
+            当前数据来源：{isCloudMode ? '云端（只读）' : '本地'}。
+          </p>
+          {isCloudMode && cloudLoading ? (
+            <p className="notice info">云端数据加载中...</p>
+          ) : null}
         </div>
         <Link className="button primary" to="/books">
           管理书籍
@@ -305,9 +351,7 @@ function HomePage() {
               return (
                 <div
                   key={dateString}
-                  className={`heatmap-cell${
-                    isActive ? ' active' : ''
-                  }`}
+                  className={`heatmap-cell${isActive ? ' active' : ''}`}
                   style={{ gridColumn: column, gridRow: row }}
                   title={
                     isActive
@@ -333,7 +377,11 @@ function HomePage() {
           归档便于查看与打印。
         </p>
         <div className="actions">
-          <button className="button primary" onClick={handleExportBackup}>
+          <button
+            className="button primary"
+            onClick={handleExportBackup}
+            disabled={isCloudMode}
+          >
             导出备份 (JSON)
           </button>
           <label className="button ghost">
@@ -343,12 +391,21 @@ function HomePage() {
               accept="application/json"
               onChange={handleImportBackup}
               hidden
+              disabled={isCloudMode}
             />
           </label>
-          <button className="button" onClick={handleExportMarkdown}>
+          <button
+            className="button"
+            onClick={handleExportMarkdown}
+            disabled={isCloudMode}
+          >
             导出归档 (Markdown)
           </button>
-          <button className="button" onClick={handleExportHtml}>
+          <button
+            className="button"
+            onClick={handleExportHtml}
+            disabled={isCloudMode}
+          >
             导出归档 (HTML)
           </button>
         </div>
@@ -356,6 +413,9 @@ function HomePage() {
           <p className={`notice ${backupStatus.type}`}>
             {backupStatus.message}
           </p>
+        ) : null}
+        {isCloudMode ? (
+          <p className="notice info">云端模式下暂不支持备份与导入。</p>
         ) : null}
       </div>
     </section>

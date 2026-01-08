@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import BookForm, { type BookFormValues } from '../components/BookForm'
+import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
 import type { Book } from '../types/book'
 
@@ -12,10 +13,19 @@ const statusLabels: Record<Book['status'], string> = {
 }
 
 function BooksPage() {
-  const { books, remove, upsert } = useBooks()
+  const { books: localBooks, remove, upsert } = useBooks()
+  const { isCloudMode, cloudBooks, cloudLoading } = useAppData()
+  const books = isCloudMode ? cloudBooks : localBooks
   const [editingBook, setEditingBook] = useState<Book | null>(null)
 
+  useEffect(() => {
+    if (isCloudMode) {
+      setEditingBook(null)
+    }
+  }, [isCloudMode])
+
   const handleSubmit = (values: BookFormValues) => {
+    if (isCloudMode) return
     const now = new Date().toISOString()
     const ratingValue =
       values.rating.trim() === '' ? undefined : Number(values.rating)
@@ -43,23 +53,33 @@ function BooksPage() {
       <div>
         <h2>书架</h2>
         <p className="muted">
-          添加和管理你的书单，所有数据保存在本地。
+          添加和管理你的书单，当前数据来源：
+          {isCloudMode ? '云端（只读）' : '本地'}。
         </p>
       </div>
 
-      <div>
-        <h3 className="section-title">
-          {editingBook ? '编辑书籍' : '添加新书'}
-        </h3>
-        <BookForm
-          initialValues={editingBook ?? undefined}
-          onSubmit={handleSubmit}
-          onCancel={
-            editingBook ? () => setEditingBook(null) : undefined
-          }
-          submitLabel={editingBook ? '更新' : '添加'}
-        />
-      </div>
+      {isCloudMode ? (
+        <div className="stack">
+          <div className="notice info">云端数据暂不支持编辑或删除。</div>
+          {cloudLoading ? (
+            <div className="notice info">云端数据加载中...</div>
+          ) : null}
+        </div>
+      ) : (
+        <div>
+          <h3 className="section-title">
+            {editingBook ? '编辑书籍' : '添加新书'}
+          </h3>
+          <BookForm
+            initialValues={editingBook ?? undefined}
+            onSubmit={handleSubmit}
+            onCancel={
+              editingBook ? () => setEditingBook(null) : undefined
+            }
+            submitLabel={editingBook ? '更新' : '添加'}
+          />
+        </div>
+      )}
 
       <div className="card stack">
         <div className="card-header">
@@ -67,7 +87,11 @@ function BooksPage() {
           <span className="muted">{books.length} 本</span>
         </div>
         {books.length === 0 ? (
-          <p className="muted">还没有书，在上方添加你的第一本吧。</p>
+          <p className="muted">
+            {isCloudMode && cloudLoading
+              ? '正在加载云端书籍...'
+              : '还没有书，在上方添加你的第一本吧。'}
+          </p>
         ) : (
           <ul className="list">
             {books.map((book) => (
@@ -119,18 +143,22 @@ function BooksPage() {
                   <Link className="button ghost" to={`/books/${book.id}`}>
                     查看详情
                   </Link>
-                  <button
-                    className="button ghost"
-                    onClick={() => setEditingBook(book)}
-                  >
-                    编辑
-                  </button>
-                  <button
-                    className="button danger"
-                    onClick={() => remove(book.id)}
-                  >
-                    删除
-                  </button>
+                  {isCloudMode ? null : (
+                    <>
+                      <button
+                        className="button ghost"
+                        onClick={() => setEditingBook(book)}
+                      >
+                        编辑
+                      </button>
+                      <button
+                        className="button danger"
+                        onClick={() => remove(book.id)}
+                      >
+                        删除
+                      </button>
+                    </>
+                  )}
                 </div>
               </li>
             ))}
