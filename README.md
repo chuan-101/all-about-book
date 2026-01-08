@@ -23,7 +23,7 @@ backup file safe.
 ## Tech Stack Notes
 - Frontend: React + TypeScript + Vite.
 - Stage 1 uses local storage only.
-- Stage 2 will add Supabase for auth, sync, and cover storage.
+- Stage 2 adds Supabase for auth and cloud reads.
 - AI integration will be handled through a backend proxy (no keys in frontend).
 
 ## Getting Started
@@ -31,5 +31,21 @@ backup file safe.
 npm install
 npm run dev
 ```
+
+### Supabase (optional)
+To enable magic link login and cloud reads, create a `.env.local` file in the repo root:
+
+```bash
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+The app will automatically fall back to local storage if the env vars are missing.
+
+### GitHub Actions secrets
+For GitHub Pages builds, add the following repository secrets:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
 The app will be available at `http://localhost:5173`.
