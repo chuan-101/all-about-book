@@ -111,7 +111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     loadSession()
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
+    const { data: listener } = supabase!.auth.onAuthStateChange(
       (_event, nextSession) => {
         if (ignore) return
         setSession(nextSession)
