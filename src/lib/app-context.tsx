@@ -18,7 +18,7 @@ import {
   fetchDiscussions,
   fetchExcerpts,
 } from './cloudRead'
-import { supabase, supabaseAvailable } from './supabaseClient'
+import { isSupabaseConfigured, supabase } from './supabaseClient'
 
 type DataSource = 'local' | 'cloud'
 
@@ -61,7 +61,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
-  const [authLoading, setAuthLoading] = useState(supabaseAvailable)
+  const [authLoading, setAuthLoading] = useState(isSupabaseConfigured)
   const [authWarning, setAuthWarning] = useState<string | null>(null)
   const [cloudLoading, setCloudLoading] = useState(false)
   const [cloudError, setCloudError] = useState<string | null>(null)
@@ -72,7 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     DiscussionMessage[]
   >([])
 
-  const canUseCloud = supabaseAvailable
+  const canUseCloud = isSupabaseConfigured
 
   const setDataSource = useCallback((source: DataSource) => {
     setDataSourceState(source)
@@ -83,7 +83,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (!supabaseAvailable || !supabase) {
+    if (!isSupabaseConfigured || !supabase) {
       setAuthWarning(
         '未配置 Supabase 环境变量，云端模式不可用，将继续使用本地数据。',
       )
@@ -131,13 +131,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [hasPreference, session, setDataSource])
 
   useEffect(() => {
-    if (!supabaseAvailable && dataSource !== 'local') {
+    if (!isSupabaseConfigured && dataSource !== 'local') {
       setDataSourceState('local')
     }
-  }, [dataSource, supabaseAvailable])
+  }, [dataSource, isSupabaseConfigured])
 
   const refreshCloud = useCallback(async () => {
-    if (!session?.user || !supabaseAvailable) return
+    if (!session?.user || !isSupabaseConfigured || !supabase) return
     setCloudLoading(true)
     setCloudError(null)
     try {
@@ -156,7 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } finally {
       setCloudLoading(false)
     }
-  }, [session, supabaseAvailable])
+  }, [session, isSupabaseConfigured])
 
   useEffect(() => {
     if (!session) {
