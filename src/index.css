@@ -251,6 +251,43 @@ textarea {
   flex-wrap: wrap;
 }
 
+.menu {
+  position: relative;
+}
+
+.menu-panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 140px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.35rem;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15);
+  z-index: 10;
+}
+
+.menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--bg);
+}
+
+.menu-item.danger {
+  color: #b42318;
+}
+
 .notice {
   padding: 0.6rem 0.75rem;
   border-radius: 10px;

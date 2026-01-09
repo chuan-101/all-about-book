@@ -72,6 +72,9 @@ function BookDetailPage() {
   const fullscreenTextareaRef = useRef<HTMLTextAreaElement | null>(
     null,
   )
+  const [openExcerptMenuId, setOpenExcerptMenuId] = useState<
+    string | null
+  >(null)
   const [discussionMessages, setDiscussionMessages] = useState<
     DiscussionMessage[]
   >([])
@@ -288,6 +291,7 @@ function BookDetailPage() {
   const handleStartEdit = (excerpt: Excerpt) => {
     setEditingExcerptId(excerpt.id)
     setEditingContent(excerpt.content)
+    setOpenExcerptMenuId(null)
   }
 
   const handleCancelEdit = () => {
@@ -630,6 +634,7 @@ function BookDetailPage() {
             <ul className="list">
               {displayExcerpts.map((excerpt) => {
                 const isEditing = editingExcerptId === excerpt.id
+                const isMenuOpen = openExcerptMenuId === excerpt.id
                 return (
                   <li key={excerpt.id} className="list-item">
                     <div className="list-item-main">
@@ -683,13 +688,36 @@ function BookDetailPage() {
                           >
                             编辑
                           </button>
-                          <button
-                            className="button danger"
-                            type="button"
-                            onClick={() => handleDeleteExcerpt(excerpt.id)}
-                          >
-                            删除
-                          </button>
+                          <div className="menu">
+                            <button
+                              className="button ghost"
+                              type="button"
+                              aria-haspopup="menu"
+                              aria-expanded={isMenuOpen}
+                              onClick={() =>
+                                setOpenExcerptMenuId(
+                                  isMenuOpen ? null : excerpt.id,
+                                )
+                              }
+                            >
+                              ⋯ 更多
+                            </button>
+                            {isMenuOpen ? (
+                              <div className="menu-panel" role="menu">
+                                <button
+                                  className="menu-item danger"
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setOpenExcerptMenuId(null)
+                                    handleDeleteExcerpt(excerpt.id)
+                                  }}
+                                >
+                                  删除
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
                         </>
                       )}
                     </div>
