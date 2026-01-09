@@ -7,7 +7,7 @@ import { getExcerpts, saveExcerpts } from './excerpts-storage'
 import { getReadingSessions, saveReadingSessions } from './reading-sessions-storage'
 import { getBooks, saveBooks } from './storage'
 
-const BACKUP_VERSION = '1.0'
+export const BACKUP_VERSION = '1.0'
 
 type BackupMeta = {
   version: string

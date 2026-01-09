@@ -9,6 +9,7 @@ import {
   createBackupPayload,
   parseBackupPayload,
 } from '../lib/backup'
+import { fetchCloudBackupPayload } from '../lib/cloudExport'
 import { supabase } from '../lib/supabaseClient'
 import { getReadingSessions } from '../lib/reading-sessions-storage'
 import type { ReadingSession } from '../types/reading-session'
@@ -39,6 +40,7 @@ function HomePage() {
     type: 'success' | 'error'
     message: string
   } | null>(null)
+  const [backupLoading, setBackupLoading] = useState(false)
   const [migrationStatus, setMigrationStatus] = useState<{
     type: 'success' | 'error' | 'info'
     message: string
@@ -127,16 +129,35 @@ function HomePage() {
     URL.revokeObjectURL(url)
   }
 
-  const handleExportBackup = () => {
-    if (isCloudMode) {
+  const exportCloudData = async () => {
+    if (!session?.user) {
       setBackupStatus({
         type: 'error',
-        message: '云端模式下暂不支持备份导出。',
+        message: '尚未登录，无法导出云端数据。',
       })
-      return
+      return null
     }
+    setBackupLoading(true)
+    setBackupStatus(null)
+    try {
+      return await fetchCloudBackupPayload(session.user)
+    } catch (error) {
+      console.error(error)
+      setBackupStatus({
+        type: 'error',
+        message: '云端数据导出失败，请稍后重试。',
+      })
+      return null
+    } finally {
+      setBackupLoading(false)
+    }
+  }
 
-    const payload = createBackupPayload()
+  const handleExportBackup = async () => {
+    const payload = isCloudMode
+      ? await exportCloudData()
+      : createBackupPayload()
+    if (!payload) return
     const filename = `all-about-book-backup-${formatDate(
       new Date(),
     )}.json`
@@ -151,21 +172,13 @@ function HomePage() {
     })
   }
 
-  const handleExportMarkdown = () => {
-    if (isCloudMode) {
-      setBackupStatus({
-        type: 'error',
-        message: '云端模式下暂不支持归档导出。',
-      })
-      return
-    }
-
-    const {
-      books: dataBooks,
-      checkIns: dataCheckIns,
-      excerpts,
-      discussions,
-    } = createBackupPayload()
+  const handleExportMarkdown = async () => {
+    const payload = isCloudMode
+      ? await exportCloudData()
+      : createBackupPayload()
+    if (!payload) return
+    const { books: dataBooks, checkIns: dataCheckIns, excerpts, discussions } =
+      payload
     const content = buildMarkdownArchive(
       dataBooks,
       excerpts,
@@ -182,21 +195,13 @@ function HomePage() {
     })
   }
 
-  const handleExportHtml = () => {
-    if (isCloudMode) {
-      setBackupStatus({
-        type: 'error',
-        message: '云端模式下暂不支持归档导出。',
-      })
-      return
-    }
-
-    const {
-      books: dataBooks,
-      checkIns: dataCheckIns,
-      excerpts,
-      discussions,
-    } = createBackupPayload()
+  const handleExportHtml = async () => {
+    const payload = isCloudMode
+      ? await exportCloudData()
+      : createBackupPayload()
+    if (!payload) return
+    const { books: dataBooks, checkIns: dataCheckIns, excerpts, discussions } =
+      payload
     const content = buildHtmlArchive(
       dataBooks,
       excerpts,
@@ -266,6 +271,20 @@ function HomePage() {
       return
     }
 
+    const isUuid = (value: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value,
+      )
+    const ensureUuid = (value?: string) =>
+      value && isUuid(value) ? value : crypto.randomUUID()
+    const sanitizeDate = (value?: string | null) => {
+      if (!value || value.trim() === '') return null
+      return value.length >= 10 ? value.slice(0, 10) : value
+    }
+    const sanitizeTimestamp = (value?: string | null) => {
+      if (!value || value.trim() === '') return null
+      return value
+    }
     const payload = createBackupPayload()
     const confirmMessage = `即将迁移本地数据到云端（书籍 ${payload.books.length} 本、书摘 ${payload.excerpts.length} 条、打卡 ${payload.checkIns.length} 条、讨论 ${payload.discussions.length} 条），确定继续吗？`
     if (!window.confirm(confirmMessage)) return
@@ -275,78 +294,130 @@ function HomePage() {
 
     try {
       const userId = session.user.id
-      const booksPayload = payload.books.map((book) => ({
-        id: book.id,
-        user_id: userId,
-        title: book.title,
-        author: book.author,
-        translator: book.translator,
-        genre: book.genre,
-        status: book.status,
-        cover: book.cover,
-        created_at: book.createdAt,
-        updated_at: book.updatedAt,
-        progress: book.progress ?? null,
-        start_date: book.startDate ?? null,
-        end_date: book.endDate ?? null,
-        rating: book.rating ?? null,
-        notes: book.notes ?? null,
-      }))
-      const checkInsPayload = payload.checkIns.map((sessionItem) => ({
-        id: sessionItem.id,
-        user_id: userId,
-        book_id: sessionItem.bookId,
-        date: sessionItem.date,
-        pages_read: sessionItem.pagesRead ?? null,
-        chapters_read: sessionItem.chaptersRead ?? null,
-        comment: sessionItem.comment ?? null,
-        created_at: sessionItem.createdAt,
-      }))
-      const excerptsPayload = payload.excerpts.map((excerpt) => ({
-        id: excerpt.id,
-        user_id: userId,
-        book_id: excerpt.bookId,
-        content: excerpt.content,
-        created_at: excerpt.createdAt,
-        updated_at: excerpt.updatedAt ?? null,
-      }))
-      const discussionsPayload = payload.discussions.map((message) => ({
-        id: message.id,
-        user_id: userId,
-        book_id: message.bookId,
-        role: message.role,
-        content: message.content,
-        created_at: message.createdAt,
-      }))
+      const bookIdMap = new Map<string, string>()
+      const booksPayload = payload.books.map((book) => {
+        const normalizedBookId = ensureUuid(book.id)
+        if (normalizedBookId !== book.id) {
+          bookIdMap.set(book.id, normalizedBookId)
+        }
+        return {
+          id: normalizedBookId,
+          user_id: userId,
+          title: book.title,
+          author: book.author,
+          translator: book.translator,
+          genre: book.genre,
+          status: book.status,
+          cover_url: book.cover ?? null,
+          created_at: sanitizeTimestamp(book.createdAt),
+          updated_at: sanitizeTimestamp(book.updatedAt),
+          start_date: sanitizeDate(book.startDate),
+          end_date: sanitizeDate(book.endDate),
+          rating: book.rating ?? null,
+          notes: book.notes ?? null,
+        }
+      })
+      const checkInsPayload = payload.checkIns.map((sessionItem) => {
+        const normalizedBookId =
+          bookIdMap.get(sessionItem.bookId) ??
+          ensureUuid(sessionItem.bookId)
+        return {
+          id: ensureUuid(sessionItem.id),
+          user_id: userId,
+          book_id: normalizedBookId,
+          date: sanitizeDate(sessionItem.date),
+          created_at: sanitizeTimestamp(sessionItem.createdAt),
+        }
+      })
+      const excerptsPayload = payload.excerpts.map((excerpt) => {
+        const normalizedBookId =
+          bookIdMap.get(excerpt.bookId) ?? ensureUuid(excerpt.bookId)
+        return {
+          id: ensureUuid(excerpt.id),
+          user_id: userId,
+          book_id: normalizedBookId,
+          content: excerpt.content,
+          created_at: sanitizeTimestamp(excerpt.createdAt),
+          updated_at: sanitizeTimestamp(excerpt.updatedAt),
+        }
+      })
+      const discussionsPayload = payload.discussions.map((message) => {
+        const normalizedBookId =
+          bookIdMap.get(message.bookId) ?? ensureUuid(message.bookId)
+        return {
+          id: ensureUuid(message.id),
+          user_id: userId,
+          book_id: normalizedBookId,
+          role: message.role,
+          content: message.content,
+          created_at: sanitizeTimestamp(message.createdAt),
+        }
+      })
+
+      const reportMigrationError = (table: string, error: unknown) => {
+        console.error(error)
+        const supabaseError = error as {
+          code?: string
+          message?: string
+          details?: string
+        }
+        const code = supabaseError?.code ?? 'unknown'
+        const message = supabaseError?.message ?? 'unknown error'
+        const details = supabaseError?.details ?? 'no details'
+        setMigrationStatus({
+          type: 'error',
+          message: `迁移失败（${table}）：${code} ${message} ${details}`,
+        })
+      }
 
       if (booksPayload.length > 0) {
-        const { error } = await supabase
-          .from('books')
-          .upsert(booksPayload, { onConflict: 'id' })
-        if (error) throw error
+        try {
+          const { error } = await supabase
+            .from('books')
+            .upsert(booksPayload, { onConflict: 'id' })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('books', error)
+          return
+        }
       }
 
       if (checkInsPayload.length > 0) {
-        const { error } = await supabase
-          .from('check_ins')
-          .upsert(checkInsPayload, {
-            onConflict: 'user_id,book_id,date',
-          })
-        if (error) throw error
+        try {
+          const { error } = await supabase
+            .from('check_ins')
+            .upsert(checkInsPayload, {
+              onConflict: 'user_id,book_id,date',
+            })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('check_ins', error)
+          return
+        }
       }
 
       if (excerptsPayload.length > 0) {
-        const { error } = await supabase
-          .from('excerpts')
-          .upsert(excerptsPayload, { onConflict: 'id' })
-        if (error) throw error
+        try {
+          const { error } = await supabase
+            .from('excerpts')
+            .upsert(excerptsPayload, { onConflict: 'id' })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('excerpts', error)
+          return
+        }
       }
 
       if (discussionsPayload.length > 0) {
-        const { error } = await supabase
-          .from('discussions')
-          .upsert(discussionsPayload, { onConflict: 'id' })
-        if (error) throw error
+        try {
+          const { error } = await supabase
+            .from('discussions')
+            .upsert(discussionsPayload, { onConflict: 'id' })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('discussions', error)
+          return
+        }
       }
 
       await refresh()
@@ -371,7 +442,7 @@ function HomePage() {
             记录你的阅读进度，管理你的书架。
           </p>
           <p className="muted">
-            当前数据来源：{isCloudMode ? '云端（只读）' : '本地'}。
+            当前数据来源：{isCloudMode ? '云端' : '本地'}。
           </p>
           {isCloudMode && cloudLoading ? (
             <p className="notice info">云端数据加载中...</p>
@@ -497,7 +568,7 @@ function HomePage() {
           <button
             className="button primary"
             onClick={handleExportBackup}
-            disabled={isCloudMode}
+            disabled={backupLoading}
           >
             导出备份 (JSON)
           </button>
@@ -508,31 +579,34 @@ function HomePage() {
               accept="application/json"
               onChange={handleImportBackup}
               hidden
-              disabled={isCloudMode}
+              disabled={isCloudMode || backupLoading}
             />
           </label>
           <button
             className="button"
             onClick={handleExportMarkdown}
-            disabled={isCloudMode}
+            disabled={backupLoading}
           >
             导出归档 (Markdown)
           </button>
           <button
             className="button"
             onClick={handleExportHtml}
-            disabled={isCloudMode}
+            disabled={backupLoading}
           >
             导出归档 (HTML)
           </button>
         </div>
+        {backupLoading ? (
+          <p className="notice info">正在导出云端数据，请稍候...</p>
+        ) : null}
         {backupStatus ? (
           <p className={`notice ${backupStatus.type}`}>
             {backupStatus.message}
           </p>
         ) : null}
         {isCloudMode ? (
-          <p className="notice info">云端模式下暂不支持备份与导入。</p>
+          <p className="notice info">云端模式下暂不支持导入备份。</p>
         ) : null}
       </div>
 

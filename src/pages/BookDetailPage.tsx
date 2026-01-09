@@ -16,6 +16,13 @@ import type { ReadingSession } from '../types/reading-session'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
 import {
+  createCloudDiscussion,
+  createCloudExcerpt,
+  deleteCloudExcerpt,
+  toggleCloudCheckIn,
+  updateCloudExcerpt,
+} from '../lib/cloudWrite'
+import {
   getCheckInsByBook,
   toggleCheckIn,
 } from '../lib/reading-sessions-storage'
@@ -46,6 +53,8 @@ function BookDetailPage() {
     cloudExcerpts,
     cloudDiscussions,
     cloudLoading,
+    session,
+    refreshCloud,
   } = useAppData()
   const books = isCloudMode ? cloudBooks : localBooks
   const book = bookId ? books.find((item) => item.id === bookId) : undefined
@@ -61,6 +70,7 @@ function BookDetailPage() {
     null,
   )
   const [editingContent, setEditingContent] = useState('')
+  const [cloudError, setCloudError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!book || isCloudMode) return
@@ -144,9 +154,31 @@ function BookDetailPage() {
     [displaySessions],
   )
 
-  const handleToggleCheckIn = (date: Date) => {
-    if (!book || isCloudMode) return
+  const handleToggleCheckIn = async (date: Date) => {
+    if (!book) return
     const dateString = formatDate(date)
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端打卡。')
+        return
+      }
+      const hasExisting = checkInDates.has(dateString)
+      setCloudError(null)
+      try {
+        await toggleCloudCheckIn(
+          session.user.id,
+          book.id,
+          dateString,
+          hasExisting,
+        )
+        await refreshCloud()
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端打卡同步失败，请稍后重试。')
+      }
+      return
+    }
+
     toggleCheckIn(book.id, dateString)
     setSessions(getCheckInsByBook(book.id))
   }
@@ -163,11 +195,30 @@ function BookDetailPage() {
     setDiscussionMessages(getMessagesByBookId(book.id))
   }
 
-  const handleCreateExcerpt = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreateExcerpt = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault()
-    if (!book || isCloudMode) return
+    if (!book) return
     const content = newExcerptContent.trim()
     if (!content) return
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端书摘。')
+        return
+      }
+      setCloudError(null)
+      try {
+        await createCloudExcerpt(session.user.id, book.id, content)
+        await refreshCloud()
+        setNewExcerptContent('')
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端书摘保存失败，请稍后重试。')
+      }
+      return
+    }
+
     const now = new Date().toISOString()
     const nextExcerpt: Excerpt = {
       id: crypto.randomUUID(),
@@ -180,11 +231,30 @@ function BookDetailPage() {
     refreshExcerpts()
   }
 
-  const handleCreateDiscussion = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreateDiscussion = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault()
-    if (!book || isCloudMode) return
+    if (!book) return
     const content = newMessageContent.trim()
     if (!content) return
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端讨论。')
+        return
+      }
+      setCloudError(null)
+      try {
+        await createCloudDiscussion(session.user.id, book.id, content)
+        await refreshCloud()
+        setNewMessageContent('')
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端讨论发送失败，请稍后重试。')
+      }
+      return
+    }
+
     const now = new Date().toISOString()
     const message: DiscussionMessage = {
       id: crypto.randomUUID(),
@@ -199,7 +269,6 @@ function BookDetailPage() {
   }
 
   const handleStartEdit = (excerpt: Excerpt) => {
-    if (isCloudMode) return
     setEditingExcerptId(excerpt.id)
     setEditingContent(excerpt.content)
   }
@@ -209,18 +278,51 @@ function BookDetailPage() {
     setEditingContent('')
   }
 
-  const handleSaveEdit = (id: string) => {
-    if (isCloudMode) return
+  const handleSaveEdit = async (id: string) => {
     const content = editingContent.trim()
     if (!content) return
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端书摘。')
+        return
+      }
+      const target = displayExcerpts.find((excerpt) => excerpt.id === id)
+      if (!target) return
+      setCloudError(null)
+      try {
+        await updateCloudExcerpt(session.user.id, target, content)
+        await refreshCloud()
+        handleCancelEdit()
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端书摘更新失败，请稍后重试。')
+      }
+      return
+    }
+
     updateExcerpt(id, { content })
     refreshExcerpts()
     handleCancelEdit()
   }
 
-  const handleDeleteExcerpt = (id: string) => {
-    if (isCloudMode) return
+  const handleDeleteExcerpt = async (id: string) => {
     if (!window.confirm('确定要删除这条书摘吗？')) return
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端书摘。')
+        return
+      }
+      setCloudError(null)
+      try {
+        await deleteCloudExcerpt(session.user.id, id)
+        await refreshCloud()
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端书摘删除失败，请稍后重试。')
+      }
+      return
+    }
+
     deleteExcerpt(id)
     refreshExcerpts()
   }
@@ -265,8 +367,8 @@ function BookDetailPage() {
             <p className="eyebrow">书籍详情</p>
             <h2>{book.title}</h2>
             <p className="muted">{book.author || '作者未知'}</p>
-            {isCloudMode ? (
-              <p className="notice info">云端数据仅供查看。</p>
+            {cloudError ? (
+              <p className="notice error">{cloudError}</p>
             ) : null}
           </div>
           <div className="page-header-actions">
@@ -415,7 +517,6 @@ function BookDetailPage() {
                     isToday ? ' today' : ''
                   }`}
                   onClick={() => handleToggleCheckIn(date)}
-                  disabled={isCloudMode}
                 >
                   <span className="calendar-date">{date.getDate()}</span>
                   {isChecked ? <span className="calendar-dot" /> : null}
@@ -432,28 +533,24 @@ function BookDetailPage() {
             <h3>书摘</h3>
             <span className="muted">{displayExcerpts.length} 条</span>
           </div>
-          {isCloudMode ? (
-            <p className="notice info">云端模式下暂不支持编辑书摘。</p>
-          ) : (
-            <form className="form" onSubmit={handleCreateExcerpt}>
-              <label className="field">
-                <span>新增书摘</span>
-                <textarea
-                  rows={3}
-                  value={newExcerptContent}
-                  onChange={(event) =>
-                    setNewExcerptContent(event.target.value)
-                  }
-                  placeholder="记录喜欢的句子或段落"
-                />
-              </label>
-              <div className="form-actions">
-                <button type="submit" className="button primary">
-                  保存书摘
-                </button>
-              </div>
-            </form>
-          )}
+          <form className="form" onSubmit={handleCreateExcerpt}>
+            <label className="field">
+              <span>新增书摘</span>
+              <textarea
+                rows={3}
+                value={newExcerptContent}
+                onChange={(event) =>
+                  setNewExcerptContent(event.target.value)
+                }
+                placeholder="记录喜欢的句子或段落"
+              />
+            </label>
+            <div className="form-actions">
+              <button type="submit" className="button primary">
+                保存书摘
+              </button>
+            </div>
+          </form>
           {displayExcerpts.length === 0 ? (
             <p className="muted">暂无书摘，先记录第一条吧。</p>
           ) : (
@@ -483,47 +580,43 @@ function BookDetailPage() {
                         </div>
                       )}
                     </div>
-                    {isCloudMode ? null : (
-                      <div className="actions">
-                        {isEditing ? (
-                          <>
-                            <button
-                              className="button primary"
-                              type="button"
-                              onClick={() => handleSaveEdit(excerpt.id)}
-                            >
-                              保存
-                            </button>
-                            <button
-                              className="button ghost"
-                              type="button"
-                              onClick={handleCancelEdit}
-                            >
-                              取消
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              className="button ghost"
-                              type="button"
-                              onClick={() => handleStartEdit(excerpt)}
-                            >
-                              编辑
-                            </button>
-                            <button
-                              className="button danger"
-                              type="button"
-                              onClick={() =>
-                                handleDeleteExcerpt(excerpt.id)
-                              }
-                            >
-                              删除
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    )}
+                    <div className="actions">
+                      {isEditing ? (
+                        <>
+                          <button
+                            className="button primary"
+                            type="button"
+                            onClick={() => handleSaveEdit(excerpt.id)}
+                          >
+                            保存
+                          </button>
+                          <button
+                            className="button ghost"
+                            type="button"
+                            onClick={handleCancelEdit}
+                          >
+                            取消
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className="button ghost"
+                            type="button"
+                            onClick={() => handleStartEdit(excerpt)}
+                          >
+                            编辑
+                          </button>
+                          <button
+                            className="button danger"
+                            type="button"
+                            onClick={() => handleDeleteExcerpt(excerpt.id)}
+                          >
+                            删除
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </li>
                 )
               })}
@@ -555,35 +648,27 @@ function BookDetailPage() {
               ))}
             </ul>
           )}
-          {isCloudMode ? (
-            <p className="notice info">云端模式下暂不支持发送讨论。</p>
-          ) : (
-            <form className="form" onSubmit={handleCreateDiscussion}>
-              <label className="field">
-                <span>我的想法</span>
-                <textarea
-                  rows={3}
-                  value={newMessageContent}
-                  onChange={(event) =>
-                    setNewMessageContent(event.target.value)
-                  }
-                  placeholder="写下你的想法或问题"
-                />
-              </label>
-              <div className="form-actions">
-                <button type="submit" className="button primary">
-                  发送
-                </button>
-                <button
-                  type="button"
-                  className="button ghost"
-                  disabled
-                >
-                  让 Syzygy 回复（即将上线）
-                </button>
-              </div>
-            </form>
-          )}
+          <form className="form" onSubmit={handleCreateDiscussion}>
+            <label className="field">
+              <span>我的想法</span>
+              <textarea
+                rows={3}
+                value={newMessageContent}
+                onChange={(event) =>
+                  setNewMessageContent(event.target.value)
+                }
+                placeholder="写下你的想法或问题"
+              />
+            </label>
+            <div className="form-actions">
+              <button type="submit" className="button primary">
+                发送
+              </button>
+              <button type="button" className="button ghost" disabled>
+                让 Syzygy 回复（即将上线）
+              </button>
+            </div>
+          </form>
         </div>
       </section>
       <section className="print-view">
