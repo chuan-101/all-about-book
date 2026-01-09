@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+import type { EmailOtpType, Session, User } from '@supabase/supabase-js'
 import type { Book } from '../types/book'
 import type { DiscussionMessage } from '../types/discussion'
 import type { Excerpt } from '../types/excerpt'
@@ -114,7 +114,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             window.history.replaceState({}, document.title, AUTH_RETURN_URL)
           } else if (tokenHash && type) {
             const { error } = await supabase!.auth.verifyOtp({
-              type,
+              type: type as EmailOtpType,
               token_hash: tokenHash,
             })
             if (error) throw error
