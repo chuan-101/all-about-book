@@ -63,9 +63,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [dataSource, setDataSourceState] = useState<DataSource>(
     storedDataSource ?? 'local',
   )
-  const [hasPreference, setHasPreference] = useState(
-    storedDataSource !== null,
-  )
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured)
@@ -83,7 +80,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setDataSource = useCallback((source: DataSource) => {
     setDataSourceState(source)
-    setHasPreference(true)
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(DATA_SOURCE_KEY, source)
     }
@@ -160,9 +156,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (hasPreference || !session) return
+    if (!session) return
     setDataSource('cloud')
-  }, [hasPreference, session, setDataSource])
+  }, [session, setDataSource])
 
   useEffect(() => {
     if (!isSupabaseConfigured && dataSource !== 'local') {

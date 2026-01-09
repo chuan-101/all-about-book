@@ -437,7 +437,7 @@ function HomePage() {
             记录你的阅读进度，管理你的书架。
           </p>
           <p className="muted">
-            当前数据来源：{isCloudMode ? '云端（只读）' : '本地'}。
+            当前数据来源：{isCloudMode ? '云端' : '本地'}。
           </p>
           {isCloudMode && cloudLoading ? (
             <p className="notice info">云端数据加载中...</p>
