@@ -305,7 +305,9 @@ export const buildMarkdownArchive = (
   excerpts: Excerpt[],
   checkIns: ReadingSession[],
   discussions: DiscussionMessage[],
+  options?: { summarizeCheckIns?: boolean },
 ): string => {
+  const summarizeCheckIns = options?.summarizeCheckIns ?? false
   const lines: string[] = ['# All About Book · 书摘归档', '']
 
   books.forEach((book) => {
@@ -335,12 +337,12 @@ export const buildMarkdownArchive = (
       })
     }
 
-      const bookCheckIns = checkIns
-        .filter((session) => session.bookId === book.id)
-        .sort(
-          (a, b) =>
-            new Date(a.date).getTime() - new Date(b.date).getTime(),
-        )
+    const bookCheckIns = checkIns
+      .filter((session) => session.bookId === book.id)
+      .sort(
+        (a, b) =>
+          new Date(a.date).getTime() - new Date(b.date).getTime(),
+      )
 
     const bookDiscussions = discussions.filter(
       (message) => message.bookId === book.id,
@@ -351,13 +353,26 @@ export const buildMarkdownArchive = (
         new Date(b.createdAt).getTime(),
     )
 
-    lines.push('### 打卡')
-    if (bookCheckIns.length === 0) {
-      lines.push('- 无')
+    if (summarizeCheckIns) {
+      if (bookCheckIns.length > 0) {
+        const startDate = formatCheckInDate(bookCheckIns[0].date)
+        const endDate = formatCheckInDate(
+          bookCheckIns[bookCheckIns.length - 1].date,
+        )
+        lines.push('### 打卡')
+        lines.push(
+          `- 打卡次数：${bookCheckIns.length} 次（${startDate} ~ ${endDate}）`,
+        )
+      }
     } else {
-      bookCheckIns.forEach((session) => {
-        lines.push(`- ${formatCheckInDate(session.date)}`)
-      })
+      lines.push('### 打卡')
+      if (bookCheckIns.length === 0) {
+        lines.push('- 无')
+      } else {
+        bookCheckIns.forEach((session) => {
+          lines.push(`- ${formatCheckInDate(session.date)}`)
+        })
+      }
     }
 
     lines.push('### 讨论')
@@ -385,7 +400,9 @@ export const buildHtmlArchive = (
   excerpts: Excerpt[],
   checkIns: ReadingSession[],
   discussions: DiscussionMessage[],
+  options?: { summarizeCheckIns?: boolean },
 ): string => {
+  const summarizeCheckIns = options?.summarizeCheckIns ?? false
   const sections = books
     .map((book) => {
       const bookExcerpts = excerpts
@@ -453,6 +470,17 @@ export const buildHtmlArchive = (
               )
               .join('')
 
+      const checkInSummary =
+        bookCheckIns.length === 0
+          ? ''
+          : `<p class="checkin-summary">打卡次数：${bookCheckIns.length} 次（${escapeHtml(
+              formatCheckInDate(bookCheckIns[0].date),
+            )} ~ ${escapeHtml(
+              formatCheckInDate(
+                bookCheckIns[bookCheckIns.length - 1].date,
+              ),
+            )}）</p>`
+
       return `<section class="book">
   <h2>《${escapeHtml(book.title || '未命名')}》 - ${escapeHtml(
         book.author || '作者未知',
@@ -463,10 +491,15 @@ export const buildHtmlArchive = (
       ? `<p class="cover-link">封面链接：${escapeHtml(book.cover)}</p>`
       : ''
   }
+  ${summarizeCheckIns ? checkInSummary : ''}
   <h3>书摘</h3>
   <ul>${excerptItems}</ul>
-  <h3>打卡</h3>
-  <ul>${checkInItems}</ul>
+  ${
+    summarizeCheckIns
+      ? ''
+      : `<h3>打卡</h3>
+  <ul>${checkInItems}</ul>`
+  }
   <h3>讨论</h3>
   <ul>${discussionItems}</ul>
 </section>`
@@ -523,6 +556,11 @@ export const buildHtmlArchive = (
   .cover-link {
     font-size: 14px;
     color: #475467;
+  }
+  .checkin-summary {
+    font-size: 14px;
+    color: #475467;
+    margin-top: 8px;
   }
   .book {
     padding-bottom: 24px;

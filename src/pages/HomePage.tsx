@@ -179,11 +179,15 @@ function HomePage() {
     if (!payload) return
     const { books: dataBooks, checkIns: dataCheckIns, excerpts, discussions } =
       payload
+    const archiveOptions = isCloudMode
+      ? { summarizeCheckIns: true }
+      : undefined
     const content = buildMarkdownArchive(
       dataBooks,
       excerpts,
       dataCheckIns,
       discussions,
+      archiveOptions,
     )
     const filename = `all-about-book-archive-${formatDate(
       new Date(),
@@ -202,11 +206,15 @@ function HomePage() {
     if (!payload) return
     const { books: dataBooks, checkIns: dataCheckIns, excerpts, discussions } =
       payload
+    const archiveOptions = isCloudMode
+      ? { summarizeCheckIns: true }
+      : undefined
     const content = buildHtmlArchive(
       dataBooks,
       excerpts,
       dataCheckIns,
       discussions,
+      archiveOptions,
     )
     const filename = `all-about-book-archive-${formatDate(
       new Date(),
