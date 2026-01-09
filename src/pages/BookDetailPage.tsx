@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   deleteExcerpt,
@@ -62,6 +68,13 @@ function BookDetailPage() {
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
   const [excerpts, setExcerpts] = useState<Excerpt[]>([])
   const [newExcerptContent, setNewExcerptContent] = useState('')
+  const [isExcerptEditorOpen, setIsExcerptEditorOpen] = useState(false)
+  const fullscreenTextareaRef = useRef<HTMLTextAreaElement | null>(
+    null,
+  )
+  const [openExcerptMenuId, setOpenExcerptMenuId] = useState<
+    string | null
+  >(null)
   const [discussionMessages, setDiscussionMessages] = useState<
     DiscussionMessage[]
   >([])
@@ -92,6 +105,11 @@ function BookDetailPage() {
     setEditingExcerptId(null)
     setEditingContent('')
   }, [isCloudMode])
+
+  useEffect(() => {
+    if (!isExcerptEditorOpen) return
+    fullscreenTextareaRef.current?.focus()
+  }, [isExcerptEditorOpen])
 
   const displaySessions = useMemo(() => {
     if (!book) return []
@@ -212,6 +230,7 @@ function BookDetailPage() {
         await createCloudExcerpt(session.user.id, book.id, content)
         await refreshCloud()
         setNewExcerptContent('')
+        setIsExcerptEditorOpen(false)
       } catch (error) {
         console.error(error)
         setCloudError('云端书摘保存失败，请稍后重试。')
@@ -228,6 +247,7 @@ function BookDetailPage() {
     }
     upsertExcerpt(nextExcerpt)
     setNewExcerptContent('')
+    setIsExcerptEditorOpen(false)
     refreshExcerpts()
   }
 
@@ -271,6 +291,7 @@ function BookDetailPage() {
   const handleStartEdit = (excerpt: Excerpt) => {
     setEditingExcerptId(excerpt.id)
     setEditingContent(excerpt.content)
+    setOpenExcerptMenuId(null)
   }
 
   const handleCancelEdit = () => {
@@ -537,6 +558,7 @@ function BookDetailPage() {
             <label className="field">
               <span>新增书摘</span>
               <textarea
+                className="excerpt-textarea"
                 rows={3}
                 value={newExcerptContent}
                 onChange={(event) =>
@@ -545,11 +567,66 @@ function BookDetailPage() {
                 placeholder="记录喜欢的句子或段落"
               />
             </label>
+            <div className="excerpt-editor-actions">
+              <button
+                type="button"
+                className="button ghost"
+                onClick={() => setIsExcerptEditorOpen(true)}
+              >
+                全屏编辑
+              </button>
+            </div>
             <div className="form-actions">
               <button type="submit" className="button primary">
                 保存书摘
               </button>
             </div>
+            {isExcerptEditorOpen ? (
+              <div
+                className="excerpt-modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                aria-label="全屏编辑书摘"
+                onClick={() => setIsExcerptEditorOpen(false)}
+              >
+                <div
+                  className="excerpt-modal"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="excerpt-modal-header">
+                    <h4>全屏编辑</h4>
+                    <button
+                      type="button"
+                      className="button ghost"
+                      onClick={() => setIsExcerptEditorOpen(false)}
+                    >
+                      关闭
+                    </button>
+                  </div>
+                  <textarea
+                    ref={fullscreenTextareaRef}
+                    className="excerpt-textarea excerpt-textarea-full"
+                    value={newExcerptContent}
+                    onChange={(event) =>
+                      setNewExcerptContent(event.target.value)
+                    }
+                    placeholder="记录喜欢的句子或段落"
+                  />
+                  <div className="form-actions">
+                    <button type="submit" className="button primary">
+                      保存书摘
+                    </button>
+                    <button
+                      type="button"
+                      className="button ghost"
+                      onClick={() => setIsExcerptEditorOpen(false)}
+                    >
+                      完成
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </form>
           {displayExcerpts.length === 0 ? (
             <p className="muted">暂无书摘，先记录第一条吧。</p>
@@ -557,6 +634,7 @@ function BookDetailPage() {
             <ul className="list">
               {displayExcerpts.map((excerpt) => {
                 const isEditing = editingExcerptId === excerpt.id
+                const isMenuOpen = openExcerptMenuId === excerpt.id
                 return (
                   <li key={excerpt.id} className="list-item">
                     <div className="list-item-main">
@@ -564,6 +642,7 @@ function BookDetailPage() {
                         <label className="field">
                           <span>编辑书摘</span>
                           <textarea
+                            className="excerpt-textarea"
                             rows={3}
                             value={editingContent}
                             onChange={(event) =>
@@ -576,7 +655,9 @@ function BookDetailPage() {
                           <p className="muted">
                             {formatExcerptDate(excerpt.createdAt)}
                           </p>
-                          <p>{excerpt.content}</p>
+                          <p className="excerpt-content">
+                            {excerpt.content}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -607,13 +688,36 @@ function BookDetailPage() {
                           >
                             编辑
                           </button>
-                          <button
-                            className="button danger"
-                            type="button"
-                            onClick={() => handleDeleteExcerpt(excerpt.id)}
-                          >
-                            删除
-                          </button>
+                          <div className="menu">
+                            <button
+                              className="button ghost"
+                              type="button"
+                              aria-haspopup="menu"
+                              aria-expanded={isMenuOpen}
+                              onClick={() =>
+                                setOpenExcerptMenuId(
+                                  isMenuOpen ? null : excerpt.id,
+                                )
+                              }
+                            >
+                              ⋯ 更多
+                            </button>
+                            {isMenuOpen ? (
+                              <div className="menu-panel" role="menu">
+                                <button
+                                  className="menu-item danger"
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setOpenExcerptMenuId(null)
+                                    handleDeleteExcerpt(excerpt.id)
+                                  }}
+                                >
+                                  删除
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
                         </>
                       )}
                     </div>

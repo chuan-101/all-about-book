@@ -520,7 +520,7 @@ function HomePage() {
           <div
             className="heatmap-grid"
             style={{
-              gridTemplateColumns: `repeat(${heatmapLayout.weekColumns}, 12px)`,
+              gridTemplateColumns: `repeat(${heatmapLayout.weekColumns}, var(--heatmap-cell-size))`,
             }}
           >
             {heatmapLayout.monthLabels.map((month) => (
