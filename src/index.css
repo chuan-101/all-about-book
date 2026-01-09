@@ -449,7 +449,7 @@ textarea {
   border: 1px solid var(--border);
   border-radius: 12px;
   min-height: 64px;
-  padding: 0.4rem;
+  padding: 0.5rem;
   text-align: left;
   cursor: pointer;
 }
@@ -484,11 +484,16 @@ textarea {
   background: var(--accent);
 }
 
+.excerpt-content {
+  white-space: pre-wrap;
+}
+
 .heatmap-container {
   overflow-x: auto;
 }
 
 .heatmap-grid {
+  --heatmap-cell-size: 12px;
   display: grid;
   gap: 4px;
   padding: 0.5rem 0;
@@ -503,8 +508,8 @@ textarea {
 }
 
 .heatmap-cell {
-  width: 12px;
-  height: 12px;
+  width: var(--heatmap-cell-size);
+  height: var(--heatmap-cell-size);
   border-radius: 4px;
   background: var(--border);
 }
@@ -669,13 +674,13 @@ textarea {
 
   .calendar-weekdays,
   .calendar-grid {
-    grid-template-columns: repeat(7, minmax(36px, 1fr));
+    grid-template-columns: repeat(7, minmax(40px, 1fr));
     gap: 0.25rem;
   }
 
   .calendar-day {
-    min-height: 48px;
-    padding: 0.35rem;
+    min-height: 56px;
+    padding: 0.45rem;
   }
 
   .calendar-date {
@@ -683,8 +688,12 @@ textarea {
   }
 
   .calendar-dot {
-    bottom: 0.35rem;
-    right: 0.35rem;
+    bottom: 0.45rem;
+    right: 0.45rem;
+  }
+
+  .heatmap-grid {
+    --heatmap-cell-size: 14px;
   }
 }
 
@@ -703,16 +712,16 @@ textarea {
 
   .calendar-weekdays,
   .calendar-grid {
-    grid-template-columns: repeat(7, minmax(32px, 1fr));
+    grid-template-columns: repeat(7, minmax(36px, 1fr));
   }
 
   .calendar-day {
-    min-height: 44px;
+    min-height: 48px;
+    padding: 0.4rem;
   }
 
-  .heatmap-cell {
-    width: 14px;
-    height: 14px;
+  .heatmap-grid {
+    --heatmap-cell-size: 16px;
   }
 }
 
