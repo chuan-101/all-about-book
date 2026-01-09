@@ -9,6 +9,7 @@ import {
   createBackupPayload,
   parseBackupPayload,
 } from '../lib/backup'
+import { fetchCloudBackupPayload } from '../lib/cloudExport'
 import { supabase } from '../lib/supabaseClient'
 import { getReadingSessions } from '../lib/reading-sessions-storage'
 import type { ReadingSession } from '../types/reading-session'
@@ -39,6 +40,7 @@ function HomePage() {
     type: 'success' | 'error'
     message: string
   } | null>(null)
+  const [backupLoading, setBackupLoading] = useState(false)
   const [migrationStatus, setMigrationStatus] = useState<{
     type: 'success' | 'error' | 'info'
     message: string
@@ -127,16 +129,35 @@ function HomePage() {
     URL.revokeObjectURL(url)
   }
 
-  const handleExportBackup = () => {
-    if (isCloudMode) {
+  const exportCloudData = async () => {
+    if (!session?.user) {
       setBackupStatus({
         type: 'error',
-        message: '云端模式下暂不支持备份导出。',
+        message: '尚未登录，无法导出云端数据。',
       })
-      return
+      return null
     }
+    setBackupLoading(true)
+    setBackupStatus(null)
+    try {
+      return await fetchCloudBackupPayload(session.user)
+    } catch (error) {
+      console.error(error)
+      setBackupStatus({
+        type: 'error',
+        message: '云端数据导出失败，请稍后重试。',
+      })
+      return null
+    } finally {
+      setBackupLoading(false)
+    }
+  }
 
-    const payload = createBackupPayload()
+  const handleExportBackup = async () => {
+    const payload = isCloudMode
+      ? await exportCloudData()
+      : createBackupPayload()
+    if (!payload) return
     const filename = `all-about-book-backup-${formatDate(
       new Date(),
     )}.json`
@@ -151,21 +172,13 @@ function HomePage() {
     })
   }
 
-  const handleExportMarkdown = () => {
-    if (isCloudMode) {
-      setBackupStatus({
-        type: 'error',
-        message: '云端模式下暂不支持归档导出。',
-      })
-      return
-    }
-
-    const {
-      books: dataBooks,
-      checkIns: dataCheckIns,
-      excerpts,
-      discussions,
-    } = createBackupPayload()
+  const handleExportMarkdown = async () => {
+    const payload = isCloudMode
+      ? await exportCloudData()
+      : createBackupPayload()
+    if (!payload) return
+    const { books: dataBooks, checkIns: dataCheckIns, excerpts, discussions } =
+      payload
     const content = buildMarkdownArchive(
       dataBooks,
       excerpts,
@@ -182,21 +195,13 @@ function HomePage() {
     })
   }
 
-  const handleExportHtml = () => {
-    if (isCloudMode) {
-      setBackupStatus({
-        type: 'error',
-        message: '云端模式下暂不支持归档导出。',
-      })
-      return
-    }
-
-    const {
-      books: dataBooks,
-      checkIns: dataCheckIns,
-      excerpts,
-      discussions,
-    } = createBackupPayload()
+  const handleExportHtml = async () => {
+    const payload = isCloudMode
+      ? await exportCloudData()
+      : createBackupPayload()
+    if (!payload) return
+    const { books: dataBooks, checkIns: dataCheckIns, excerpts, discussions } =
+      payload
     const content = buildHtmlArchive(
       dataBooks,
       excerpts,
@@ -563,7 +568,7 @@ function HomePage() {
           <button
             className="button primary"
             onClick={handleExportBackup}
-            disabled={isCloudMode}
+            disabled={backupLoading}
           >
             导出备份 (JSON)
           </button>
@@ -574,31 +579,34 @@ function HomePage() {
               accept="application/json"
               onChange={handleImportBackup}
               hidden
-              disabled={isCloudMode}
+              disabled={isCloudMode || backupLoading}
             />
           </label>
           <button
             className="button"
             onClick={handleExportMarkdown}
-            disabled={isCloudMode}
+            disabled={backupLoading}
           >
             导出归档 (Markdown)
           </button>
           <button
             className="button"
             onClick={handleExportHtml}
-            disabled={isCloudMode}
+            disabled={backupLoading}
           >
             导出归档 (HTML)
           </button>
         </div>
+        {backupLoading ? (
+          <p className="notice info">正在导出云端数据，请稍候...</p>
+        ) : null}
         {backupStatus ? (
           <p className={`notice ${backupStatus.type}`}>
             {backupStatus.message}
           </p>
         ) : null}
         {isCloudMode ? (
-          <p className="notice info">云端模式下暂不支持备份与导入。</p>
+          <p className="notice info">云端模式下暂不支持导入备份。</p>
         ) : null}
       </div>
 
