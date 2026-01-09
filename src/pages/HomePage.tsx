@@ -266,6 +266,20 @@ function HomePage() {
       return
     }
 
+    const isUuid = (value: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value,
+      )
+    const ensureUuid = (value?: string) =>
+      value && isUuid(value) ? value : crypto.randomUUID()
+    const sanitizeDate = (value?: string | null) => {
+      if (!value || value.trim() === '') return null
+      return value.length >= 10 ? value.slice(0, 10) : value
+    }
+    const sanitizeTimestamp = (value?: string | null) => {
+      if (!value || value.trim() === '') return null
+      return value
+    }
     const payload = createBackupPayload()
     const confirmMessage = `即将迁移本地数据到云端（书籍 ${payload.books.length} 本、书摘 ${payload.excerpts.length} 条、打卡 ${payload.checkIns.length} 条、讨论 ${payload.discussions.length} 条），确定继续吗？`
     if (!window.confirm(confirmMessage)) return
@@ -275,78 +289,130 @@ function HomePage() {
 
     try {
       const userId = session.user.id
-      const booksPayload = payload.books.map((book) => ({
-        id: book.id,
-        user_id: userId,
-        title: book.title,
-        author: book.author,
-        translator: book.translator,
-        genre: book.genre,
-        status: book.status,
-        cover: book.cover,
-        created_at: book.createdAt,
-        updated_at: book.updatedAt,
-        progress: book.progress ?? null,
-        start_date: book.startDate ?? null,
-        end_date: book.endDate ?? null,
-        rating: book.rating ?? null,
-        notes: book.notes ?? null,
-      }))
-      const checkInsPayload = payload.checkIns.map((sessionItem) => ({
-        id: sessionItem.id,
-        user_id: userId,
-        book_id: sessionItem.bookId,
-        date: sessionItem.date,
-        pages_read: sessionItem.pagesRead ?? null,
-        chapters_read: sessionItem.chaptersRead ?? null,
-        comment: sessionItem.comment ?? null,
-        created_at: sessionItem.createdAt,
-      }))
-      const excerptsPayload = payload.excerpts.map((excerpt) => ({
-        id: excerpt.id,
-        user_id: userId,
-        book_id: excerpt.bookId,
-        content: excerpt.content,
-        created_at: excerpt.createdAt,
-        updated_at: excerpt.updatedAt ?? null,
-      }))
-      const discussionsPayload = payload.discussions.map((message) => ({
-        id: message.id,
-        user_id: userId,
-        book_id: message.bookId,
-        role: message.role,
-        content: message.content,
-        created_at: message.createdAt,
-      }))
+      const bookIdMap = new Map<string, string>()
+      const booksPayload = payload.books.map((book) => {
+        const normalizedBookId = ensureUuid(book.id)
+        if (normalizedBookId !== book.id) {
+          bookIdMap.set(book.id, normalizedBookId)
+        }
+        return {
+          id: normalizedBookId,
+          user_id: userId,
+          title: book.title,
+          author: book.author,
+          translator: book.translator,
+          genre: book.genre,
+          status: book.status,
+          cover_url: book.cover ?? null,
+          created_at: sanitizeTimestamp(book.createdAt),
+          updated_at: sanitizeTimestamp(book.updatedAt),
+          start_date: sanitizeDate(book.startDate),
+          end_date: sanitizeDate(book.endDate),
+          rating: book.rating ?? null,
+          notes: book.notes ?? null,
+        }
+      })
+      const checkInsPayload = payload.checkIns.map((sessionItem) => {
+        const normalizedBookId =
+          bookIdMap.get(sessionItem.bookId) ??
+          ensureUuid(sessionItem.bookId)
+        return {
+          id: ensureUuid(sessionItem.id),
+          user_id: userId,
+          book_id: normalizedBookId,
+          date: sanitizeDate(sessionItem.date),
+          created_at: sanitizeTimestamp(sessionItem.createdAt),
+        }
+      })
+      const excerptsPayload = payload.excerpts.map((excerpt) => {
+        const normalizedBookId =
+          bookIdMap.get(excerpt.bookId) ?? ensureUuid(excerpt.bookId)
+        return {
+          id: ensureUuid(excerpt.id),
+          user_id: userId,
+          book_id: normalizedBookId,
+          content: excerpt.content,
+          created_at: sanitizeTimestamp(excerpt.createdAt),
+          updated_at: sanitizeTimestamp(excerpt.updatedAt),
+        }
+      })
+      const discussionsPayload = payload.discussions.map((message) => {
+        const normalizedBookId =
+          bookIdMap.get(message.bookId) ?? ensureUuid(message.bookId)
+        return {
+          id: ensureUuid(message.id),
+          user_id: userId,
+          book_id: normalizedBookId,
+          role: message.role,
+          content: message.content,
+          created_at: sanitizeTimestamp(message.createdAt),
+        }
+      })
+
+      const reportMigrationError = (table: string, error: unknown) => {
+        console.error(error)
+        const supabaseError = error as {
+          code?: string
+          message?: string
+          details?: string
+        }
+        const code = supabaseError?.code ?? 'unknown'
+        const message = supabaseError?.message ?? 'unknown error'
+        const details = supabaseError?.details ?? 'no details'
+        setMigrationStatus({
+          type: 'error',
+          message: `迁移失败（${table}）：${code} ${message} ${details}`,
+        })
+      }
 
       if (booksPayload.length > 0) {
-        const { error } = await supabase
-          .from('books')
-          .upsert(booksPayload, { onConflict: 'id' })
-        if (error) throw error
+        try {
+          const { error } = await supabase
+            .from('books')
+            .upsert(booksPayload, { onConflict: 'id' })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('books', error)
+          return
+        }
       }
 
       if (checkInsPayload.length > 0) {
-        const { error } = await supabase
-          .from('check_ins')
-          .upsert(checkInsPayload, {
-            onConflict: 'user_id,book_id,date',
-          })
-        if (error) throw error
+        try {
+          const { error } = await supabase
+            .from('check_ins')
+            .upsert(checkInsPayload, {
+              onConflict: 'user_id,book_id,date',
+            })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('check_ins', error)
+          return
+        }
       }
 
       if (excerptsPayload.length > 0) {
-        const { error } = await supabase
-          .from('excerpts')
-          .upsert(excerptsPayload, { onConflict: 'id' })
-        if (error) throw error
+        try {
+          const { error } = await supabase
+            .from('excerpts')
+            .upsert(excerptsPayload, { onConflict: 'id' })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('excerpts', error)
+          return
+        }
       }
 
       if (discussionsPayload.length > 0) {
-        const { error } = await supabase
-          .from('discussions')
-          .upsert(discussionsPayload, { onConflict: 'id' })
-        if (error) throw error
+        try {
+          const { error } = await supabase
+            .from('discussions')
+            .upsert(discussionsPayload, { onConflict: 'id' })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('discussions', error)
+          return
+        }
       }
 
       await refresh()
