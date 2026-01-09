@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+import type { EmailOtpType, Session, User } from '@supabase/supabase-js'
 import type { Book } from '../types/book'
 import type { DiscussionMessage } from '../types/discussion'
 import type { Excerpt } from '../types/excerpt'
