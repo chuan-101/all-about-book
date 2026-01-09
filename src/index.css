@@ -3,8 +3,8 @@
     sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #1c1f2a;
-  background-color: #f4f6fb;
+  color: var(--text);
+  background-color: var(--bg);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -18,7 +18,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f4f6fb;
+  background: var(--bg);
   overflow-x: hidden;
 }
 
@@ -58,8 +58,8 @@ textarea {
 }
 
 .header {
-  background: #ffffff;
-  border-bottom: 1px solid #e3e7f0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
   padding-top: env(safe-area-inset-top);
 }
 
@@ -87,7 +87,7 @@ textarea {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.75rem;
-  color: #667085;
+  color: var(--muted);
   margin: 0;
 }
 
@@ -102,12 +102,12 @@ textarea {
   justify-content: center;
   padding: 0.5rem 0.85rem;
   border-radius: 999px;
-  color: #1c1f2a;
+  color: var(--text);
   font-weight: 600;
 }
 
 .nav a.active {
-  background: #1c1f2a;
+  background: var(--accent);
   color: #ffffff;
 }
 
@@ -142,10 +142,10 @@ textarea {
 }
 
 .card {
-  background: #ffffff;
+  background: var(--card);
   border-radius: 16px;
   padding: 1.5rem;
-  border: 1px solid #e3e7f0;
+  border: 1px solid var(--border);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
@@ -170,7 +170,7 @@ textarea {
 }
 
 .stat-label {
-  color: #667085;
+  color: var(--muted);
   font-size: 0.9rem;
 }
 
@@ -180,7 +180,7 @@ textarea {
 }
 
 .muted {
-  color: #667085;
+  color: var(--muted);
   margin: 0.25rem 0 0;
 }
 
@@ -223,13 +223,13 @@ textarea {
   width: 60px;
   height: 80px;
   border-radius: 10px;
-  border: 1px solid #e3e7f0;
+  border: 1px solid var(--border);
   object-fit: cover;
-  background: #f1f3f9;
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #98a2b3;
+  color: var(--muted);
   font-size: 0.75rem;
   text-align: center;
 }
@@ -284,18 +284,18 @@ textarea {
   padding: 0.5rem 1rem;
   cursor: pointer;
   font-weight: 600;
-  background: #f1f3f9;
-  color: #1c1f2a;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .button.primary {
-  background: #1c1f2a;
+  background: var(--accent);
   color: #ffffff;
 }
 
 .button.ghost {
   background: transparent;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--border);
 }
 
 .button.danger {
@@ -315,8 +315,8 @@ textarea {
 }
 
 .chip.ghost {
-  background: #f2f4f7;
-  color: #344054;
+  background: var(--bg);
+  color: var(--muted);
 }
 
 .data-source {
@@ -354,7 +354,7 @@ textarea {
 
 .field span {
   font-size: 0.85rem;
-  color: #475467;
+  color: var(--muted);
 }
 
 .field input,
@@ -362,8 +362,8 @@ textarea {
 .field textarea {
   padding: 0.6rem 0.75rem;
   border-radius: 10px;
-  border: 1px solid #d0d5dd;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--card);
 }
 
 .form-actions {
@@ -400,7 +400,7 @@ textarea {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px dashed #e3e7f0;
+  border-bottom: 1px dashed var(--border);
   padding-bottom: 0.75rem;
 }
 
@@ -434,7 +434,7 @@ textarea {
   gap: 0.35rem;
   text-align: center;
   font-weight: 600;
-  color: #667085;
+  color: var(--muted);
 }
 
 .calendar-grid {
@@ -445,8 +445,8 @@ textarea {
 
 .calendar-day {
   position: relative;
-  background: #f8f9fc;
-  border: 1px solid #e3e7f0;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   min-height: 64px;
   padding: 0.4rem;
@@ -461,8 +461,8 @@ textarea {
 }
 
 .calendar-day.checked {
-  border-color: #1c1f2a;
-  background: #eef2ff;
+  border-color: var(--accent);
+  background: var(--card);
 }
 
 .calendar-day.today {
@@ -481,7 +481,7 @@ textarea {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #1c1f2a;
+  background: var(--accent);
 }
 
 .heatmap-container {
@@ -499,18 +499,18 @@ textarea {
 .heatmap-month-label {
   white-space: nowrap;
   font-size: clamp(0.7rem, 2.5vw, 0.8rem);
-  color: #667085;
+  color: var(--muted);
 }
 
 .heatmap-cell {
   width: 12px;
   height: 12px;
   border-radius: 4px;
-  background: #eef2f6;
+  background: var(--border);
 }
 
 .heatmap-cell.active {
-  background: #1c1f2a;
+  background: var(--accent);
 }
 
 .heatmap-cell.empty {
