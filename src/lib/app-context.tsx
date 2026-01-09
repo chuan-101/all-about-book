@@ -42,6 +42,13 @@ type AppContextValue = {
 }
 
 const DATA_SOURCE_KEY = 'all-about-book:data-source'
+const AUTH_RETURN_URL = 'https://chuan-101.github.io/all-about-book/#/'
+
+const getHashParams = (hash: string): URLSearchParams => {
+  const queryIndex = hash.indexOf('?')
+  if (queryIndex === -1) return new URLSearchParams()
+  return new URLSearchParams(hash.slice(queryIndex + 1))
+}
 
 const AppContext = createContext<AppContextValue | undefined>(undefined)
 
@@ -94,6 +101,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let ignore = false
     const loadSession = async () => {
       try {
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href)
+          const code = url.searchParams.get('code')
+          const hashParams = getHashParams(url.hash)
+          const tokenHash = hashParams.get('token_hash')
+          const type = hashParams.get('type')
+
+          if (code) {
+            const { error } = await supabase!.auth.exchangeCodeForSession(code)
+            if (error) throw error
+            window.history.replaceState({}, document.title, AUTH_RETURN_URL)
+          } else if (tokenHash && type) {
+            const { error } = await supabase!.auth.verifyOtp({
+              type,
+              token_hash: tokenHash,
+            })
+            if (error) throw error
+            window.history.replaceState({}, document.title, AUTH_RETURN_URL)
+          }
+        }
+
         const { data, error } = await supabase!.auth.getSession()
         if (ignore) return
         if (error) {
@@ -103,6 +131,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } else {
           setSession(data.session)
           setUser(data.session?.user ?? null)
+        }
+      } catch {
+        if (!ignore) {
+          setAuthWarning('无法完成登录回调，将继续使用本地数据。')
+          setSession(null)
+          setUser(null)
         }
       } finally {
         if (!ignore) setAuthLoading(false)
