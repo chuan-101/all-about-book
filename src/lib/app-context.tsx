@@ -96,25 +96,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     let ignore = false
     const loadSession = async () => {
+      let callbackError: unknown = null
       try {
         if (typeof window !== 'undefined') {
           const url = new URL(window.location.href)
-          const code = url.searchParams.get('code')
           const hashParams = getHashParams(url.hash)
+          const code = url.searchParams.get('code') ?? hashParams.get('code')
           const tokenHash = hashParams.get('token_hash')
           const type = hashParams.get('type')
+          const hasCallbackParams = Boolean(
+            code ||
+              tokenHash ||
+              type ||
+              url.searchParams.get('token_hash') ||
+              url.searchParams.get('type'),
+          )
 
-          if (code) {
-            const { error } = await supabase!.auth.exchangeCodeForSession(code)
-            if (error) throw error
-            window.history.replaceState({}, document.title, AUTH_RETURN_URL)
-          } else if (tokenHash && type) {
-            const { error } = await supabase!.auth.verifyOtp({
-              type: type as EmailOtpType,
-              token_hash: tokenHash,
-            })
-            if (error) throw error
-            window.history.replaceState({}, document.title, AUTH_RETURN_URL)
+          if (hasCallbackParams) {
+            try {
+              if (code) {
+                const { error } = await supabase!.auth.exchangeCodeForSession(code)
+                if (error) throw error
+              } else if (tokenHash && type) {
+                const { error } = await supabase!.auth.verifyOtp({
+                  type: type as EmailOtpType,
+                  token_hash: tokenHash,
+                })
+                if (error) throw error
+              }
+            } catch (error) {
+              callbackError = error
+            } finally {
+              window.history.replaceState({}, document.title, AUTH_RETURN_URL)
+            }
           }
         }
 
@@ -127,10 +141,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } else {
           setSession(data.session)
           setUser(data.session?.user ?? null)
+          if (callbackError && !data.session) {
+            setAuthWarning('无法完成登录回调，将继续使用本地数据。')
+          }
         }
-      } catch {
+      } catch (error) {
         if (!ignore) {
-          setAuthWarning('无法完成登录回调，将继续使用本地数据。')
+          if (callbackError) {
+            setAuthWarning('无法完成登录回调，将继续使用本地数据。')
+          } else {
+            setAuthWarning('无法读取登录信息，将继续使用本地数据。')
+          }
           setSession(null)
           setUser(null)
         }
