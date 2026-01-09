@@ -4,7 +4,11 @@ import { HashRouter } from 'react-router-dom'
 import App from './App.tsx'
 import { AppProvider } from './lib/app-context.tsx'
 import { BooksProvider } from './lib/books-context.tsx'
+import { getTheme, setTheme } from './lib/theme.ts'
+import './styles/theme.css'
 import './index.css'
+
+setTheme(getTheme())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
