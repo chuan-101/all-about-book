@@ -9,6 +9,7 @@ import {
   createBackupPayload,
   parseBackupPayload,
 } from '../lib/backup'
+import { supabase } from '../lib/supabaseClient'
 import { getReadingSessions } from '../lib/reading-sessions-storage'
 import type { ReadingSession } from '../types/reading-session'
 
@@ -21,8 +22,14 @@ const formatDate = (date: Date) => {
 
 function HomePage() {
   const { books: localBooks, refresh } = useBooks()
-  const { isCloudMode, cloudBooks, cloudCheckIns, cloudLoading } =
-    useAppData()
+  const {
+    isCloudMode,
+    cloudBooks,
+    cloudCheckIns,
+    cloudLoading,
+    session,
+    refreshCloud,
+  } = useAppData()
   const books = isCloudMode ? cloudBooks : localBooks
   const totalBooks = books.length
   const readingBooks = books.filter((book) => book.status === 'reading')
@@ -32,6 +39,11 @@ function HomePage() {
     type: 'success' | 'error'
     message: string
   } | null>(null)
+  const [migrationStatus, setMigrationStatus] = useState<{
+    type: 'success' | 'error' | 'info'
+    message: string
+  } | null>(null)
+  const [migrationLoading, setMigrationLoading] = useState(false)
   const currentYear = new Date().getFullYear()
 
   useEffect(() => {
@@ -245,6 +257,111 @@ function HomePage() {
     }
   }
 
+  const handleMigrateToCloud = async () => {
+    if (!supabase || !session?.user) {
+      setMigrationStatus({
+        type: 'error',
+        message: '尚未登录或云端服务不可用，无法执行迁移。',
+      })
+      return
+    }
+
+    const payload = createBackupPayload()
+    const confirmMessage = `即将迁移本地数据到云端（书籍 ${payload.books.length} 本、书摘 ${payload.excerpts.length} 条、打卡 ${payload.checkIns.length} 条、讨论 ${payload.discussions.length} 条），确定继续吗？`
+    if (!window.confirm(confirmMessage)) return
+
+    setMigrationLoading(true)
+    setMigrationStatus({ type: 'info', message: '正在迁移，请稍候...' })
+
+    try {
+      const userId = session.user.id
+      const booksPayload = payload.books.map((book) => ({
+        id: book.id,
+        user_id: userId,
+        title: book.title,
+        author: book.author,
+        translator: book.translator,
+        genre: book.genre,
+        status: book.status,
+        cover: book.cover,
+        created_at: book.createdAt,
+        updated_at: book.updatedAt,
+        progress: book.progress ?? null,
+        start_date: book.startDate ?? null,
+        end_date: book.endDate ?? null,
+        rating: book.rating ?? null,
+        notes: book.notes ?? null,
+      }))
+      const checkInsPayload = payload.checkIns.map((sessionItem) => ({
+        id: sessionItem.id,
+        user_id: userId,
+        book_id: sessionItem.bookId,
+        date: sessionItem.date,
+        pages_read: sessionItem.pagesRead ?? null,
+        chapters_read: sessionItem.chaptersRead ?? null,
+        comment: sessionItem.comment ?? null,
+        created_at: sessionItem.createdAt,
+      }))
+      const excerptsPayload = payload.excerpts.map((excerpt) => ({
+        id: excerpt.id,
+        user_id: userId,
+        book_id: excerpt.bookId,
+        content: excerpt.content,
+        created_at: excerpt.createdAt,
+        updated_at: excerpt.updatedAt ?? null,
+      }))
+      const discussionsPayload = payload.discussions.map((message) => ({
+        id: message.id,
+        user_id: userId,
+        book_id: message.bookId,
+        role: message.role,
+        content: message.content,
+        created_at: message.createdAt,
+      }))
+
+      if (booksPayload.length > 0) {
+        const { error } = await supabase
+          .from('books')
+          .upsert(booksPayload, { onConflict: 'id' })
+        if (error) throw error
+      }
+
+      if (checkInsPayload.length > 0) {
+        const { error } = await supabase
+          .from('check_ins')
+          .upsert(checkInsPayload, {
+            onConflict: 'user_id,book_id,date',
+          })
+        if (error) throw error
+      }
+
+      if (excerptsPayload.length > 0) {
+        const { error } = await supabase
+          .from('excerpts')
+          .upsert(excerptsPayload, { onConflict: 'id' })
+        if (error) throw error
+      }
+
+      if (discussionsPayload.length > 0) {
+        const { error } = await supabase
+          .from('discussions')
+          .upsert(discussionsPayload, { onConflict: 'id' })
+        if (error) throw error
+      }
+
+      await refresh()
+      await refreshCloud()
+      setMigrationStatus({ type: 'success', message: '迁移完成。' })
+    } catch {
+      setMigrationStatus({
+        type: 'error',
+        message: '迁移失败，请稍后重试。',
+      })
+    } finally {
+      setMigrationLoading(false)
+    }
+  }
+
   return (
     <section className="stack">
       <div className="page-header">
@@ -418,6 +535,32 @@ function HomePage() {
           <p className="notice info">云端模式下暂不支持备份与导入。</p>
         ) : null}
       </div>
+
+      {session ? (
+        <div className="card stack">
+          <div className="card-header">
+            <h3>云端迁移</h3>
+          </div>
+          <p className="muted">
+            将本地数据同步到云端一次性保存，避免重复导入。
+          </p>
+          <button
+            className="button primary"
+            type="button"
+            onClick={handleMigrateToCloud}
+            disabled={migrationLoading}
+          >
+            {migrationLoading
+              ? '正在迁移...'
+              : '一键迁移本地数据到云端'}
+          </button>
+          {migrationStatus ? (
+            <p className={`notice ${migrationStatus.type}`}>
+              {migrationStatus.message}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </section>
   )
 }

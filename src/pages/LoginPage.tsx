@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../lib/app-context'
 import { supabase } from '../lib/supabaseClient'
 
-const REDIRECT_URL = 'https://chuan-101.github.io/all-about-book/#/'
+const REDIRECT_URL = 'https://chuan-101.github.io/all-about-book/'
 
 function LoginPage() {
   const navigate = useNavigate()
