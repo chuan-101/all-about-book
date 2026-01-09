@@ -272,6 +272,14 @@ function HomePage() {
       )
     const ensureUuid = (value?: string) =>
       value && isUuid(value) ? value : crypto.randomUUID()
+    const sanitizeDate = (value?: string | null) => {
+      if (!value || value.trim() === '') return null
+      return value.length >= 10 ? value.slice(0, 10) : value
+    }
+    const sanitizeTimestamp = (value?: string | null) => {
+      if (!value || value.trim() === '') return null
+      return value
+    }
     const payload = createBackupPayload()
     const confirmMessage = `即将迁移本地数据到云端（书籍 ${payload.books.length} 本、书摘 ${payload.excerpts.length} 条、打卡 ${payload.checkIns.length} 条、讨论 ${payload.discussions.length} 条），确定继续吗？`
     if (!window.confirm(confirmMessage)) return
@@ -296,10 +304,10 @@ function HomePage() {
           genre: book.genre,
           status: book.status,
           cover_url: book.cover ?? null,
-          created_at: book.createdAt,
-          updated_at: book.updatedAt,
-          start_date: book.startDate ?? null,
-          end_date: book.endDate ?? null,
+          created_at: sanitizeTimestamp(book.createdAt),
+          updated_at: sanitizeTimestamp(book.updatedAt),
+          start_date: sanitizeDate(book.startDate),
+          end_date: sanitizeDate(book.endDate),
           rating: book.rating ?? null,
           notes: book.notes ?? null,
         }
@@ -312,8 +320,8 @@ function HomePage() {
           id: ensureUuid(sessionItem.id),
           user_id: userId,
           book_id: normalizedBookId,
-          date: sessionItem.date,
-          created_at: sessionItem.createdAt,
+          date: sanitizeDate(sessionItem.date),
+          created_at: sanitizeTimestamp(sessionItem.createdAt),
         }
       })
       const excerptsPayload = payload.excerpts.map((excerpt) => {
@@ -324,8 +332,8 @@ function HomePage() {
           user_id: userId,
           book_id: normalizedBookId,
           content: excerpt.content,
-          created_at: excerpt.createdAt,
-          updated_at: excerpt.updatedAt ?? null,
+          created_at: sanitizeTimestamp(excerpt.createdAt),
+          updated_at: sanitizeTimestamp(excerpt.updatedAt),
         }
       })
       const discussionsPayload = payload.discussions.map((message) => {
@@ -337,7 +345,7 @@ function HomePage() {
           book_id: normalizedBookId,
           role: message.role,
           content: message.content,
-          created_at: message.createdAt,
+          created_at: sanitizeTimestamp(message.createdAt),
         }
       })
 
