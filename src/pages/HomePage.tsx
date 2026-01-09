@@ -202,7 +202,7 @@ function HomePage() {
   }
 
   const handleThemeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextTheme = event.target.value as 'light' | 'paper'
+    const nextTheme = event.target.value
     setThemeState(nextTheme)
     setTheme(nextTheme)
   }
