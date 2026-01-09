@@ -576,7 +576,9 @@ function BookDetailPage() {
                           <p className="muted">
                             {formatExcerptDate(excerpt.createdAt)}
                           </p>
-                          <p>{excerpt.content}</p>
+                          <p className="excerpt-content">
+                            {excerpt.content}
+                          </p>
                         </div>
                       )}
                     </div>
