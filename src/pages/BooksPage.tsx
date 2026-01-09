@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import BookForm, { type BookFormValues } from '../components/BookForm'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
+import { deleteCloudBook, upsertCloudBook } from '../lib/cloudWrite'
 import type { Book } from '../types/book'
 
 const statusLabels: Record<Book['status'], string> = {
@@ -14,9 +15,11 @@ const statusLabels: Record<Book['status'], string> = {
 
 function BooksPage() {
   const { books: localBooks, remove, upsert } = useBooks()
-  const { isCloudMode, cloudBooks, cloudLoading } = useAppData()
+  const { isCloudMode, cloudBooks, cloudLoading, session, refreshCloud } =
+    useAppData()
   const books = isCloudMode ? cloudBooks : localBooks
   const [editingBook, setEditingBook] = useState<Book | null>(null)
+  const [cloudError, setCloudError] = useState<string | null>(null)
 
   useEffect(() => {
     if (isCloudMode) {
@@ -24,8 +27,7 @@ function BooksPage() {
     }
   }, [isCloudMode])
 
-  const handleSubmit = (values: BookFormValues) => {
-    if (isCloudMode) return
+  const handleSubmit = async (values: BookFormValues) => {
     const now = new Date().toISOString()
     const ratingValue =
       values.rating.trim() === '' ? undefined : Number(values.rating)
@@ -44,8 +46,46 @@ function BooksPage() {
           rating: ratingValue,
         }
 
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端书籍。')
+        return
+      }
+      setCloudError(null)
+      try {
+        await upsertCloudBook(session.user.id, nextBook)
+        await refreshCloud()
+        setEditingBook(null)
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端书籍保存失败，请稍后重试。')
+      }
+      return
+    }
+
     upsert(nextBook)
     setEditingBook(null)
+  }
+
+  const handleDelete = async (book: Book) => {
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端书籍。')
+        return
+      }
+      if (!window.confirm('确定要删除这本书吗？')) return
+      setCloudError(null)
+      try {
+        await deleteCloudBook(session.user.id, book.id)
+        await refreshCloud()
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端书籍删除失败，请稍后重试。')
+      }
+      return
+    }
+
+    remove(book.id)
   }
 
   return (
@@ -54,32 +94,27 @@ function BooksPage() {
         <h2>书架</h2>
         <p className="muted">
           添加和管理你的书单，当前数据来源：
-          {isCloudMode ? '云端（只读）' : '本地'}。
+          {isCloudMode ? '云端' : '本地'}。
         </p>
       </div>
 
-      {isCloudMode ? (
-        <div className="stack">
-          <div className="notice info">云端数据暂不支持编辑或删除。</div>
-          {cloudLoading ? (
-            <div className="notice info">云端数据加载中...</div>
-          ) : null}
-        </div>
-      ) : (
-        <div>
-          <h3 className="section-title">
-            {editingBook ? '编辑书籍' : '添加新书'}
-          </h3>
-          <BookForm
-            initialValues={editingBook ?? undefined}
-            onSubmit={handleSubmit}
-            onCancel={
-              editingBook ? () => setEditingBook(null) : undefined
-            }
-            submitLabel={editingBook ? '更新' : '添加'}
-          />
-        </div>
-      )}
+      {cloudLoading ? (
+        <div className="notice info">云端数据加载中...</div>
+      ) : null}
+      {cloudError ? (
+        <div className="notice error">{cloudError}</div>
+      ) : null}
+      <div>
+        <h3 className="section-title">
+          {editingBook ? '编辑书籍' : '添加新书'}
+        </h3>
+        <BookForm
+          initialValues={editingBook ?? undefined}
+          onSubmit={handleSubmit}
+          onCancel={editingBook ? () => setEditingBook(null) : undefined}
+          submitLabel={editingBook ? '更新' : '添加'}
+        />
+      </div>
 
       <div className="card stack">
         <div className="card-header">
@@ -143,22 +178,18 @@ function BooksPage() {
                   <Link className="button ghost" to={`/books/${book.id}`}>
                     查看详情
                   </Link>
-                  {isCloudMode ? null : (
-                    <>
-                      <button
-                        className="button ghost"
-                        onClick={() => setEditingBook(book)}
-                      >
-                        编辑
-                      </button>
-                      <button
-                        className="button danger"
-                        onClick={() => remove(book.id)}
-                      >
-                        删除
-                      </button>
-                    </>
-                  )}
+                  <button
+                    className="button ghost"
+                    onClick={() => setEditingBook(book)}
+                  >
+                    编辑
+                  </button>
+                  <button
+                    className="button danger"
+                    onClick={() => handleDelete(book)}
+                  >
+                    删除
+                  </button>
                 </div>
               </li>
             ))}

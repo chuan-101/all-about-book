@@ -51,7 +51,7 @@ const normalizeBook = (row: SupabaseRow): Book => {
     translator: asString(row.translator),
     genre: asString(row.genre),
     status,
-    cover: asString(row.cover),
+    cover: asString(row.cover_url ?? row.cover),
     createdAt,
     updatedAt,
     progress: asProgress(row.progress),
