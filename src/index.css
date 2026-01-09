@@ -19,6 +19,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background: #f4f6fb;
+  overflow-x: hidden;
 }
 
 a {
@@ -37,6 +38,13 @@ select {
   font: inherit;
 }
 
+button,
+input,
+select,
+textarea {
+  min-height: 44px;
+}
+
 .app {
   min-height: 100vh;
   display: flex;
@@ -52,6 +60,7 @@ select {
 .header {
   background: #ffffff;
   border-bottom: 1px solid #e3e7f0;
+  padding-top: env(safe-area-inset-top);
 }
 
 .header-content {
@@ -88,6 +97,9 @@ select {
 }
 
 .nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.5rem 0.85rem;
   border-radius: 999px;
   color: #1c1f2a;
@@ -100,7 +112,7 @@ select {
 }
 
 .main {
-  padding: 2rem 0 3rem;
+  padding: 2rem 0 calc(3rem + env(safe-area-inset-bottom));
   flex: 1;
 }
 
@@ -195,6 +207,16 @@ select {
   align-items: center;
   flex: 1;
   min-width: 240px;
+}
+
+.list-item-main p {
+  font-size: clamp(0.95rem, 2.8vw, 1.05rem);
+  line-height: 1.6;
+  margin: 0.35rem 0 0;
+}
+
+.list-item-main .muted {
+  margin-top: 0;
 }
 
 .cover {
@@ -471,11 +493,12 @@ select {
   gap: 4px;
   padding: 0.5rem 0;
   grid-template-rows: auto repeat(7, 1fr);
+  width: max-content;
 }
 
 .heatmap-month-label {
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: clamp(0.7rem, 2.5vw, 0.8rem);
   color: #667085;
 }
 
@@ -564,6 +587,133 @@ select {
 
 .print-checkins {
   columns: 2;
+}
+
+@media (max-width: 720px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nav {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .nav a {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+
+  .data-source {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .page-header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header-actions .button,
+  .form-actions .button,
+  .actions .button,
+  .header-actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card {
+    padding: 1.1rem;
+  }
+
+  .stats-grid,
+  .form-grid,
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .list-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .list-item-main {
+    min-width: 0;
+    align-items: flex-start;
+  }
+
+  .calendar-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .calendar-weekdays,
+  .calendar-grid {
+    grid-template-columns: repeat(7, minmax(36px, 1fr));
+    gap: 0.25rem;
+  }
+
+  .calendar-day {
+    min-height: 48px;
+    padding: 0.35rem;
+  }
+
+  .calendar-date {
+    font-size: 0.8rem;
+  }
+
+  .calendar-dot {
+    bottom: 0.35rem;
+    right: 0.35rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .card {
+    border-radius: 12px;
+  }
+
+  .calendar-weekdays,
+  .calendar-grid {
+    grid-template-columns: repeat(7, minmax(32px, 1fr));
+  }
+
+  .calendar-day {
+    min-height: 44px;
+  }
+
+  .heatmap-cell {
+    width: 14px;
+    height: 14px;
+  }
 }
 
 @media print {
