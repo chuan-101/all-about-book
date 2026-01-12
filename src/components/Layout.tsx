@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAppData } from '../lib/app-context'
+import UpdatePrompt from './UpdatePrompt'
 
 function Layout() {
   const navigate = useNavigate()
@@ -74,6 +75,7 @@ function Layout() {
         </div>
       </header>
       <main className="container main">
+        <UpdatePrompt />
         {authWarning ? (
           <p className="notice warning">{authWarning}</p>
         ) : null}
