@@ -219,6 +219,11 @@ textarea {
   margin-top: 0;
 }
 
+.list-item-main .field {
+  width: 100%;
+  align-self: stretch;
+}
+
 .cover {
   width: 60px;
   height: 80px;
