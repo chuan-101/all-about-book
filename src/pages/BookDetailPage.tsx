@@ -6,6 +6,7 @@ import {
   type FormEvent,
 } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import AutoResizeTextarea from '../components/AutoResizeTextarea'
 import {
   deleteExcerpt,
   getExcerptsByBookId,
@@ -557,7 +558,7 @@ function BookDetailPage() {
           <form className="form" onSubmit={handleCreateExcerpt}>
             <label className="field">
               <span>新增书摘</span>
-              <textarea
+              <AutoResizeTextarea
                 className="excerpt-textarea"
                 rows={3}
                 value={newExcerptContent}
@@ -603,10 +604,11 @@ function BookDetailPage() {
                       关闭
                     </button>
                   </div>
-                  <textarea
+                  <AutoResizeTextarea
                     ref={fullscreenTextareaRef}
                     className="excerpt-textarea excerpt-textarea-full"
                     value={newExcerptContent}
+                    maxHeight="60vh"
                     onChange={(event) =>
                       setNewExcerptContent(event.target.value)
                     }
@@ -641,7 +643,7 @@ function BookDetailPage() {
                       {isEditing ? (
                         <label className="field">
                           <span>编辑书摘</span>
-                          <textarea
+                          <AutoResizeTextarea
                             className="excerpt-textarea"
                             rows={3}
                             value={editingContent}
