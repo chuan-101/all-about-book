@@ -3,12 +3,24 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
+const base = '/all-about-book/'
+
 export default defineConfig({
-  base: '/all-about-book/',
+  base,
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      includeAssets: [
+        'favicon.ico',
+        'icons/icon-192.png',
+        'icons/icon-512.png',
+        'icons/icon-180.png',
+      ],
+      workbox: {
+        cleanupOutdatedCaches: true,
+        navigateFallback: `${base}index.html`,
+      },
       manifest: {
         name: 'All About Book',
         short_name: 'All About Book',
