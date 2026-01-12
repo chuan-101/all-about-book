@@ -14,7 +14,7 @@ type AutoResizeTextareaProps =
 const AutoResizeTextarea = forwardRef<
   HTMLTextAreaElement,
   AutoResizeTextareaProps
->(({ maxHeight = 240, style, value, ...props }, forwardedRef) => {
+>(({ maxHeight = '40vh', style, value, ...props }, forwardedRef) => {
   const innerRef = useRef<HTMLTextAreaElement | null>(null)
 
   useImperativeHandle(
