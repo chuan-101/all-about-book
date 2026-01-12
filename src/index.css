@@ -405,11 +405,11 @@ textarea {
 
 .excerpt-textarea {
   width: 100%;
-  min-height: 160px;
+  min-height: 200px;
   font-size: 1rem;
   line-height: 1.6;
   resize: vertical;
-  overflow: auto;
+  overflow: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -758,7 +758,7 @@ textarea {
   }
 
   .excerpt-textarea {
-    min-height: 200px;
+    min-height: 150px;
     font-size: 1rem;
     line-height: 1.7;
   }
