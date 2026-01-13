@@ -49,3 +49,5 @@ For GitHub Pages builds, add the following repository secrets:
 - `VITE_SUPABASE_ANON_KEY`
 
 The app will be available at `http://localhost:5173`.
+
+deploy test
