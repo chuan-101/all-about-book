@@ -19,9 +19,9 @@ type RateLimitEntry = {
 }
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://chuan-101.github.io',
   'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+    'authorization, apikey, content-type, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
@@ -75,10 +75,10 @@ const getUserId = async (req: Request): Promise<AuthResult> => {
     }
   }
 
-  const incomingApiKey = req.headers.get('apikey')
-  if (!incomingApiKey) {
+  const [scheme, token] = authHeader.split(' ')
+  if (scheme?.toLowerCase() !== 'bearer' || !token) {
     return {
-      error: { code: 'missing_apikey', message: 'Missing apikey header.' },
+      error: { code: 'invalid_auth', message: 'Invalid Authorization header.' },
       status: 401,
     }
   }
@@ -95,28 +95,12 @@ const getUserId = async (req: Request): Promise<AuthResult> => {
     }
   }
 
-  if (incomingApiKey !== supabaseAnonKey) {
-    return {
-      error: {
-        code: 'invalid_apikey',
-        message: 'Invalid apikey header.',
-      },
-      status: 401,
-    }
-  }
+  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
 
-  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: authHeader,
-      },
-    },
-  })
-
-  const { data, error } = await supabaseClient.auth.getUser()
+  const { data, error } = await supabaseClient.auth.getUser(token)
   if (error || !data?.user) {
     return {
-      error: { code: 'invalid_jwt', message: 'Invalid or expired token.' },
+      error: { code: 'invalid_auth', message: 'Invalid or expired token.' },
       status: 401,
     }
   }
@@ -139,7 +123,7 @@ const enforceRateLimit = (userId: string) => {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { status: 200, headers: corsHeaders })
   }
 
   if (req.method !== 'POST') {
@@ -169,7 +153,10 @@ serve(async (req) => {
 
     const authResult = await getUserId(req)
     if ('error' in authResult) {
-      return jsonResponse(authResult.error, authResult.status)
+      return jsonResponse(
+        { ok: false, code: authResult.error.code },
+        authResult.status,
+      )
     }
     const userId = authResult.userId
 
