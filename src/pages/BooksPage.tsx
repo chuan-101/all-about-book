@@ -20,6 +20,8 @@ function BooksPage() {
   const books = isCloudMode ? cloudBooks : localBooks
   const [editingBook, setEditingBook] = useState<Book | null>(null)
   const [cloudError, setCloudError] = useState<string | null>(null)
+  const [openBookMenuId, setOpenBookMenuId] = useState<string | null>(null)
+  const [confirmingBook, setConfirmingBook] = useState<Book | null>(null)
 
   useEffect(() => {
     if (isCloudMode) {
@@ -73,7 +75,6 @@ function BooksPage() {
         setCloudError('请先登录后再同步云端书籍。')
         return
       }
-      if (!window.confirm('确定要删除这本书吗？')) return
       setCloudError(null)
       try {
         await deleteCloudBook(session.user.id, book.id)
@@ -86,6 +87,17 @@ function BooksPage() {
     }
 
     remove(book.id)
+  }
+
+  const handleRequestDelete = (book: Book) => {
+    setOpenBookMenuId(null)
+    setConfirmingBook(book)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!confirmingBook) return
+    await handleDelete(confirmingBook)
+    setConfirmingBook(null)
   }
 
   return (
@@ -184,18 +196,101 @@ function BooksPage() {
                   >
                     编辑
                   </button>
-                  <button
-                    className="button danger"
-                    onClick={() => handleDelete(book)}
-                  >
-                    删除
-                  </button>
+                  <div className="menu">
+                    <button
+                      className="button ghost"
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={openBookMenuId === book.id}
+                      onClick={() =>
+                        setOpenBookMenuId(
+                          openBookMenuId === book.id ? null : book.id,
+                        )
+                      }
+                    >
+                      ⋯ 更多
+                    </button>
+                    {openBookMenuId === book.id ? (
+                      <div className="menu-panel" role="menu">
+                        <Link
+                          className="menu-item"
+                          role="menuitem"
+                          to={`/books/${book.id}`}
+                          onClick={() => setOpenBookMenuId(null)}
+                        >
+                          查看详情
+                        </Link>
+                        <button
+                          className="menu-item"
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setOpenBookMenuId(null)
+                            setEditingBook(book)
+                          }}
+                        >
+                          编辑
+                        </button>
+                        <button
+                          className="menu-item danger"
+                          type="button"
+                          role="menuitem"
+                          onClick={() => handleRequestDelete(book)}
+                        >
+                          删除
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+      {confirmingBook ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="确认删除书籍"
+          onClick={() => setConfirmingBook(null)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>确认删除</h4>
+            </header>
+            <div className="stack">
+              <p>
+                将删除《{confirmingBook.title}》，此操作无法撤销。
+              </p>
+              <p className="muted">
+                确认后书籍将从{isCloudMode ? '云端' : '本地'}移除。
+              </p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button ghost"
+                autoFocus
+                onClick={() => setConfirmingBook(null)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={handleConfirmDelete}
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
