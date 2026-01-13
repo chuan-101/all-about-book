@@ -11,6 +11,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
+      injectRegister: 'script',
       includeAssets: [
         'favicon.ico',
         'icons/icon-192.png',
