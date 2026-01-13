@@ -327,6 +327,17 @@ function BookDetailPage() {
       setNewMessageContent('')
     } catch (error) {
       console.error(error)
+      const status =
+        typeof error === 'object' &&
+        error !== null &&
+        'status' in error &&
+        typeof (error as { status?: unknown }).status === 'number'
+          ? (error as { status?: number }).status
+          : undefined
+      if (status === 401 || status === 403) {
+        setCloudError('请先登录后再让 Syzygy 回复。')
+        return
+      }
       setCloudError('Syzygy 回复失败，请稍后再试。')
     } finally {
       setIsAskingSyzygy(false)
