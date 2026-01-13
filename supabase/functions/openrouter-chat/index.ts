@@ -61,14 +61,48 @@ const jsonResponse = (
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
 
-const getUserId = async (req: Request) => {
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader) return null
+type AuthResult =
+  | { userId: string }
+  | { error: { code: string; message: string }; status: number }
+
+const getUserId = async (req: Request): Promise<AuthResult> => {
+  const authHeader =
+    req.headers.get('authorization') ?? req.headers.get('Authorization')
+  if (!authHeader) {
+    return {
+      error: { code: 'missing_auth', message: 'Missing Authorization header.' },
+      status: 401,
+    }
+  }
+
+  const incomingApiKey = req.headers.get('apikey')
+  if (!incomingApiKey) {
+    return {
+      error: { code: 'missing_apikey', message: 'Missing apikey header.' },
+      status: 401,
+    }
+  }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase environment is not configured.')
+    return {
+      error: {
+        code: 'auth_config_missing',
+        message: 'Supabase environment is not configured.',
+      },
+      status: 500,
+    }
+  }
+
+  if (incomingApiKey !== supabaseAnonKey) {
+    return {
+      error: {
+        code: 'invalid_apikey',
+        message: 'Invalid apikey header.',
+      },
+      status: 401,
+    }
   }
 
   const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -80,8 +114,13 @@ const getUserId = async (req: Request) => {
   })
 
   const { data, error } = await supabaseClient.auth.getUser()
-  if (error || !data?.user) return null
-  return data.user.id
+  if (error || !data?.user) {
+    return {
+      error: { code: 'invalid_jwt', message: 'Invalid or expired token.' },
+      status: 401,
+    }
+  }
+  return { userId: data.user.id }
 }
 
 const enforceRateLimit = (userId: string) => {
@@ -128,10 +167,11 @@ serve(async (req) => {
       return jsonResponse({ error: 'Message is too long.' }, 413)
     }
 
-    const userId = await getUserId(req)
-    if (!userId) {
-      return jsonResponse({ error: 'Unauthorized.' }, 401)
+    const authResult = await getUserId(req)
+    if ('error' in authResult) {
+      return jsonResponse(authResult.error, authResult.status)
     }
+    const userId = authResult.userId
 
     if (!enforceRateLimit(userId)) {
       return jsonResponse(
