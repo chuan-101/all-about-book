@@ -24,6 +24,7 @@ import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
 import {
   createCloudDiscussion,
+  createCloudDiscussionMessages,
   createCloudExcerpt,
   deleteCloudExcerpt,
   toggleCloudCheckIn,
@@ -33,6 +34,7 @@ import {
   getCheckInsByBook,
   toggleCheckIn,
 } from '../lib/reading-sessions-storage'
+import { supabase } from '../lib/supabaseClient'
 
 const statusLabels = {
   unread: '未读',
@@ -85,6 +87,7 @@ function BookDetailPage() {
   )
   const [editingContent, setEditingContent] = useState('')
   const [cloudError, setCloudError] = useState<string | null>(null)
+  const [isAskingSyzygy, setIsAskingSyzygy] = useState(false)
 
   useEffect(() => {
     if (!book || isCloudMode) return
@@ -287,6 +290,47 @@ function BookDetailPage() {
     addMessage(message)
     setNewMessageContent('')
     refreshDiscussions()
+  }
+
+  const handleAskSyzygy = async () => {
+    if (!book) return
+    const content = newMessageContent.trim()
+    if (!content) return
+    if (!isCloudMode) {
+      setCloudError('请先切换到云端模式后再使用 Syzygy。')
+      return
+    }
+    if (!session?.user || !supabase) {
+      setCloudError('请先登录后再让 Syzygy 回复。')
+      return
+    }
+    if (isAskingSyzygy) return
+    setCloudError(null)
+    setIsAskingSyzygy(true)
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'openrouter-chat',
+        {
+          body: { userMessage: content },
+        },
+      )
+
+      if (error || !data?.assistantReply) {
+        throw error ?? new Error('No assistant reply returned.')
+      }
+
+      await createCloudDiscussionMessages(session.user.id, book.id, [
+        { role: 'me', content },
+        { role: 'syzygy', content: data.assistantReply },
+      ])
+      await refreshCloud()
+      setNewMessageContent('')
+    } catch (error) {
+      console.error(error)
+      setCloudError('Syzygy 回复失败，请稍后再试。')
+    } finally {
+      setIsAskingSyzygy(false)
+    }
   }
 
   const handleStartEdit = (excerpt: Excerpt) => {
@@ -770,8 +814,17 @@ function BookDetailPage() {
               <button type="submit" className="button primary">
                 发送
               </button>
-              <button type="button" className="button ghost" disabled>
-                让 Syzygy 回复（即将上线）
+              <button
+                type="button"
+                className="button ghost"
+                onClick={handleAskSyzygy}
+                disabled={
+                  !session?.user || !isCloudMode || isAskingSyzygy
+                }
+              >
+                {isAskingSyzygy
+                  ? 'Syzygy 思考中...'
+                  : '让 Syzygy 回复'}
               </button>
             </div>
           </form>

@@ -177,3 +177,26 @@ export const createCloudDiscussion = async (
     throw error
   }
 }
+
+export const createCloudDiscussionMessages = async (
+  userId: string,
+  bookId: string,
+  messages: Array<{ role: 'me' | 'syzygy'; content: string }>,
+): Promise<void> => {
+  const client = ensureClient()
+  const now = new Date().toISOString()
+  const payload = messages.map((message) => ({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    book_id: bookId,
+    role: message.role,
+    content: message.content,
+    created_at: now,
+  }))
+
+  const { error } = await client.from('discussions').insert(payload)
+
+  if (error) {
+    throw error
+  }
+}
