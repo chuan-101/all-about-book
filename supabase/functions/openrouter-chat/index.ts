@@ -19,8 +19,9 @@ type RateLimitEntry = {
 }
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  'Access-Control-Allow-Origin': 'https://chuan-101.github.io',
+  'Access-Control-Allow-Headers':
+    'authorization, apikey, content-type, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
