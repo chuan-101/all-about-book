@@ -1,16 +1,8 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.90.0'
 
-type SettingsPayload = {
-  systemPrompt?: string
-  temperature?: number
-  model?: string
-  maxTokens?: number
-}
-
 type RequestPayload = {
   userMessage?: string
-  settings?: SettingsPayload
 }
 
 type RateLimitEntry = {
@@ -24,12 +16,6 @@ const corsHeaders = {
     'authorization, apikey, content-type, x-client-info',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
-
-const ALLOWED_MODELS = new Set([
-  'openai/gpt-4o-mini',
-  'openai/gpt-4o',
-  'anthropic/claude-3.5-sonnet',
-])
 
 const DEFAULT_MODEL = 'openai/gpt-4o-mini'
 const DEFAULT_SYSTEM_PROMPT =
@@ -61,11 +47,69 @@ const jsonResponse = (
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
 
+type SyzygySettingsRow = {
+  system_prompt?: string | null
+  temperature?: number | null
+  model?: string | null
+}
+
+const createAuthedClient = (
+  supabaseUrl: string,
+  supabaseAnonKey: string,
+  token: string,
+) =>
+  createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  })
+
+const fetchSyzygySettings = async (
+  client: ReturnType<typeof createAuthedClient>,
+  userId: string,
+): Promise<SyzygySettingsRow | null> => {
+  const { data, error } = await client
+    .from('syzygy_settings')
+    .select('system_prompt,temperature,model')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') {
+    throw error
+  }
+
+  return data ?? null
+}
+
+const fetchEnabledModels = async (
+  client: ReturnType<typeof createAuthedClient>,
+  modelIds: string[],
+): Promise<Set<string>> => {
+  if (modelIds.length === 0) return new Set()
+  const { data, error } = await client
+    .from('openrouter_models')
+    .select('id')
+    .in('id', modelIds)
+    .eq('enabled', true)
+
+  if (error) {
+    throw error
+  }
+
+  return new Set((data ?? []).map((row) => row.id))
+}
 type AuthResult =
-  | { userId: string }
+  | {
+      userId: string
+      token: string
+      supabaseUrl: string
+      supabaseAnonKey: string
+    }
   | { error: { code: string; message: string }; status: number }
 
-const getUserId = async (req: Request): Promise<AuthResult> => {
+const getAuthContext = async (req: Request): Promise<AuthResult> => {
   const authHeader =
     req.headers.get('authorization') ?? req.headers.get('Authorization')
   if (!authHeader) {
@@ -104,7 +148,12 @@ const getUserId = async (req: Request): Promise<AuthResult> => {
       status: 401,
     }
   }
-  return { userId: data.user.id }
+  return {
+    userId: data.user.id,
+    token,
+    supabaseUrl,
+    supabaseAnonKey,
+  }
 }
 
 const enforceRateLimit = (userId: string) => {
@@ -151,14 +200,14 @@ serve(async (req) => {
       return jsonResponse({ error: 'Message is too long.' }, 413)
     }
 
-    const authResult = await getUserId(req)
+    const authResult = await getAuthContext(req)
     if ('error' in authResult) {
       return jsonResponse(
         { ok: false, code: authResult.error.code },
         authResult.status,
       )
     }
-    const userId = authResult.userId
+    const { userId, token, supabaseUrl, supabaseAnonKey } = authResult
 
     if (!enforceRateLimit(userId)) {
       return jsonResponse(
@@ -172,32 +221,61 @@ serve(async (req) => {
       return jsonResponse({ error: 'Missing API configuration.' }, 500)
     }
 
-    const settings = payload.settings ?? {}
-    const systemPrompt = settings.systemPrompt?.trim()
-      ? settings.systemPrompt.trim()
+    const supabaseClient = createAuthedClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      token,
+    )
+
+    let settings: SyzygySettingsRow | null = null
+    try {
+      settings = await fetchSyzygySettings(supabaseClient, userId)
+    } catch (error) {
+      console.error('Failed to fetch syzygy settings', error)
+      return jsonResponse({ error: 'Failed to load settings.' }, 500)
+    }
+
+    const systemPrompt = settings?.system_prompt?.trim()
+      ? settings.system_prompt.trim()
       : DEFAULT_SYSTEM_PROMPT
 
     let temperature = DEFAULT_TEMPERATURE
-    if (typeof settings.temperature === 'number') {
-      temperature = clamp(settings.temperature, 0, 1)
+    if (typeof settings?.temperature === 'number') {
+      temperature = clamp(settings.temperature, 0, 2)
     }
 
+    const desiredModel =
+      settings?.model && settings.model.trim()
+        ? settings.model.trim()
+        : DEFAULT_MODEL
     let model = DEFAULT_MODEL
-    if (settings.model) {
-      if (!ALLOWED_MODELS.has(settings.model)) {
-        return jsonResponse({ error: 'Model is not supported.' }, 400)
+    try {
+      const enabledModels = await fetchEnabledModels(supabaseClient, [
+        desiredModel,
+        DEFAULT_MODEL,
+      ])
+      if (!enabledModels.has(DEFAULT_MODEL)) {
+        return jsonResponse(
+          {
+            error:
+              'Default model is not enabled. Please enable it in openrouter_models.',
+          },
+          400,
+        )
       }
-      model = settings.model
+      if (enabledModels.has(desiredModel)) {
+        model = desiredModel
+      }
+    } catch (error) {
+      console.error('Failed to validate models', error)
+      return jsonResponse({ error: 'Failed to validate model.' }, 500)
     }
 
-    let maxTokens = DEFAULT_MAX_TOKENS
-    if (typeof settings.maxTokens === 'number') {
-      maxTokens = clamp(
-        Math.floor(settings.maxTokens),
-        MIN_MAX_TOKENS,
-        MAX_MAX_TOKENS,
-      )
-    }
+    const maxTokens = clamp(
+      DEFAULT_MAX_TOKENS,
+      MIN_MAX_TOKENS,
+      MAX_MAX_TOKENS,
+    )
 
     const response = await fetch(
       'https://openrouter.ai/api/v1/chat/completions',
@@ -245,7 +323,8 @@ serve(async (req) => {
 
     return jsonResponse({
       assistantReply,
-      model: data.model ?? model,
+      usedModel: data.model ?? model,
+      usedTemperature: temperature,
       requestId: data.id ?? response.headers.get('x-request-id'),
     })
   } catch (error) {
