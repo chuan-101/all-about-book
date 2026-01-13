@@ -190,12 +190,6 @@ function BooksPage() {
                   <Link className="button ghost" to={`/books/${book.id}`}>
                     查看详情
                   </Link>
-                  <button
-                    className="button ghost"
-                    onClick={() => setEditingBook(book)}
-                  >
-                    编辑
-                  </button>
                   <div className="menu">
                     <button
                       className="button ghost"
@@ -212,14 +206,6 @@ function BooksPage() {
                     </button>
                     {openBookMenuId === book.id ? (
                       <div className="menu-panel" role="menu">
-                        <Link
-                          className="menu-item"
-                          role="menuitem"
-                          to={`/books/${book.id}`}
-                          onClick={() => setOpenBookMenuId(null)}
-                        >
-                          查看详情
-                        </Link>
                         <button
                           className="menu-item"
                           type="button"
