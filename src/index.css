@@ -443,6 +443,19 @@ textarea {
   background: var(--card);
 }
 
+.syzygy-textarea {
+  width: 100%;
+  min-height: 180px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.syzygy-temp-value {
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
 .excerpt-textarea {
   width: 100%;
   min-height: 200px;
@@ -500,6 +513,11 @@ textarea {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.syzygy-meta {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
 }
 
 .detail-grid {

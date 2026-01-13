@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAppData } from '../lib/app-context'
+import SyzygyConsole from './SyzygyConsole'
 import UpdatePrompt from './UpdatePrompt'
 
 function Layout() {
@@ -58,6 +59,7 @@ function Layout() {
                 云端
               </button>
             </div>
+            <SyzygyConsole />
             {session ? (
               <button
                 type="button"

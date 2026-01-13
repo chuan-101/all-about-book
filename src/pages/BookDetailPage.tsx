@@ -339,7 +339,12 @@ function BookDetailPage() {
 
       await createCloudDiscussionMessages(session.user.id, book.id, [
         { role: 'me', content },
-        { role: 'syzygy', content: data.assistantReply },
+        {
+          role: 'syzygy',
+          content: data.assistantReply,
+          usedModel: data.usedModel,
+          usedTemperature: data.usedTemperature,
+        },
       ])
       await refreshCloud()
       setNewMessageContent('')
@@ -822,6 +827,18 @@ function BookDetailPage() {
                       {message.role === 'me' ? '我' : 'Syzygy'}
                     </p>
                     <p>{message.content}</p>
+                    {message.role === 'syzygy' &&
+                    (message.usedModel ||
+                      typeof message.usedTemperature === 'number') ? (
+                      <p className="muted syzygy-meta">
+                        {message.usedModel
+                          ? `model=${message.usedModel}`
+                          : 'model=unknown'}
+                        {typeof message.usedTemperature === 'number'
+                          ? `, temp=${message.usedTemperature.toFixed(1)}`
+                          : ''}
+                      </p>
+                    ) : null}
                   </div>
                 </li>
               ))}

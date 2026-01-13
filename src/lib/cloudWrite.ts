@@ -181,7 +181,12 @@ export const createCloudDiscussion = async (
 export const createCloudDiscussionMessages = async (
   userId: string,
   bookId: string,
-  messages: Array<{ role: 'me' | 'syzygy'; content: string }>,
+  messages: Array<{
+    role: 'me' | 'syzygy'
+    content: string
+    usedModel?: string
+    usedTemperature?: number
+  }>,
 ): Promise<void> => {
   const client = ensureClient()
   const now = new Date().toISOString()
@@ -191,6 +196,13 @@ export const createCloudDiscussionMessages = async (
     book_id: bookId,
     role: message.role,
     content: message.content,
+    used_model:
+      message.role === 'syzygy' ? message.usedModel ?? null : null,
+    used_temperature:
+      message.role === 'syzygy' &&
+      typeof message.usedTemperature === 'number'
+        ? message.usedTemperature
+        : null,
     created_at: now,
   }))
 

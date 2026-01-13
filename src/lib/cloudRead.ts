@@ -100,6 +100,8 @@ const normalizeDiscussion = (row: SupabaseRow): DiscussionMessage => {
     role: row.role === 'syzygy' ? 'syzygy' : 'me',
     content: asString(row.content),
     createdAt,
+    usedModel: asOptionalString(row.used_model ?? row.usedModel),
+    usedTemperature: asNumber(row.used_temperature ?? row.usedTemperature),
   }
 }
 

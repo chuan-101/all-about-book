@@ -4,4 +4,6 @@ export interface DiscussionMessage {
   role: 'me' | 'syzygy'
   content: string
   createdAt: string
+  usedModel?: string
+  usedTemperature?: number
 }

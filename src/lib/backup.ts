@@ -29,6 +29,9 @@ type ParseResult =
 const normalizeString = (value: unknown): string =>
   typeof value === 'string' ? value : ''
 
+const normalizeOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value ? value : undefined
+
 const normalizeNumber = (value: unknown): number | undefined =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined
 
@@ -152,6 +155,8 @@ const normalizeDiscussion = (
         : 'me',
     content: normalizeString(message.content),
     createdAt,
+    usedModel: normalizeOptionalString(message.usedModel),
+    usedTemperature: normalizeNumber(message.usedTemperature),
   }
 }
 

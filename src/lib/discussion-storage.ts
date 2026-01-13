@@ -5,6 +5,12 @@ const STORAGE_KEY = 'all-about-book:discussions'
 const normalizeString = (value: unknown): string =>
   typeof value === 'string' ? value : ''
 
+const normalizeOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim() ? value : undefined
+
+const normalizeOptionalNumber = (value: unknown): number | undefined =>
+  typeof value === 'number' && !Number.isNaN(value) ? value : undefined
+
 const normalizeMessage = (
   message: Partial<DiscussionMessage>,
 ): DiscussionMessage => {
@@ -23,6 +29,8 @@ const normalizeMessage = (
         : 'me',
     content: normalizeString(message.content),
     createdAt,
+    usedModel: normalizeOptionalString(message.usedModel),
+    usedTemperature: normalizeOptionalNumber(message.usedTemperature),
   }
 }
 
