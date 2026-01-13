@@ -34,7 +34,7 @@ import {
   getCheckInsByBook,
   toggleCheckIn,
 } from '../lib/reading-sessions-storage'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, supabaseAnonKey } from '../lib/supabaseClient'
 
 const statusLabels = {
   unread: '未读',
@@ -304,14 +304,32 @@ function BookDetailPage() {
       setCloudError('请先登录后再让 Syzygy 回复。')
       return
     }
+    if (!supabaseAnonKey) {
+      setCloudError('Supabase 配置缺失，请稍后再试。')
+      return
+    }
     if (isAskingSyzygy) return
     setCloudError(null)
     setIsAskingSyzygy(true)
     try {
+      const accessToken = session.access_token
+      if (!accessToken) {
+        setCloudError('请先登录后再让 Syzygy 回复。')
+        return
+      }
+      if (import.meta.env.DEV) {
+        const prefix = supabaseAnonKey.slice(0, 6)
+        const suffix = supabaseAnonKey.slice(-4)
+        console.debug(`Supabase anon key: ${prefix}...${suffix}`)
+      }
       const { data, error } = await supabase.functions.invoke(
         'openrouter-chat',
         {
           body: { userMessage: content },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: supabaseAnonKey,
+          },
         },
       )
 
@@ -327,6 +345,17 @@ function BookDetailPage() {
       setNewMessageContent('')
     } catch (error) {
       console.error(error)
+      const status =
+        typeof error === 'object' &&
+        error !== null &&
+        'status' in error &&
+        typeof (error as { status?: unknown }).status === 'number'
+          ? (error as { status?: number }).status
+          : undefined
+      if (status === 401 || status === 403) {
+        setCloudError('请先登录后再让 Syzygy 回复。')
+        return
+      }
       setCloudError('Syzygy 回复失败，请稍后再试。')
     } finally {
       setIsAskingSyzygy(false)
