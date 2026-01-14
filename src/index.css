@@ -157,6 +157,67 @@ textarea {
   margin-bottom: 1rem;
 }
 
+.discussion-header {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.discussion-header-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  flex-wrap: wrap;
+  min-width: 220px;
+}
+
+.discussion-model {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.model-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 180px;
+  max-width: min(260px, 70vw);
+}
+
+.model-toggle-label {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.model-menu {
+  max-height: min(320px, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-width: 240px;
+}
+
+.model-option-id {
+  font-size: 0.75rem;
+}
+
+.model-status {
+  font-size: 0.85rem;
+}
+
+.model-status.success {
+  color: #027a48;
+}
+
+.model-status.error {
+  color: #b42318;
+}
+
 .stats-grid {
   display: grid;
   gap: 1rem;
