@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -19,6 +20,7 @@ import {
   deleteMessagesByBookId,
   getMessagesByBookId,
 } from '../lib/discussion-storage'
+import { SYZYGY_DEFAULTS } from '../lib/syzygyDefaults'
 import type { Excerpt } from '../types/excerpt'
 import type { DiscussionMessage } from '../types/discussion'
 import type { ReadingSession } from '../types/reading-session'
@@ -48,6 +50,25 @@ const statusLabels = {
 } as const
 
 const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+
+type ModelOption = {
+  id: string
+  label: string
+}
+
+const MISSING_TABLE_MESSAGE =
+  'Table missing: openrouter_models/syzygy_settings. Run SQL schema in Supabase.'
+
+const isMissingTableError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false
+  const status =
+    'status' in error && typeof error.status === 'number'
+      ? error.status
+      : undefined
+  const code =
+    'code' in error && typeof error.code === 'string' ? error.code : undefined
+  return status === 404 || code === '42P01'
+}
 
 const formatDate = (date: Date) => {
   const year = date.getFullYear()
@@ -99,6 +120,19 @@ function BookDetailPage() {
     useState<DiscussionMessage | null>(null)
   const [isConfirmingClearDiscussions, setIsConfirmingClearDiscussions] =
     useState(false)
+  const [modelOptions, setModelOptions] = useState<ModelOption[]>([])
+  const [modelLoading, setModelLoading] = useState(false)
+  const [modelError, setModelError] = useState<string | null>(null)
+  const [selectedModel, setSelectedModel] = useState(
+    SYZYGY_DEFAULTS.model,
+  )
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false)
+  const [modelStatus, setModelStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle')
+  const [modelStatusMessage, setModelStatusMessage] = useState<
+    string | null
+  >(null)
 
   useEffect(() => {
     if (!book || isCloudMode) return
@@ -120,6 +154,105 @@ function BookDetailPage() {
     setEditingExcerptId(null)
     setEditingContent('')
   }, [isCloudMode])
+
+  const canSwitchModel = isCloudMode && Boolean(session)
+
+  const loadModelOptions = useCallback(async () => {
+    if (!supabase || !session) return
+    setModelLoading(true)
+    setModelError(null)
+    try {
+      const { data, error } = await supabase
+        .from('openrouter_models')
+        .select('id,label,enabled,sort_order')
+        .eq('enabled', true)
+        .order('sort_order', { ascending: true })
+        .order('label', { ascending: true })
+
+      if (error) {
+        throw error
+      }
+
+      const nextModels =
+        data?.map((row) => ({
+          id: row.id,
+          label: row.label,
+        })) ?? []
+      setModelOptions(nextModels)
+      if (nextModels.length === 0) {
+        setModelError('No enabled models. Add rows in openrouter_models.')
+      }
+    } catch (error) {
+      console.error('Failed to load openrouter models', error)
+      if (isMissingTableError(error)) {
+        setModelError(MISSING_TABLE_MESSAGE)
+      } else {
+        setModelError('无法加载模型列表，请稍后重试。')
+      }
+    } finally {
+      setModelLoading(false)
+    }
+  }, [session])
+
+  const loadSelectedModel = useCallback(async () => {
+    if (!supabase || !session) return
+    try {
+      const { data, error } = await supabase
+        .from('syzygy_settings')
+        .select('model')
+        .eq('user_id', session.user.id)
+        .maybeSingle()
+
+      if (error && error.code !== 'PGRST116') {
+        throw error
+      }
+
+      setSelectedModel(data?.model ?? SYZYGY_DEFAULTS.model)
+    } catch (error) {
+      console.error('Failed to load syzygy model', error)
+      if (isMissingTableError(error)) {
+        setModelError(MISSING_TABLE_MESSAGE)
+      }
+      setSelectedModel(SYZYGY_DEFAULTS.model)
+    }
+  }, [session])
+
+  useEffect(() => {
+    if (!canSwitchModel) return
+    void Promise.all([loadModelOptions(), loadSelectedModel()])
+  }, [canSwitchModel, loadModelOptions, loadSelectedModel])
+
+  useEffect(() => {
+    if (!modelOptions.length) return
+    const isValid = modelOptions.some(
+      (model) => model.id === selectedModel,
+    )
+    if (isValid) return
+    const fallback =
+      modelOptions.find((model) => model.id === SYZYGY_DEFAULTS.model)
+        ?.id ?? modelOptions[0]?.id
+    if (fallback) {
+      setSelectedModel(fallback)
+    }
+  }, [modelOptions, selectedModel])
+
+  useEffect(() => {
+    if (!isModelMenuOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isModelMenuOpen])
+
+  useEffect(() => {
+    if (modelStatus === 'idle') return
+    const timer = window.setTimeout(() => {
+      setModelStatus('idle')
+      setModelStatusMessage(null)
+    }, 2200)
+    return () => window.clearTimeout(timer)
+  }, [modelStatus])
 
   useEffect(() => {
     if (!isExcerptEditorOpen) return
@@ -146,6 +279,13 @@ function BookDetailPage() {
       ? cloudDiscussions.filter((message) => message.bookId === book.id)
       : discussionMessages
   }, [book, cloudDiscussions, discussionMessages, isCloudMode])
+
+  const selectedModelLabel = useMemo(() => {
+    const current = modelOptions.find(
+      (model) => model.id === selectedModel,
+    )
+    return current?.label ?? selectedModel
+  }, [modelOptions, selectedModel])
 
   const monthStart = useMemo(
     () =>
@@ -504,6 +644,41 @@ function BookDetailPage() {
 
     deleteMessagesByBookId(book.id)
     refreshDiscussions()
+  }
+
+  const handleModelSelect = async (modelId: string) => {
+    if (!session || !supabase) return
+    if (modelId === selectedModel) {
+      setIsModelMenuOpen(false)
+      return
+    }
+    const previousModel = selectedModel
+    setSelectedModel(modelId)
+    setIsModelMenuOpen(false)
+    setModelStatus('saving')
+    setModelStatusMessage('更新中...')
+    try {
+      const { error } = await supabase
+        .from('syzygy_settings')
+        .upsert(
+          {
+            user_id: session.user.id,
+            model: modelId,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        )
+      if (error) {
+        throw error
+      }
+      setModelStatus('saved')
+      setModelStatusMessage('Model updated')
+    } catch (error) {
+      console.error('Failed to update syzygy model', error)
+      setSelectedModel(previousModel)
+      setModelStatus('error')
+      setModelStatusMessage('模型更新失败')
+    }
   }
 
   const formatExcerptDate = (value: string) =>
@@ -887,12 +1062,69 @@ function BookDetailPage() {
           )}
         </div>
         <div className="card stack">
-          <div className="card-header">
-            <div>
-              <h3>与 Syzygy 讨论</h3>
-              <span className="muted">
-                {displayDiscussions.length} 条
-              </span>
+          <div className="card-header discussion-header">
+            <div className="discussion-header-main">
+              <div>
+                <h3>与 Syzygy 讨论</h3>
+                <span className="muted">
+                  {displayDiscussions.length} 条
+                </span>
+              </div>
+              {canSwitchModel ? (
+                <div className="discussion-model">
+                  <span className="muted">Model</span>
+                  <div className="menu">
+                    <button
+                      type="button"
+                      className="button ghost model-toggle"
+                      aria-haspopup="listbox"
+                      aria-expanded={isModelMenuOpen}
+                      onClick={() =>
+                        setIsModelMenuOpen((value) => !value)
+                      }
+                      disabled={modelLoading || modelOptions.length === 0}
+                    >
+                      <span className="model-toggle-label">
+                        {modelLoading
+                          ? '加载中...'
+                          : selectedModelLabel}
+                      </span>
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                    {isModelMenuOpen ? (
+                      <div
+                        className="menu-panel model-menu"
+                        role="listbox"
+                      >
+                        {modelOptions.map((model) => (
+                          <button
+                            key={model.id}
+                            type="button"
+                            className="menu-item"
+                            role="option"
+                            aria-selected={model.id === selectedModel}
+                            onClick={() => handleModelSelect(model.id)}
+                          >
+                            <span>{model.label}</span>
+                            <span className="muted model-option-id">
+                              {model.id}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                  {modelStatusMessage ? (
+                    <span
+                      className={`model-status ${
+                        modelStatus === 'error' ? 'error' : 'success'
+                      }`}
+                    >
+                      {modelStatusMessage}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <button
               type="button"
@@ -903,6 +1135,7 @@ function BookDetailPage() {
               清空本书讨论
             </button>
           </div>
+          {modelError ? <p className="notice error">{modelError}</p> : null}
           <p className="muted">
             后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
           </p>
