@@ -64,6 +64,7 @@ function SyzygyConsole() {
     'idle' | 'syncing' | 'success' | 'error'
   >('idle')
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
   const [catalogQuery, setCatalogQuery] = useState('')
   const [draft, setDraft] = useState<SyzygyDraft>(() =>
@@ -231,14 +232,10 @@ function SyzygyConsole() {
     if (syncStatus !== 'success') return
     const timer = window.setTimeout(() => {
       setSyncStatus('idle')
+      setSyncMessage(null)
     }, 2800)
     return () => window.clearTimeout(timer)
   }, [syncStatus])
-
-  const handleRefreshModels = async () => {
-    if (modelsLoading) return
-    await loadModels()
-  }
 
   const handleRestoreDefaults = () => {
     setDraft(buildDraftFromDefaults())
@@ -308,10 +305,11 @@ function SyzygyConsole() {
     }
   }
 
-  const handleSyncModels = async () => {
+  const syncModels = async () => {
     if (!supabase || !session || syncStatus === 'syncing') return
     setSyncStatus('syncing')
     setSyncError(null)
+    setSyncMessage(null)
     try {
       const { data, error } = await supabase.functions.invoke(
         'sync-openrouter-models',
@@ -320,10 +318,17 @@ function SyzygyConsole() {
       if (error) {
         throw error
       }
+      const total =
+        typeof data?.total === 'number'
+          ? data.total
+          : typeof data?.count === 'number'
+            ? data.count
+            : 0
       const syncedAt = data?.syncedAt
         ? new Date(data.syncedAt).toLocaleString()
         : new Date().toLocaleString()
       setLastSyncedAt(syncedAt)
+      setSyncMessage(`Synced ${total} models`)
       setSyncStatus('success')
       await Promise.all([loadCatalog(), loadModels()])
     } catch (error) {
@@ -331,6 +336,15 @@ function SyzygyConsole() {
       setSyncStatus('error')
       setSyncError('同步失败，请稍后再试。')
     }
+  }
+
+  const handleRefreshModels = async () => {
+    if (modelsLoading || syncStatus === 'syncing') return
+    await syncModels()
+  }
+
+  const handleSyncModels = async () => {
+    await syncModels()
   }
 
   if (!canOpen) return null
@@ -405,11 +419,14 @@ function SyzygyConsole() {
                   type="button"
                   className="button ghost"
                   onClick={handleRefreshModels}
-                  disabled={modelsLoading}
+                  disabled={modelsLoading || syncStatus === 'syncing'}
                 >
                   {modelsLoading ? '刷新中...' : '刷新模型列表'}
                 </button>
               </div>
+              {syncStatus === 'success' && syncMessage ? (
+                <p className="notice success">{syncMessage}</p>
+              ) : null}
               <label className="field">
                 <span>
                   Temperature{' '}
@@ -549,7 +566,9 @@ function SyzygyConsole() {
                 </div>
               </div>
               {syncStatus === 'success' ? (
-                <p className="notice success">同步完成。</p>
+                <p className="notice success">
+                  {syncMessage ?? '同步完成。'}
+                </p>
               ) : null}
               {syncStatus === 'error' && syncError ? (
                 <p className="notice error">{syncError}</p>
