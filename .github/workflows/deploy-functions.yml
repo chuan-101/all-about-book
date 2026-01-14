@@ -35,8 +35,8 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Deploy Edge Function
-        run: supabase functions deploy openrouter-chat --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" --no-verify-jwt
+      - name: Deploy Edge Functions
+        run: supabase functions deploy openrouter-chat sync-openrouter-models --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

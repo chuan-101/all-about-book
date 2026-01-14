@@ -64,6 +64,7 @@ function SyzygyConsole() {
     'idle' | 'syncing' | 'success' | 'error'
   >('idle')
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
   const [catalogQuery, setCatalogQuery] = useState('')
   const [draft, setDraft] = useState<SyzygyDraft>(() =>
@@ -187,7 +188,7 @@ function SyzygyConsole() {
         maxTokens: clamp(
           asNumber(data?.max_tokens) ?? defaults.maxTokens,
           32,
-          1200,
+          4000,
         ),
         model: data?.model ?? defaults.model,
       })
@@ -231,14 +232,10 @@ function SyzygyConsole() {
     if (syncStatus !== 'success') return
     const timer = window.setTimeout(() => {
       setSyncStatus('idle')
+      setSyncMessage(null)
     }, 2800)
     return () => window.clearTimeout(timer)
   }, [syncStatus])
-
-  const handleRefreshModels = async () => {
-    if (modelsLoading) return
-    await loadModels()
-  }
 
   const handleRestoreDefaults = () => {
     setDraft(buildDraftFromDefaults())
@@ -289,7 +286,7 @@ function SyzygyConsole() {
         system_prompt: trimmedPrompt ? trimmedPrompt : null,
         temperature: clamp(draft.temperature, 0, 2),
         top_p: clamp(draft.topP, 0, 1),
-        max_tokens: clamp(draft.maxTokens, 32, 1200),
+        max_tokens: clamp(draft.maxTokens, 32, 4000),
         model: draft.model || null,
         updated_at: new Date().toISOString(),
       }
@@ -308,10 +305,11 @@ function SyzygyConsole() {
     }
   }
 
-  const handleSyncModels = async () => {
+  const syncModels = async () => {
     if (!supabase || !session || syncStatus === 'syncing') return
     setSyncStatus('syncing')
     setSyncError(null)
+    setSyncMessage(null)
     try {
       const { data, error } = await supabase.functions.invoke(
         'sync-openrouter-models',
@@ -320,10 +318,17 @@ function SyzygyConsole() {
       if (error) {
         throw error
       }
+      const total =
+        typeof data?.total === 'number'
+          ? data.total
+          : typeof data?.count === 'number'
+            ? data.count
+            : 0
       const syncedAt = data?.syncedAt
         ? new Date(data.syncedAt).toLocaleString()
         : new Date().toLocaleString()
       setLastSyncedAt(syncedAt)
+      setSyncMessage(`Synced ${total} models`)
       setSyncStatus('success')
       await Promise.all([loadCatalog(), loadModels()])
     } catch (error) {
@@ -331,6 +336,15 @@ function SyzygyConsole() {
       setSyncStatus('error')
       setSyncError('同步失败，请稍后再试。')
     }
+  }
+
+  const handleRefreshModels = async () => {
+    if (modelsLoading || syncStatus === 'syncing') return
+    await syncModels()
+  }
+
+  const handleSyncModels = async () => {
+    await syncModels()
   }
 
   if (!canOpen) return null
@@ -405,11 +419,14 @@ function SyzygyConsole() {
                   type="button"
                   className="button ghost"
                   onClick={handleRefreshModels}
-                  disabled={modelsLoading}
+                  disabled={modelsLoading || syncStatus === 'syncing'}
                 >
                   {modelsLoading ? '刷新中...' : '刷新模型列表'}
                 </button>
               </div>
+              {syncStatus === 'success' && syncMessage ? (
+                <p className="notice success">{syncMessage}</p>
+              ) : null}
               <label className="field">
                 <span>
                   Temperature{' '}
@@ -465,7 +482,7 @@ function SyzygyConsole() {
                 <input
                   type="number"
                   min={32}
-                  max={1200}
+                  max={4000}
                   value={draft.maxTokens}
                   onChange={(event) =>
                     setDraft((current) => ({
@@ -474,13 +491,13 @@ function SyzygyConsole() {
                         Number.parseInt(event.target.value, 10) ||
                           SYZYGY_DEFAULTS.maxTokens,
                         32,
-                        1200,
+                        4000,
                       ),
                     }))
                   }
                 />
                 <small className="muted">
-                  建议范围 32–1200，避免响应过长。
+                  建议范围 32–4000，避免响应过长。
                 </small>
               </label>
               <label className="field">
@@ -549,7 +566,9 @@ function SyzygyConsole() {
                 </div>
               </div>
               {syncStatus === 'success' ? (
-                <p className="notice success">同步完成。</p>
+                <p className="notice success">
+                  {syncMessage ?? '同步完成。'}
+                </p>
               ) : null}
               {syncStatus === 'error' && syncError ? (
                 <p className="notice error">{syncError}</p>
