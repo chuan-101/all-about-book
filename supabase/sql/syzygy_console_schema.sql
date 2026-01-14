@@ -44,15 +44,3 @@ create policy "openrouter_models_manage"
   for all
   using (auth.role() = 'authenticated')
   with check (auth.role() = 'authenticated');
-
-insert into public.openrouter_models (id, label, enabled, sort_order)
-values
-  ('openai/gpt-4o-mini', 'GPT-4o Mini', true, 0),
-  ('openai/gpt-4o', 'GPT-4o', true, 1),
-  ('anthropic/claude-3.5-sonnet', 'Claude 3.5 Sonnet', true, 2)
-on conflict (id) do update
-set
-  label = excluded.label,
-  enabled = excluded.enabled,
-  sort_order = excluded.sort_order,
-  updated_at = now();

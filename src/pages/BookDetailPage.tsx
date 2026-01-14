@@ -342,8 +342,10 @@ function BookDetailPage() {
         {
           role: 'syzygy',
           content: data.assistantReply,
-          usedModel: data.usedModel,
-          usedTemperature: data.usedTemperature,
+          metadata: {
+            model: data.usedModel,
+            temperature: data.usedTemperature,
+          },
         },
       ])
       await refreshCloud()
@@ -828,14 +830,16 @@ function BookDetailPage() {
                     </p>
                     <p>{message.content}</p>
                     {message.role === 'syzygy' &&
-                    (message.usedModel ||
-                      typeof message.usedTemperature === 'number') ? (
+                    (message.metadata?.model ||
+                      typeof message.metadata?.temperature ===
+                        'number') ? (
                       <p className="muted syzygy-meta">
-                        {message.usedModel
-                          ? `model=${message.usedModel}`
+                        {message.metadata?.model
+                          ? `model=${message.metadata.model}`
                           : 'model=unknown'}
-                        {typeof message.usedTemperature === 'number'
-                          ? `, temp=${message.usedTemperature.toFixed(1)}`
+                        {typeof message.metadata?.temperature ===
+                        'number'
+                          ? `, temp=${message.metadata.temperature.toFixed(1)}`
                           : ''}
                       </p>
                     ) : null}
