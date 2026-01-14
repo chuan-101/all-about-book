@@ -473,6 +473,75 @@ textarea {
   margin-left: 0.25rem;
 }
 
+.syzygy-section {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.syzygy-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.syzygy-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.syzygy-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 320px;
+  overflow: auto;
+  padding: 0.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.syzygy-catalog-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.syzygy-catalog-meta {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.syzygy-catalog-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.syzygy-catalog-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.syzygy-catalog-actions {
+  display: flex;
+  align-items: flex-start;
+}
+
 .excerpt-textarea {
   width: 100%;
   min-height: 200px;
