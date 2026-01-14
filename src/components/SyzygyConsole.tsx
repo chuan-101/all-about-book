@@ -188,7 +188,7 @@ function SyzygyConsole() {
         maxTokens: clamp(
           asNumber(data?.max_tokens) ?? defaults.maxTokens,
           32,
-          1200,
+          4000,
         ),
         model: data?.model ?? defaults.model,
       })
@@ -286,7 +286,7 @@ function SyzygyConsole() {
         system_prompt: trimmedPrompt ? trimmedPrompt : null,
         temperature: clamp(draft.temperature, 0, 2),
         top_p: clamp(draft.topP, 0, 1),
-        max_tokens: clamp(draft.maxTokens, 32, 1200),
+        max_tokens: clamp(draft.maxTokens, 32, 4000),
         model: draft.model || null,
         updated_at: new Date().toISOString(),
       }
@@ -482,7 +482,7 @@ function SyzygyConsole() {
                 <input
                   type="number"
                   min={32}
-                  max={1200}
+                  max={4000}
                   value={draft.maxTokens}
                   onChange={(event) =>
                     setDraft((current) => ({
@@ -491,13 +491,13 @@ function SyzygyConsole() {
                         Number.parseInt(event.target.value, 10) ||
                           SYZYGY_DEFAULTS.maxTokens,
                         32,
-                        1200,
+                        4000,
                       ),
                     }))
                   }
                 />
                 <small className="muted">
-                  建议范围 32–1200，避免响应过长。
+                  建议范围 32–4000，避免响应过长。
                 </small>
               </label>
               <label className="field">
