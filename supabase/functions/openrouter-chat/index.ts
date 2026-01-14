@@ -3,6 +3,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.90.0'
 
 type RequestPayload = {
   userMessage?: string
+  bookId?: string
+  attachContext?: boolean
 }
 
 type RateLimitEntry = {
@@ -22,6 +24,13 @@ const DEFAULT_SYSTEM_PROMPT =
   'You are Syzygy, a thoughtful reading companion. Offer concise, friendly insights and questions to deepen understanding.'
 const DEFAULT_TEMPERATURE = 0.7
 const DEFAULT_MAX_TOKENS = 500
+
+const DISCUSSION_LIMIT = 40
+const EXCERPT_LIMIT = 30
+// TODO: Allow configuring discussion/excerpt limits (50-100) via settings.
+const MAX_CONTEXT_CHARS = 60_000
+const MAX_EXCERPT_CHARS = 500
+const MAX_DISCUSSION_CHARS = 400
 
 const MAX_BODY_CHARS = 8000
 const MAX_USER_MESSAGE_CHARS = 4000
@@ -46,6 +55,13 @@ const jsonResponse = (
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
+
+const trimContent = (value: string | null | undefined, maxChars: number) => {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) return ''
+  if (trimmed.length <= maxChars) return trimmed
+  return `${trimmed.slice(0, maxChars - 1).trimEnd()}…`
+}
 
 type SyzygySettingsRow = {
   system_prompt?: string | null
@@ -100,6 +116,133 @@ const fetchEnabledModels = async (
 
   return new Set((data ?? []).map((row) => row.id))
 }
+
+type DiscussionRow = {
+  role: string | null
+  content: string | null
+  created_at: string | null
+  metadata?: Record<string, unknown> | null
+}
+
+type ExcerptRow = {
+  content: string | null
+  page: number | null
+  chapter: string | null
+  created_at: string | null
+}
+
+type BookRow = {
+  title: string | null
+  author: string | null
+}
+
+const fetchBookInfo = async (
+  client: ReturnType<typeof createAuthedClient>,
+  userId: string,
+  bookId: string,
+): Promise<BookRow | null> => {
+  const { data, error } = await client
+    .from('books')
+    .select('title,author')
+    .eq('user_id', userId)
+    .eq('id', bookId)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') {
+    throw error
+  }
+
+  return data ?? null
+}
+
+const fetchDiscussions = async (
+  client: ReturnType<typeof createAuthedClient>,
+  userId: string,
+  bookId: string,
+): Promise<DiscussionRow[]> => {
+  const { data, error } = await client
+    .from('discussions')
+    .select('role,content,created_at,metadata')
+    .eq('user_id', userId)
+    .eq('book_id', bookId)
+    .order('created_at', { ascending: true })
+    .limit(DISCUSSION_LIMIT)
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
+const fetchExcerpts = async (
+  client: ReturnType<typeof createAuthedClient>,
+  userId: string,
+  bookId: string,
+): Promise<ExcerptRow[]> => {
+  const { data, error } = await client
+    .from('excerpts')
+    .select('content,page,chapter,created_at')
+    .eq('user_id', userId)
+    .eq('book_id', bookId)
+    .order('created_at', { ascending: false })
+    .limit(EXCERPT_LIMIT)
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
+const buildContextPack = ({
+  book,
+  excerpts,
+  discussions,
+}: {
+  book: BookRow | null
+  excerpts: ExcerptRow[]
+  discussions: DiscussionRow[]
+}) => {
+  const title = book?.title?.trim() || 'Unknown title'
+  const author = book?.author?.trim() || 'Unknown author'
+  const lines: string[] = [`Book: ${title} / ${author}`]
+
+  lines.push('Recent excerpts:')
+  if (excerpts.length === 0) {
+    lines.push('- No excerpts yet.')
+  } else {
+    excerpts.forEach((excerpt) => {
+      const content = trimContent(excerpt.content, MAX_EXCERPT_CHARS)
+      if (!content) return
+      const metaParts = []
+      if (excerpt.page) metaParts.push(`page ${excerpt.page}`)
+      if (excerpt.chapter) metaParts.push(`chapter ${excerpt.chapter}`)
+      const meta =
+        metaParts.length > 0 ? ` (${metaParts.join(', ')})` : ''
+      lines.push(`- ${content}${meta}`)
+    })
+  }
+
+  lines.push('Recent discussion transcript:')
+  if (discussions.length === 0) {
+    lines.push('- No prior discussion yet.')
+  } else {
+    discussions.forEach((message) => {
+      const content = trimContent(message.content, MAX_DISCUSSION_CHARS)
+      if (!content) return
+      const role = message.role?.trim() || 'unknown'
+      lines.push(`- ${role}: ${content}`)
+    })
+  }
+
+  let contextPack = lines.join('\n')
+  if (contextPack.length > MAX_CONTEXT_CHARS) {
+    contextPack = contextPack.slice(0, MAX_CONTEXT_CHARS)
+  }
+  return contextPack
+}
+
 type AuthResult =
   | {
       userId: string
@@ -277,6 +420,32 @@ serve(async (req) => {
       MAX_MAX_TOKENS,
     )
 
+    const attachContext = payload.attachContext !== false
+    const bookId = payload.bookId?.trim()
+    let contextPack: string | null = null
+
+    if (attachContext && bookId) {
+      try {
+        const [bookInfo, excerpts, discussions] = await Promise.all([
+          fetchBookInfo(supabaseClient, userId, bookId),
+          fetchExcerpts(supabaseClient, userId, bookId),
+          fetchDiscussions(supabaseClient, userId, bookId),
+        ])
+        contextPack = buildContextPack({
+          book: bookInfo,
+          excerpts,
+          discussions,
+        })
+      } catch (error) {
+        console.error('Failed to build context pack', error)
+        return jsonResponse({ error: 'Failed to load context.' }, 500)
+      }
+    }
+
+    const systemPromptWithContext = contextPack
+      ? `${systemPrompt}\n\nContext Pack:\n${contextPack}`
+      : systemPrompt
+
     const response = await fetch(
       'https://openrouter.ai/api/v1/chat/completions',
       {
@@ -292,7 +461,7 @@ serve(async (req) => {
           temperature,
           max_tokens: maxTokens,
           messages: [
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: systemPromptWithContext },
             { role: 'user', content: userMessage },
           ],
         }),
