@@ -434,6 +434,23 @@ textarea {
   color: var(--muted);
 }
 
+.field.checkbox-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.field.checkbox-field span {
+  font-size: 0.9rem;
+}
+
+.field input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+}
+
 .field input,
 .field select,
 .field textarea {

@@ -88,6 +88,7 @@ function BookDetailPage() {
   const [editingContent, setEditingContent] = useState('')
   const [cloudError, setCloudError] = useState<string | null>(null)
   const [isAskingSyzygy, setIsAskingSyzygy] = useState(false)
+  const [attachContext, setAttachContext] = useState(true)
 
   useEffect(() => {
     if (!book || isCloudMode) return
@@ -325,7 +326,11 @@ function BookDetailPage() {
       const { data, error } = await supabase.functions.invoke(
         'openrouter-chat',
         {
-          body: { userMessage: content },
+          body: {
+            userMessage: content,
+            bookId: book.id,
+            attachContext,
+          },
           headers: {
             Authorization: `Bearer ${accessToken}`,
             apikey: supabaseAnonKey,
@@ -859,6 +864,16 @@ function BookDetailPage() {
                 }
                 placeholder="写下你的想法或问题"
               />
+            </label>
+            <label className="field checkbox-field">
+              <input
+                type="checkbox"
+                checked={attachContext}
+                onChange={(event) =>
+                  setAttachContext(event.target.checked)
+                }
+              />
+              <span>附带阅读上下文</span>
             </label>
             <div className="form-actions">
               <button type="submit" className="button primary">
