@@ -145,6 +145,42 @@ const normalizeDiscussion = (
     typeof message.createdAt === 'string' && message.createdAt
       ? message.createdAt
       : now
+  const legacyModel = normalizeOptionalString(
+    (message as Record<string, unknown>).usedModel,
+  )
+  const legacyTemperature = normalizeNumber(
+    (message as Record<string, unknown>).usedTemperature,
+  )
+  const rawMetadata =
+    message.metadata && typeof message.metadata === 'object'
+      ? (message.metadata as Record<string, unknown>)
+      : undefined
+  const metadataModel = normalizeOptionalString(rawMetadata?.model)
+  const metadataTemperature = normalizeNumber(rawMetadata?.temperature)
+  const metadata =
+    rawMetadata && Object.keys(rawMetadata).length
+      ? {
+          ...rawMetadata,
+          model: metadataModel ?? legacyModel,
+          temperature:
+            typeof metadataTemperature === 'number'
+              ? metadataTemperature
+              : legacyTemperature,
+        }
+      : metadataModel || typeof metadataTemperature === 'number'
+        ? {
+            model: metadataModel ?? legacyModel,
+            temperature:
+              typeof metadataTemperature === 'number'
+                ? metadataTemperature
+                : legacyTemperature,
+          }
+        : legacyModel || typeof legacyTemperature === 'number'
+          ? {
+              model: legacyModel,
+              temperature: legacyTemperature,
+            }
+          : undefined
 
   return {
     id: normalizeString(message.id) || crypto.randomUUID(),
@@ -155,8 +191,7 @@ const normalizeDiscussion = (
         : 'me',
     content: normalizeString(message.content),
     createdAt,
-    usedModel: normalizeOptionalString(message.usedModel),
-    usedTemperature: normalizeNumber(message.usedTemperature),
+    metadata,
   }
 }
 

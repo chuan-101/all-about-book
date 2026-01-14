@@ -11,6 +11,32 @@ const normalizeOptionalString = (value: unknown): string | undefined =>
 const normalizeOptionalNumber = (value: unknown): number | undefined =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined
 
+const normalizeMetadata = (
+  value: unknown,
+): DiscussionMessage['metadata'] => {
+  if (!value || typeof value !== 'object') return undefined
+  const record = value as Record<string, unknown>
+  const model = normalizeOptionalString(record.model)
+  const temperature = normalizeOptionalNumber(record.temperature)
+  const rest = Object.fromEntries(
+    Object.entries(record).filter(
+      ([key]) => key !== 'model' && key !== 'temperature',
+    ),
+  )
+  if (
+    !model &&
+    typeof temperature !== 'number' &&
+    Object.keys(rest).length === 0
+  ) {
+    return undefined
+  }
+  return {
+    ...(Object.keys(rest).length ? rest : {}),
+    model,
+    temperature,
+  }
+}
+
 const normalizeMessage = (
   message: Partial<DiscussionMessage>,
 ): DiscussionMessage => {
@@ -19,6 +45,20 @@ const normalizeMessage = (
     typeof message.createdAt === 'string' && message.createdAt
       ? message.createdAt
       : now
+  const legacyModel = normalizeOptionalString(
+    (message as Record<string, unknown>).usedModel,
+  )
+  const legacyTemperature = normalizeOptionalNumber(
+    (message as Record<string, unknown>).usedTemperature,
+  )
+  const metadata =
+    normalizeMetadata(message.metadata) ??
+    (legacyModel || typeof legacyTemperature === 'number'
+      ? {
+          model: legacyModel,
+          temperature: legacyTemperature,
+        }
+      : undefined)
 
   return {
     id: normalizeString(message.id) || crypto.randomUUID(),
@@ -29,8 +69,7 @@ const normalizeMessage = (
         : 'me',
     content: normalizeString(message.content),
     createdAt,
-    usedModel: normalizeOptionalString(message.usedModel),
-    usedTemperature: normalizeOptionalNumber(message.usedTemperature),
+    metadata,
   }
 }
 

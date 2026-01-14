@@ -7,5 +7,6 @@ export interface DiscussionMessage {
   metadata?: {
     model?: string
     temperature?: number
+    [key: string]: unknown
   }
 }
