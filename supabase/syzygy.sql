@@ -2,6 +2,8 @@ create table if not exists public.syzygy_settings (
   user_id uuid primary key references auth.users (id) on delete cascade,
   system_prompt text,
   temperature double precision,
+  top_p double precision,
+  max_tokens integer,
   model text,
   updated_at timestamptz not null default now()
 );
@@ -27,7 +29,7 @@ create policy "syzygy_settings_update_own"
 create table if not exists public.openrouter_models (
   id text primary key,
   label text not null,
-  enabled boolean not null default true,
+  enabled boolean not null default false,
   sort_order integer not null default 0,
   updated_at timestamptz not null default now()
 );

@@ -23,6 +23,7 @@ const DEFAULT_MODEL = 'openai/gpt-4o-mini'
 const DEFAULT_SYSTEM_PROMPT =
   'You are Syzygy, a thoughtful reading companion. Offer concise, friendly insights and questions to deepen understanding.'
 const DEFAULT_TEMPERATURE = 0.7
+const DEFAULT_TOP_P = 0.9
 const DEFAULT_MAX_TOKENS = 500
 
 const DISCUSSION_LIMIT = 40
@@ -66,6 +67,8 @@ const trimContent = (value: string | null | undefined, maxChars: number) => {
 type SyzygySettingsRow = {
   system_prompt?: string | null
   temperature?: number | null
+  top_p?: number | null
+  max_tokens?: number | null
   model?: string | null
 }
 
@@ -88,7 +91,7 @@ const fetchSyzygySettings = async (
 ): Promise<SyzygySettingsRow | null> => {
   const { data, error } = await client
     .from('syzygy_settings')
-    .select('system_prompt,temperature,model')
+    .select('system_prompt,temperature,top_p,max_tokens,model')
     .eq('user_id', userId)
     .maybeSingle()
 
@@ -387,6 +390,11 @@ serve(async (req) => {
       temperature = clamp(settings.temperature, 0, 2)
     }
 
+    let topP = DEFAULT_TOP_P
+    if (typeof settings?.top_p === 'number') {
+      topP = clamp(settings.top_p, 0, 1)
+    }
+
     const desiredModel =
       settings?.model && settings.model.trim()
         ? settings.model.trim()
@@ -415,7 +423,9 @@ serve(async (req) => {
     }
 
     const maxTokens = clamp(
-      DEFAULT_MAX_TOKENS,
+      typeof settings?.max_tokens === 'number'
+        ? settings.max_tokens
+        : DEFAULT_MAX_TOKENS,
       MIN_MAX_TOKENS,
       MAX_MAX_TOKENS,
     )
@@ -459,6 +469,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model,
           temperature,
+          top_p: topP,
           max_tokens: maxTokens,
           messages: [
             { role: 'system', content: systemPromptWithContext },
