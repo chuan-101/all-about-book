@@ -15,6 +15,8 @@ import {
 } from '../lib/excerpts-storage'
 import {
   addMessage,
+  deleteMessage,
+  deleteMessagesByBookId,
   getMessagesByBookId,
 } from '../lib/discussion-storage'
 import type { Excerpt } from '../types/excerpt'
@@ -26,6 +28,8 @@ import {
   createCloudDiscussion,
   createCloudDiscussionMessages,
   createCloudExcerpt,
+  deleteCloudDiscussion,
+  deleteCloudDiscussionsByBook,
   deleteCloudExcerpt,
   toggleCloudCheckIn,
   updateCloudExcerpt,
@@ -78,6 +82,8 @@ function BookDetailPage() {
   const [openExcerptMenuId, setOpenExcerptMenuId] = useState<
     string | null
   >(null)
+  const [openDiscussionMenuId, setOpenDiscussionMenuId] =
+    useState<string | null>(null)
   const [discussionMessages, setDiscussionMessages] = useState<
     DiscussionMessage[]
   >([])
@@ -89,6 +95,10 @@ function BookDetailPage() {
   const [cloudError, setCloudError] = useState<string | null>(null)
   const [isAskingSyzygy, setIsAskingSyzygy] = useState(false)
   const [attachContext, setAttachContext] = useState(true)
+  const [confirmingDiscussion, setConfirmingDiscussion] =
+    useState<DiscussionMessage | null>(null)
+  const [isConfirmingClearDiscussions, setIsConfirmingClearDiscussions] =
+    useState(false)
 
   useEffect(() => {
     if (!book || isCloudMode) return
@@ -432,6 +442,68 @@ function BookDetailPage() {
 
     deleteExcerpt(id)
     refreshExcerpts()
+  }
+
+  const handleRequestDeleteDiscussion = (
+    message: DiscussionMessage,
+  ) => {
+    setConfirmingDiscussion(message)
+    setOpenDiscussionMenuId(null)
+  }
+
+  const handleConfirmDeleteDiscussion = async () => {
+    if (!confirmingDiscussion) return
+    const message = confirmingDiscussion
+    setConfirmingDiscussion(null)
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端讨论。')
+        return
+      }
+      setCloudError(null)
+      try {
+        await deleteCloudDiscussion(
+          session.user.id,
+          message.bookId,
+          message.id,
+        )
+        await refreshCloud()
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端讨论删除失败，请稍后重试。')
+      }
+      return
+    }
+
+    deleteMessage(message.id)
+    refreshDiscussions()
+  }
+
+  const handleRequestClearDiscussions = () => {
+    setIsConfirmingClearDiscussions(true)
+  }
+
+  const handleConfirmClearDiscussions = async () => {
+    if (!book) return
+    setIsConfirmingClearDiscussions(false)
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再同步云端讨论。')
+        return
+      }
+      setCloudError(null)
+      try {
+        await deleteCloudDiscussionsByBook(session.user.id, book.id)
+        await refreshCloud()
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端讨论清空失败，请稍后重试。')
+      }
+      return
+    }
+
+    deleteMessagesByBookId(book.id)
+    refreshDiscussions()
   }
 
   const formatExcerptDate = (value: string) =>
@@ -816,8 +888,20 @@ function BookDetailPage() {
         </div>
         <div className="card stack">
           <div className="card-header">
-            <h3>与 Syzygy 讨论</h3>
-            <span className="muted">{displayDiscussions.length} 条</span>
+            <div>
+              <h3>与 Syzygy 讨论</h3>
+              <span className="muted">
+                {displayDiscussions.length} 条
+              </span>
+            </div>
+            <button
+              type="button"
+              className="button ghost"
+              onClick={handleRequestClearDiscussions}
+              disabled={displayDiscussions.length === 0}
+            >
+              清空本书讨论
+            </button>
           </div>
           <p className="muted">
             后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
@@ -826,31 +910,67 @@ function BookDetailPage() {
             <p className="muted">暂无讨论，先写下你的想法吧。</p>
           ) : (
             <ul className="list">
-              {displayDiscussions.map((message) => (
-                <li key={message.id} className="list-item">
-                  <div className="list-item-main">
-                    <p className="muted">
-                      {formatExcerptDate(message.createdAt)} ·{' '}
-                      {message.role === 'me' ? '我' : 'Syzygy'}
-                    </p>
-                    <p>{message.content}</p>
-                    {message.role === 'syzygy' &&
-                    (message.metadata?.model ||
-                      typeof message.metadata?.temperature ===
-                        'number') ? (
-                      <p className="muted syzygy-meta">
-                        {message.metadata?.model
-                          ? `model=${message.metadata.model}`
-                          : 'model=unknown'}
-                        {typeof message.metadata?.temperature ===
-                        'number'
-                          ? `, temp=${message.metadata.temperature.toFixed(1)}`
-                          : ''}
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
+              {displayDiscussions.map((message) => {
+                const isMenuOpen = openDiscussionMenuId === message.id
+                return (
+                  <li key={message.id} className="list-item">
+                    <div className="list-item-main">
+                      <div>
+                        <p className="muted">
+                          {formatExcerptDate(message.createdAt)} ·{' '}
+                          {message.role === 'me' ? '我' : 'Syzygy'}
+                        </p>
+                        <p>{message.content}</p>
+                        {message.role === 'syzygy' &&
+                        (message.metadata?.model ||
+                          typeof message.metadata?.temperature ===
+                            'number') ? (
+                          <p className="muted syzygy-meta">
+                            {message.metadata?.model
+                              ? `model=${message.metadata.model}`
+                              : 'model=unknown'}
+                            {typeof message.metadata?.temperature ===
+                            'number'
+                              ? `, temp=${message.metadata.temperature.toFixed(1)}`
+                              : ''}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="actions">
+                      <div className="menu">
+                        <button
+                          className="button ghost"
+                          type="button"
+                          aria-haspopup="menu"
+                          aria-expanded={isMenuOpen}
+                          onClick={() =>
+                            setOpenDiscussionMenuId(
+                              isMenuOpen ? null : message.id,
+                            )
+                          }
+                        >
+                          ⋯ 更多
+                        </button>
+                        {isMenuOpen ? (
+                          <div className="menu-panel" role="menu">
+                            <button
+                              className="menu-item danger"
+                              type="button"
+                              role="menuitem"
+                              onClick={() =>
+                                handleRequestDeleteDiscussion(message)
+                              }
+                            >
+                              删除
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           )}
           <form className="form" onSubmit={handleCreateDiscussion}>
@@ -895,6 +1015,88 @@ function BookDetailPage() {
           </form>
         </div>
       </section>
+      {confirmingDiscussion ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="确认删除讨论消息"
+          onClick={() => setConfirmingDiscussion(null)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>删除这条消息？</h4>
+            </header>
+            <div className="stack">
+              <p>删除后将无法恢复。</p>
+              <p className="muted">
+                消息会从{isCloudMode ? '云端' : '本地'}删除。
+              </p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button ghost"
+                autoFocus
+                onClick={() => setConfirmingDiscussion(null)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={handleConfirmDeleteDiscussion}
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {isConfirmingClearDiscussions ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="确认清空本书讨论"
+          onClick={() => setIsConfirmingClearDiscussions(false)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>清空本书讨论？</h4>
+            </header>
+            <div className="stack">
+              <p>
+                将删除《{book.title}》的全部讨论消息。
+              </p>
+              <p className="muted">此操作无法撤销。</p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button ghost"
+                autoFocus
+                onClick={() => setIsConfirmingClearDiscussions(false)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={handleConfirmClearDiscussions}
+              >
+                确认清空
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <section className="print-view">
         <header className="print-header">
           <p className="print-eyebrow">书籍详情</p>
