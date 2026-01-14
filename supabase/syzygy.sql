@@ -45,12 +45,6 @@ create policy "openrouter_models_manage"
   using (auth.role() = 'authenticated')
   with check (auth.role() = 'authenticated');
 
-alter table public.discussions
-  add column if not exists used_model text;
-
-alter table public.discussions
-  add column if not exists used_temperature double precision;
-
 insert into public.openrouter_models (id, label, enabled, sort_order)
 values
   ('openai/gpt-4o-mini', 'GPT-4o Mini', true, 0),
