@@ -16,6 +16,22 @@ const asNumber = (value: unknown): number | undefined =>
 const asOptionalString = (value: unknown): string | undefined =>
   typeof value === 'string' && value ? value : undefined
 
+const asMetadata = (
+  value: unknown,
+): { model?: string; temperature?: number } | undefined => {
+  if (!value || typeof value !== 'object') return undefined
+  const record = value as Record<string, unknown>
+  const model = asOptionalString(record.model)
+  const temperature = asNumber(record.temperature)
+  if (!model && typeof temperature !== 'number') {
+    return undefined
+  }
+  return {
+    model,
+    temperature,
+  }
+}
+
 const asProgress = (value: unknown): Book['progress'] => {
   if (!value || typeof value !== 'object') return undefined
   const record = value as Record<string, unknown>
@@ -100,8 +116,7 @@ const normalizeDiscussion = (row: SupabaseRow): DiscussionMessage => {
     role: row.role === 'syzygy' ? 'syzygy' : 'me',
     content: asString(row.content),
     createdAt,
-    usedModel: asOptionalString(row.used_model ?? row.usedModel),
-    usedTemperature: asNumber(row.used_temperature ?? row.usedTemperature),
+    metadata: asMetadata(row.metadata),
   }
 }
 
