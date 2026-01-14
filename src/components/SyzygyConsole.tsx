@@ -26,6 +26,20 @@ const clamp = (value: number, min: number, max: number) =>
 const asNumber = (value: unknown): number | undefined =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined
 
+const MISSING_TABLE_MESSAGE =
+  'Table missing: openrouter_models/syzygy_settings. Run SQL schema in Supabase.'
+
+const isMissingTableError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false
+  const status =
+    'status' in error && typeof error.status === 'number'
+      ? error.status
+      : undefined
+  const code =
+    'code' in error && typeof error.code === 'string' ? error.code : undefined
+  return status === 404 || code === '42P01'
+}
+
 function SyzygyConsole() {
   const { isCloudMode, session } = useAppData()
   const [isOpen, setIsOpen] = useState(false)
@@ -69,9 +83,16 @@ function SyzygyConsole() {
           label: row.label,
         })) ?? []
       setModels(nextModels)
+      if (nextModels.length === 0) {
+        setModelsError('No enabled models. Add rows in openrouter_models.')
+      }
     } catch (error) {
       console.error('Failed to load openrouter models', error)
-      setModelsError('无法加载模型列表，请稍后重试。')
+      if (isMissingTableError(error)) {
+        setModelsError(MISSING_TABLE_MESSAGE)
+      } else {
+        setModelsError('无法加载模型列表，请稍后重试。')
+      }
     } finally {
       setModelsLoading(false)
     }
@@ -103,7 +124,11 @@ function SyzygyConsole() {
       })
     } catch (error) {
       console.error('Failed to load syzygy settings', error)
-      setSettingsError('无法加载 Syzygy 设置，请稍后重试。')
+      if (isMissingTableError(error)) {
+        setSettingsError(MISSING_TABLE_MESSAGE)
+      } else {
+        setSettingsError('无法加载 Syzygy 设置，请稍后重试。')
+      }
       setDraft(buildDraftFromDefaults())
     }
   }, [session])
