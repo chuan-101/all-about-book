@@ -178,16 +178,23 @@ serve(async (req) => {
     )
 
     const now = new Date().toISOString()
+    const fetchedLabelFor = (model: OpenRouterModel) =>
+      model.display_name || model.name || model.id
+    let inserted = 0
+    let updated = 0
+
     const upserts = models.map((model) => {
       const existing = existingMap.get(model.id)
-      const label =
-        existing?.label ||
-        model.display_name ||
-        model.name ||
-        model.id
+      if (existing) {
+        updated += 1
+      } else {
+        inserted += 1
+      }
+
+      const existingLabel = existing?.label?.trim()
       return {
         id: model.id,
-        label,
+        label: existingLabel ? existingLabel : fetchedLabelFor(model),
         enabled: existing?.enabled ?? false,
         sort_order: existing?.sortOrder ?? 0,
         updated_at: now,
@@ -204,7 +211,9 @@ serve(async (req) => {
 
     return jsonResponse({
       ok: true,
-      count: upserts.length,
+      inserted,
+      updated,
+      total: upserts.length,
       syncedAt: now,
     })
   } catch (error) {
