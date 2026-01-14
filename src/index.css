@@ -574,7 +574,7 @@ textarea {
 
 .excerpt-modal {
   width: min(760px, 100%);
-  max-height: calc(100vh - 3rem);
+  max-height: 85vh;
   background: var(--card);
   border-radius: 16px;
   border: 1px solid var(--border);
@@ -589,6 +589,14 @@ textarea {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+
+.excerpt-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .excerpt-modal-header h4 {
@@ -914,7 +922,7 @@ textarea {
 
   .excerpt-modal {
     width: 100%;
-    max-height: calc(100vh - 1.5rem);
+    max-height: 85vh;
     border-radius: 16px 16px 12px 12px;
     padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   }
