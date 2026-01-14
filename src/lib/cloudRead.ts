@@ -160,7 +160,7 @@ export const fetchExcerpts = async (_user: User): Promise<Excerpt[]> => {
   const { data, error } = await client
     .from('excerpts')
     .select('*')
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
 
   if (error) {
     throw error
