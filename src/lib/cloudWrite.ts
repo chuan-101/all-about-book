@@ -208,3 +208,37 @@ export const createCloudDiscussionMessages = async (
     throw error
   }
 }
+
+export const deleteCloudDiscussion = async (
+  userId: string,
+  bookId: string,
+  messageId: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('discussions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('book_id', bookId)
+    .eq('id', messageId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const deleteCloudDiscussionsByBook = async (
+  userId: string,
+  bookId: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('discussions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('book_id', bookId)
+
+  if (error) {
+    throw error
+  }
+}

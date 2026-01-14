@@ -116,6 +116,13 @@ export const deleteMessage = (id: string): void => {
   saveDiscussions(messages)
 }
 
+export const deleteMessagesByBookId = (bookId: string): void => {
+  const messages = getDiscussions().filter(
+    (message) => message.bookId !== bookId,
+  )
+  saveDiscussions(messages)
+}
+
 export const updateMessage = (
   id: string,
   content: string,
