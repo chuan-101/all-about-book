@@ -24,7 +24,7 @@ const DEFAULT_SYSTEM_PROMPT =
   'You are Syzygy, a thoughtful reading companion. Offer concise, friendly insights and questions to deepen understanding.'
 const DEFAULT_TEMPERATURE = 0.7
 const DEFAULT_TOP_P = 0.9
-const DEFAULT_MAX_TOKENS = 500
+const DEFAULT_MAX_TOKENS = 2000
 
 const DISCUSSION_LIMIT = 40
 const EXCERPT_LIMIT = 30
@@ -35,7 +35,7 @@ const MAX_DISCUSSION_CHARS = 400
 
 const MAX_BODY_CHARS = 8000
 const MAX_USER_MESSAGE_CHARS = 4000
-const MAX_MAX_TOKENS = 1200
+const MAX_MAX_TOKENS = 4000
 const MIN_MAX_TOKENS = 32
 
 const RATE_LIMIT_WINDOW_MS = 60_000

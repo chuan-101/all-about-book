@@ -64,6 +64,7 @@ function SyzygyConsole() {
     'idle' | 'syncing' | 'success' | 'error'
   >('idle')
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
   const [catalogQuery, setCatalogQuery] = useState('')
   const [draft, setDraft] = useState<SyzygyDraft>(() =>
@@ -187,7 +188,7 @@ function SyzygyConsole() {
         maxTokens: clamp(
           asNumber(data?.max_tokens) ?? defaults.maxTokens,
           32,
-          1200,
+          4000,
         ),
         model: data?.model ?? defaults.model,
       })
@@ -206,6 +207,15 @@ function SyzygyConsole() {
     if (!isOpen) return
     void Promise.all([loadModels(), loadSettings(), loadCatalog()])
   }, [isOpen, loadModels, loadSettings, loadCatalog])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!models.length) return
@@ -231,14 +241,10 @@ function SyzygyConsole() {
     if (syncStatus !== 'success') return
     const timer = window.setTimeout(() => {
       setSyncStatus('idle')
+      setSyncMessage(null)
     }, 2800)
     return () => window.clearTimeout(timer)
   }, [syncStatus])
-
-  const handleRefreshModels = async () => {
-    if (modelsLoading) return
-    await loadModels()
-  }
 
   const handleRestoreDefaults = () => {
     setDraft(buildDraftFromDefaults())
@@ -289,7 +295,7 @@ function SyzygyConsole() {
         system_prompt: trimmedPrompt ? trimmedPrompt : null,
         temperature: clamp(draft.temperature, 0, 2),
         top_p: clamp(draft.topP, 0, 1),
-        max_tokens: clamp(draft.maxTokens, 32, 1200),
+        max_tokens: clamp(draft.maxTokens, 32, 4000),
         model: draft.model || null,
         updated_at: new Date().toISOString(),
       }
@@ -308,10 +314,11 @@ function SyzygyConsole() {
     }
   }
 
-  const handleSyncModels = async () => {
+  const syncModels = async () => {
     if (!supabase || !session || syncStatus === 'syncing') return
     setSyncStatus('syncing')
     setSyncError(null)
+    setSyncMessage(null)
     try {
       const { data, error } = await supabase.functions.invoke(
         'sync-openrouter-models',
@@ -320,10 +327,17 @@ function SyzygyConsole() {
       if (error) {
         throw error
       }
+      const total =
+        typeof data?.total === 'number'
+          ? data.total
+          : typeof data?.count === 'number'
+            ? data.count
+            : 0
       const syncedAt = data?.syncedAt
         ? new Date(data.syncedAt).toLocaleString()
         : new Date().toLocaleString()
       setLastSyncedAt(syncedAt)
+      setSyncMessage(`Synced ${total} models`)
       setSyncStatus('success')
       await Promise.all([loadCatalog(), loadModels()])
     } catch (error) {
@@ -331,6 +345,15 @@ function SyzygyConsole() {
       setSyncStatus('error')
       setSyncError('同步失败，请稍后再试。')
     }
+  }
+
+  const handleRefreshModels = async () => {
+    if (modelsLoading || syncStatus === 'syncing') return
+    await syncModels()
+  }
+
+  const handleSyncModels = async () => {
+    await syncModels()
   }
 
   if (!canOpen) return null
@@ -368,274 +391,286 @@ function SyzygyConsole() {
                 关闭
               </button>
             </div>
-            {settingsError ? (
-              <p className="notice error">{settingsError}</p>
-            ) : null}
-            {modelsError ? (
-              <p className="notice error">{modelsError}</p>
-            ) : null}
-            <div className="form">
-              <label className="field">
-                <span>模型</span>
-                <select
-                  value={draft.model}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      model: event.target.value,
-                    }))
-                  }
-                  disabled={modelsLoading}
-                >
-                  {models.length === 0 ? (
-                    <option value={draft.model}>
-                      {modelsLoading ? '加载中...' : selectedModelLabel}
-                    </option>
-                  ) : (
-                    models.map((model) => (
-                      <option key={model.id} value={model.id}>
-                        {model.label} ({model.id})
+            <div className="excerpt-modal-body">
+              {settingsError ? (
+                <p className="notice error">{settingsError}</p>
+              ) : null}
+              {modelsError ? (
+                <p className="notice error">{modelsError}</p>
+              ) : null}
+              <div className="form">
+                <label className="field">
+                  <span>模型</span>
+                  <select
+                    value={draft.model}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        model: event.target.value,
+                      }))
+                    }
+                    disabled={modelsLoading}
+                  >
+                    {models.length === 0 ? (
+                      <option value={draft.model}>
+                        {modelsLoading ? '加载中...' : selectedModelLabel}
                       </option>
-                    ))
-                  )}
-                </select>
-              </label>
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="button ghost"
-                  onClick={handleRefreshModels}
-                  disabled={modelsLoading}
-                >
-                  {modelsLoading ? '刷新中...' : '刷新模型列表'}
-                </button>
-              </div>
-              <label className="field">
-                <span>
-                  Temperature{' '}
-                  <strong className="syzygy-temp-value">
-                    {draft.temperature.toFixed(1)}
-                  </strong>
-                </span>
-                <input
-                  type="range"
-                  min={0}
-                  max={2}
-                  step={0.1}
-                  value={draft.temperature}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      temperature: clamp(
-                        Number.parseFloat(event.target.value),
-                        0,
-                        2,
-                      ),
-                    }))
-                  }
-                />
-              </label>
-              <label className="field">
-                <span>
-                  Top P{' '}
-                  <strong className="syzygy-temp-value">
-                    {draft.topP.toFixed(2)}
-                  </strong>
-                </span>
-                <input
-                  type="range"
-                  min={0.1}
-                  max={1}
-                  step={0.01}
-                  value={draft.topP}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      topP: clamp(
-                        Number.parseFloat(event.target.value),
-                        0,
-                        1,
-                      ),
-                    }))
-                  }
-                />
-              </label>
-              <label className="field">
-                <span>Max tokens</span>
-                <input
-                  type="number"
-                  min={32}
-                  max={1200}
-                  value={draft.maxTokens}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      maxTokens: clamp(
-                        Number.parseInt(event.target.value, 10) ||
-                          SYZYGY_DEFAULTS.maxTokens,
-                        32,
-                        1200,
-                      ),
-                    }))
-                  }
-                />
-                <small className="muted">
-                  建议范围 32–1200，避免响应过长。
-                </small>
-              </label>
-              <label className="field">
-                <span>系统提示词</span>
-                <textarea
-                  className="syzygy-textarea"
-                  rows={6}
-                  value={draft.systemPrompt}
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      systemPrompt: event.target.value,
-                    }))
-                  }
-                  placeholder="输入 Syzygy 系统提示词（可留空使用默认值）"
-                />
-              </label>
-            </div>
-            <div className="form-actions">
-              <button
-                type="button"
-                className="button primary"
-                onClick={handleSave}
-                disabled={saveStatus === 'saving'}
-              >
-                {saveStatus === 'saving' ? '保存中...' : '保存'}
-              </button>
-              <button
-                type="button"
-                className="button ghost"
-                onClick={handleRestoreDefaults}
-              >
-                恢复默认值
-              </button>
-              {saveStatus === 'saved' ? (
-                <span className="muted">已保存。</span>
-              ) : null}
-              {saveStatus === 'error' ? (
-                <span className="notice error">
-                  保存失败，请稍后再试。
-                </span>
-              ) : null}
-            </div>
-            <section className="syzygy-section">
-              <div className="syzygy-section-header">
-                <div>
-                  <h5>Model Catalog</h5>
-                  <p className="muted">
-                    同步 OpenRouter 模型，并管理可用模型列表。
-                  </p>
-                </div>
-                <div className="syzygy-section-actions">
+                    ) : (
+                      models.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.label} ({model.id})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </label>
+                <div className="form-actions">
                   <button
                     type="button"
                     className="button ghost"
-                    onClick={handleSyncModels}
-                    disabled={syncStatus === 'syncing'}
+                    onClick={handleRefreshModels}
+                    disabled={modelsLoading || syncStatus === 'syncing'}
                   >
-                    {syncStatus === 'syncing'
-                      ? '同步中...'
-                      : 'Sync from OpenRouter'}
+                    {modelsLoading ? '刷新中...' : '刷新模型列表'}
                   </button>
-                  {lastSyncedAt ? (
-                    <span className="muted">上次同步：{lastSyncedAt}</span>
-                  ) : null}
                 </div>
+                {syncStatus === 'success' && syncMessage ? (
+                  <p className="notice success">{syncMessage}</p>
+                ) : null}
+                <label className="field">
+                  <span>
+                    Temperature{' '}
+                    <strong className="syzygy-temp-value">
+                      {draft.temperature.toFixed(1)}
+                    </strong>
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={2}
+                    step={0.1}
+                    value={draft.temperature}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        temperature: clamp(
+                          Number.parseFloat(event.target.value),
+                          0,
+                          2,
+                        ),
+                      }))
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>
+                    Top P{' '}
+                    <strong className="syzygy-temp-value">
+                      {draft.topP.toFixed(2)}
+                    </strong>
+                  </span>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={1}
+                    step={0.01}
+                    value={draft.topP}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        topP: clamp(
+                          Number.parseFloat(event.target.value),
+                          0,
+                          1,
+                        ),
+                      }))
+                    }
+                  />
+                </label>
+                <label className="field">
+                  <span>Max tokens</span>
+                  <input
+                    type="number"
+                    min={32}
+                    max={4000}
+                    value={draft.maxTokens}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        maxTokens: clamp(
+                          Number.parseInt(event.target.value, 10) ||
+                            SYZYGY_DEFAULTS.maxTokens,
+                          32,
+                          4000,
+                        ),
+                      }))
+                    }
+                  />
+                  <small className="muted">
+                    建议范围 32–4000，避免响应过长。
+                  </small>
+                </label>
+                <label className="field">
+                  <span>系统提示词</span>
+                  <textarea
+                    className="syzygy-textarea"
+                    rows={6}
+                    value={draft.systemPrompt}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        systemPrompt: event.target.value,
+                      }))
+                    }
+                    placeholder="输入 Syzygy 系统提示词（可留空使用默认值）"
+                  />
+                </label>
               </div>
-              {syncStatus === 'success' ? (
-                <p className="notice success">同步完成。</p>
-              ) : null}
-              {syncStatus === 'error' && syncError ? (
-                <p className="notice error">{syncError}</p>
-              ) : null}
-              <label className="field">
-                <span>搜索模型</span>
-                <input
-                  type="search"
-                  placeholder="输入模型名称或 ID"
-                  value={catalogQuery}
-                  onChange={(event) => setCatalogQuery(event.target.value)}
-                />
-              </label>
-              <div className="syzygy-catalog">
-                {catalogLoading ? (
-                  <p className="muted">加载模型目录中...</p>
-                ) : filteredCatalog.length === 0 ? (
-                  <p className="muted">暂无模型记录。</p>
-                ) : (
-                  filteredCatalog.map((entry) => (
-                    <div key={entry.id} className="syzygy-catalog-row">
-                      <div className="syzygy-catalog-meta">
-                        <div className="syzygy-catalog-title">
-                          <strong>{entry.label}</strong>
-                          <span className="muted">{entry.id}</span>
-                        </div>
-                        <div className="syzygy-catalog-fields">
-                          <label className="field checkbox-field">
-                            <input
-                              type="checkbox"
-                              checked={entry.enabled}
-                              onChange={(event) =>
-                                handleCatalogUpdate(entry.id, {
-                                  enabled: event.target.checked,
-                                })
-                              }
-                            />
-                            <span>启用</span>
-                          </label>
-                          <label className="field">
-                            <span>显示名称</span>
-                            <input
-                              type="text"
-                              value={entry.label}
-                              onChange={(event) =>
-                                handleCatalogUpdate(entry.id, {
-                                  label: event.target.value,
-                                })
-                              }
-                            />
-                          </label>
-                          <label className="field">
-                            <span>排序</span>
-                            <input
-                              type="number"
-                              value={entry.sortOrder}
-                              onChange={(event) =>
-                                handleCatalogUpdate(entry.id, {
-                                  sortOrder: Number.isNaN(
-                                    Number.parseInt(event.target.value, 10),
-                                  )
-                                    ? 0
-                                    : Number.parseInt(
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="button primary"
+                  onClick={handleSave}
+                  disabled={saveStatus === 'saving'}
+                >
+                  {saveStatus === 'saving' ? '保存中...' : '保存'}
+                </button>
+                <button
+                  type="button"
+                  className="button ghost"
+                  onClick={handleRestoreDefaults}
+                >
+                  恢复默认值
+                </button>
+                {saveStatus === 'saved' ? (
+                  <span className="muted">已保存。</span>
+                ) : null}
+                {saveStatus === 'error' ? (
+                  <span className="notice error">
+                    保存失败，请稍后再试。
+                  </span>
+                ) : null}
+              </div>
+              <section className="syzygy-section">
+                <div className="syzygy-section-header">
+                  <div>
+                    <h5>Model Catalog</h5>
+                    <p className="muted">
+                      同步 OpenRouter 模型，并管理可用模型列表。
+                    </p>
+                  </div>
+                  <div className="syzygy-section-actions">
+                    <button
+                      type="button"
+                      className="button ghost"
+                      onClick={handleSyncModels}
+                      disabled={syncStatus === 'syncing'}
+                    >
+                      {syncStatus === 'syncing'
+                        ? '同步中...'
+                        : 'Sync from OpenRouter'}
+                    </button>
+                    {lastSyncedAt ? (
+                      <span className="muted">上次同步：{lastSyncedAt}</span>
+                    ) : null}
+                  </div>
+                </div>
+                {syncStatus === 'success' ? (
+                  <p className="notice success">
+                    {syncMessage ?? '同步完成。'}
+                  </p>
+                ) : null}
+                {syncStatus === 'error' && syncError ? (
+                  <p className="notice error">{syncError}</p>
+                ) : null}
+                <label className="field">
+                  <span>搜索模型</span>
+                  <input
+                    type="search"
+                    placeholder="输入模型名称或 ID"
+                    value={catalogQuery}
+                    onChange={(event) =>
+                      setCatalogQuery(event.target.value)
+                    }
+                  />
+                </label>
+                <div className="syzygy-catalog">
+                  {catalogLoading ? (
+                    <p className="muted">加载模型目录中...</p>
+                  ) : filteredCatalog.length === 0 ? (
+                    <p className="muted">暂无模型记录。</p>
+                  ) : (
+                    filteredCatalog.map((entry) => (
+                      <div key={entry.id} className="syzygy-catalog-row">
+                        <div className="syzygy-catalog-meta">
+                          <div className="syzygy-catalog-title">
+                            <strong>{entry.label}</strong>
+                            <span className="muted">{entry.id}</span>
+                          </div>
+                          <div className="syzygy-catalog-fields">
+                            <label className="field checkbox-field">
+                              <input
+                                type="checkbox"
+                                checked={entry.enabled}
+                                onChange={(event) =>
+                                  handleCatalogUpdate(entry.id, {
+                                    enabled: event.target.checked,
+                                  })
+                                }
+                              />
+                              <span>启用</span>
+                            </label>
+                            <label className="field">
+                              <span>显示名称</span>
+                              <input
+                                type="text"
+                                value={entry.label}
+                                onChange={(event) =>
+                                  handleCatalogUpdate(entry.id, {
+                                    label: event.target.value,
+                                  })
+                                }
+                              />
+                            </label>
+                            <label className="field">
+                              <span>排序</span>
+                              <input
+                                type="number"
+                                value={entry.sortOrder}
+                                onChange={(event) =>
+                                  handleCatalogUpdate(entry.id, {
+                                    sortOrder: Number.isNaN(
+                                      Number.parseInt(
                                         event.target.value,
                                         10,
                                       ),
-                                })
-                              }
-                            />
-                          </label>
+                                    )
+                                      ? 0
+                                      : Number.parseInt(
+                                          event.target.value,
+                                          10,
+                                        ),
+                                  })
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        <div className="syzygy-catalog-actions">
+                          <button
+                            type="button"
+                            className="button ghost"
+                            onClick={() => handleCatalogSave(entry)}
+                          >
+                            保存
+                          </button>
                         </div>
                       </div>
-                      <div className="syzygy-catalog-actions">
-                        <button
-                          type="button"
-                          className="button ghost"
-                          onClick={() => handleCatalogSave(entry)}
-                        >
-                          保存
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
+                    ))
+                  )}
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       ) : null}
