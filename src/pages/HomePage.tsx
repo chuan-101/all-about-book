@@ -24,11 +24,12 @@ function HomePage() {
   const currentYear = new Date().getFullYear()
   const todayLabel = useMemo(
     () =>
-      new Date().toLocaleDateString('zh-CN', {
-        month: 'numeric',
-        day: 'numeric',
-        weekday: 'short',
-      }),
+      new Date()
+        .toLocaleDateString('en-US', {
+          month: 'short',
+          day: '2-digit',
+        })
+        .toUpperCase(),
     [],
   )
 
@@ -103,8 +104,10 @@ function HomePage() {
     <section className="stack">
       <div className="page-header dashboard-header">
         <div className="dashboard-header-text">
-          <span className="dashboard-date">{todayLabel}</span>
-          <h1 className="dashboard-title">仪表盘</h1>
+          <div className="dashboard-heading">
+            <span className="dashboard-date">{todayLabel}</span>
+            <span className="dashboard-subtitle">仪表盘</span>
+          </div>
           <p className="muted">
             记录你的阅读进度，管理你的书架。
           </p>
@@ -121,6 +124,7 @@ function HomePage() {
           <span aria-hidden="true">📚</span>
         </Link>
       </div>
+      <div className="dashboard-divider" role="presentation" />
 
       <div className="stats-grid">
         <div className="card stat">

@@ -60,25 +60,28 @@ function Layout({ onOpenSettings }: LayoutProps) {
             </div>
           </div>
           <div className="header-actions">
+            <div className="header-actions-spacer" />
             <nav className="nav">
               <NavLink to="/" end>
                 首页
               </NavLink>
               <NavLink to="/books">书架</NavLink>
             </nav>
-            {session ? (
-              <button
-                type="button"
-                className="button ghost top-nav-button"
-                onClick={() => signOut()}
-              >
-                退出登录
-              </button>
-            ) : (
-              <NavLink className="button ghost top-nav-button" to="/login">
-                登录
-              </NavLink>
-            )}
+            <div className="header-actions-right">
+              {session ? (
+                <button
+                  type="button"
+                  className="button ghost top-nav-button"
+                  onClick={() => signOut()}
+                >
+                  退出登录
+                </button>
+              ) : (
+                <NavLink className="button ghost top-nav-button" to="/login">
+                  登录
+                </NavLink>
+              )}
+            </div>
           </div>
         </div>
       </header>
