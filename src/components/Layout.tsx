@@ -44,7 +44,6 @@ function Layout({ onOpenSettings }: LayoutProps) {
       <header className="header">
         <div className="container header-content">
           <div>
-            <p className="eyebrow">阅读记录</p>
             <h1 className="title">我的读书追踪器</h1>
           </div>
           <div className="header-actions">

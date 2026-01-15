@@ -196,13 +196,43 @@ textarea {
   gap: 0.35rem;
 }
 
-.dashboard-title {
-  margin: 0;
+.dashboard-date {
+  font-size: 0.8rem;
+  opacity: 0.6;
 }
 
-.button.compact {
-  padding: 0.4rem 0.85rem;
-  font-size: 0.9rem;
+.dashboard-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-primary);
+  box-shadow: none;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: transform var(--transition-speed),
+    box-shadow var(--transition-speed),
+    background-color var(--transition-speed);
+}
+
+.icon-btn:hover {
+  background: var(--color-bg-main);
+  box-shadow: var(--box-shadow-btn);
+}
+
+.icon-btn:active {
+  transform: translateY(1px);
 }
 
 .section-title {
@@ -1152,6 +1182,7 @@ textarea {
   .main {
     padding-bottom: calc(140px + env(safe-area-inset-bottom));
     margin-bottom: 80px;
+    padding-top: 1.5rem;
   }
 
   .header-content {
