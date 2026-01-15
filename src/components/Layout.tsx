@@ -6,14 +6,15 @@ import SyzygyConsole from './SyzygyConsole'
 import ThemeToggle from './ThemeToggle'
 import UpdatePrompt from './UpdatePrompt'
 
-function Layout() {
+type LayoutProps = {
+  onOpenSettings: () => void
+}
+
+function Layout({ onOpenSettings }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isConsoleOpen, setIsConsoleOpen] = useState(false)
   const {
-    dataSource,
-    setDataSource,
-    canUseCloud,
     isCloudMode,
     session,
     authWarning,
@@ -36,18 +37,6 @@ function Layout() {
       navigate('/books')
       return
     }
-    if (tab === 'settings') {
-      window.alert('设置功能即将推出。')
-    }
-  }
-
-  const handleSelectSource = (source: 'local' | 'cloud') => {
-    if (source === 'cloud' && !session) {
-      setDataSource('cloud')
-      navigate('/login')
-      return
-    }
-    setDataSource(source)
   }
 
   return (
@@ -121,6 +110,7 @@ function Layout() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onOpenConsole={() => setIsConsoleOpen(true)}
+        onOpenSettings={onOpenSettings}
       />
     </div>
   )
