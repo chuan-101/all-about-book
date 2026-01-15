@@ -1,6 +1,5 @@
 :root {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    sans-serif;
+  font-family: var(--font-family);
   line-height: 1.5;
   font-weight: 400;
   color: var(--text);
@@ -18,7 +17,10 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: var(--texture-overlay);
+  background-repeat: repeat;
+  background-size: 240px 240px;
   overflow-x: hidden;
 }
 
@@ -143,10 +145,10 @@ textarea {
 
 .card {
   background: var(--card);
-  border-radius: 16px;
+  border-radius: var(--border-radius);
   padding: 1.5rem;
   border: 1px solid var(--border);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--box-shadow-out);
 }
 
 .card-header {
@@ -418,12 +420,13 @@ textarea {
 
 .button {
   border: none;
-  border-radius: 999px;
+  border-radius: var(--border-radius);
   padding: 0.5rem 1rem;
   cursor: pointer;
   font-weight: 600;
   background: var(--bg);
   color: var(--text);
+  box-shadow: var(--box-shadow-out);
 }
 
 .button.primary {
@@ -434,6 +437,7 @@ textarea {
 .button.ghost {
   background: transparent;
   border: 1px solid var(--border);
+  box-shadow: none;
 }
 
 .button.danger {
@@ -441,11 +445,16 @@ textarea {
   color: #b42318;
 }
 
+.button:active {
+  box-shadow: var(--box-shadow-in);
+  transform: translateY(1px);
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--border-radius);
   background: #e0ecff;
   color: #175cd3;
   font-size: 0.75rem;
@@ -516,9 +525,39 @@ textarea {
 .field select,
 .field textarea {
   padding: 0.6rem 0.75rem;
-  border-radius: 10px;
+  border-radius: var(--border-radius);
   border: 1px solid var(--border);
   background: var(--card);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--box-shadow-out);
+  cursor: pointer;
+}
+
+.theme-toggle-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.theme-toggle-current {
+  font-size: 0.9rem;
+}
+
+.theme-toggle:active {
+  box-shadow: var(--box-shadow-in);
+  transform: translateY(1px);
 }
 
 .syzygy-textarea {

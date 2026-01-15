@@ -1,0 +1,44 @@
+:root {
+  --bg-primary: #f4e4c1;
+  --text-primary: #4a3b2a;
+  --accent-color: #d95e40;
+  --font-family: 'Times New Roman', 'Noto Serif SC', serif;
+  --texture-overlay: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=');
+  --border-radius: 2px;
+  --box-shadow-out: 0 6px 16px rgba(74, 59, 42, 0.18);
+  --box-shadow-in: inset 2px 2px 6px rgba(74, 59, 42, 0.2);
+  --bg: var(--bg-primary);
+  --text: var(--text-primary);
+  --accent: var(--accent-color);
+  --card: #fff2d9;
+  --muted: #7a6755;
+  --border: #e3cfa8;
+}
+
+:root[data-theme='showa'] {
+  --bg-primary: #f4e4c1;
+  --text-primary: #4a3b2a;
+  --accent-color: #d95e40;
+  --font-family: 'Times New Roman', 'Noto Serif SC', serif;
+  --texture-overlay: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=');
+  --border-radius: 2px;
+  --box-shadow-out: 0 6px 16px rgba(74, 59, 42, 0.18);
+  --box-shadow-in: inset 2px 2px 6px rgba(74, 59, 42, 0.2);
+  --card: #fff2d9;
+  --muted: #7a6755;
+  --border: #e3cfa8;
+}
+
+:root[data-theme='retro'] {
+  --bg-primary: #e0e5ec;
+  --text-primary: #2d3436;
+  --accent-color: #6c5ce7;
+  --font-family: 'Courier New', 'JetBrains Mono', monospace;
+  --texture-overlay: none;
+  --border-radius: 12px;
+  --box-shadow-out: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
+  --box-shadow-in: inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff;
+  --card: #f2f5f9;
+  --muted: #636e72;
+  --border: #cfd4dd;
+}

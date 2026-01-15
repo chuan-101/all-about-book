@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAppData } from '../lib/app-context'
 import SyzygyConsole from './SyzygyConsole'
+import ThemeToggle from './ThemeToggle'
 import UpdatePrompt from './UpdatePrompt'
 
 function Layout() {
@@ -35,6 +36,7 @@ function Layout() {
             <h1 className="title">我的读书追踪器</h1>
           </div>
           <div className="header-actions">
+            <ThemeToggle />
             <nav className="nav">
               <NavLink to="/" end>
                 首页
