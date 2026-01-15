@@ -77,9 +77,15 @@ interface BottomNavProps {
   activeTab: string
   onTabChange: (tab: string) => void
   onOpenConsole: () => void
+  onOpenSettings: () => void
 }
 
-function BottomNav({ activeTab, onTabChange, onOpenConsole }: BottomNavProps) {
+function BottomNav({
+  activeTab,
+  onTabChange,
+  onOpenConsole,
+  onOpenSettings,
+}: BottomNavProps) {
   return (
     <nav className="bottom-nav" aria-label="Primary">
       <button
@@ -121,7 +127,7 @@ function BottomNav({ activeTab, onTabChange, onOpenConsole }: BottomNavProps) {
         type="button"
         className="bottom-nav-item"
         aria-label="Settings"
-        onClick={() => onTabChange('settings')}
+        onClick={onOpenSettings}
       >
         <span className="bottom-nav-icon">
           <SettingsIcon />

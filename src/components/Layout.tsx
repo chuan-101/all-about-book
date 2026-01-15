@@ -6,14 +6,15 @@ import SyzygyConsole from './SyzygyConsole'
 import ThemeToggle from './ThemeToggle'
 import UpdatePrompt from './UpdatePrompt'
 
-function Layout() {
+type LayoutProps = {
+  onOpenSettings: () => void
+}
+
+function Layout({ onOpenSettings }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [isConsoleOpen, setIsConsoleOpen] = useState(false)
   const {
-    dataSource,
-    setDataSource,
-    canUseCloud,
     isCloudMode,
     session,
     authWarning,
@@ -36,18 +37,6 @@ function Layout() {
       navigate('/books')
       return
     }
-    if (tab === 'settings') {
-      window.alert('设置功能即将推出。')
-    }
-  }
-
-  const handleSelectSource = (source: 'local' | 'cloud') => {
-    if (source === 'cloud' && !session) {
-      setDataSource('cloud')
-      navigate('/login')
-      return
-    }
-    setDataSource(source)
   }
 
   return (
@@ -66,28 +55,6 @@ function Layout() {
               </NavLink>
               <NavLink to="/books">书架</NavLink>
             </nav>
-            <div className="data-source">
-              <span className="muted">数据来源：</span>
-              <button
-                type="button"
-                className={`chip${dataSource === 'local' ? '' : ' ghost'}`}
-                onClick={() => handleSelectSource('local')}
-              >
-                本地
-              </button>
-              <button
-                type="button"
-                className={`chip${dataSource === 'cloud' ? '' : ' ghost'}`}
-                onClick={() => handleSelectSource('cloud')}
-                disabled={!canUseCloud}
-              >
-                云端
-              </button>
-            </div>
-            <SyzygyConsole
-              isOpen={isConsoleOpen}
-              onOpenChange={setIsConsoleOpen}
-            />
             {session ? (
               <button
                 type="button"
@@ -104,6 +71,10 @@ function Layout() {
           </div>
         </div>
       </header>
+      <SyzygyConsole
+        isOpen={isConsoleOpen}
+        onOpenChange={setIsConsoleOpen}
+      />
       <main className="container main">
         <UpdatePrompt />
         {authWarning ? (
@@ -121,6 +92,7 @@ function Layout() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onOpenConsole={() => setIsConsoleOpen(true)}
+        onOpenSettings={onOpenSettings}
       />
     </div>
   )
