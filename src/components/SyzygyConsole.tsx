@@ -3,6 +3,11 @@ import { useAppData } from '../lib/app-context'
 import { SYZYGY_DEFAULTS } from '../lib/syzygyDefaults'
 import { supabase } from '../lib/supabaseClient'
 
+interface SyzygyConsoleProps {
+  isOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
 type ModelOption = {
   id: string
   label: string
@@ -51,9 +56,17 @@ const isMissingTableError = (error: unknown): boolean => {
   return status === 404 || code === '42P01'
 }
 
-function SyzygyConsole() {
+function SyzygyConsole({ isOpen: controlledOpen, onOpenChange }: SyzygyConsoleProps) {
   const { isCloudMode, session } = useAppData()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpenInternal, setIsOpenInternal] = useState(false)
+  const isControlled = typeof controlledOpen === 'boolean'
+  const isOpen = isControlled ? controlledOpen : isOpenInternal
+  const setIsOpen = (open: boolean) => {
+    if (!isControlled) {
+      setIsOpenInternal(open)
+    }
+    onOpenChange?.(open)
+  }
   const [models, setModels] = useState<ModelOption[]>([])
   const [catalog, setCatalog] = useState<ModelCatalogEntry[]>([])
   const [catalogLoading, setCatalogLoading] = useState(false)

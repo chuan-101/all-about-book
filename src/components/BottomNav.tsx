@@ -1,5 +1,3 @@
-import { NavLink } from 'react-router-dom'
-
 const HomeIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path
@@ -75,36 +73,44 @@ const SettingsIcon = () => (
   </svg>
 )
 
-function BottomNav() {
+interface BottomNavProps {
+  activeTab: string
+  onTabChange: (tab: string) => void
+  onOpenConsole: () => void
+}
+
+function BottomNav({ activeTab, onTabChange, onOpenConsole }: BottomNavProps) {
   return (
     <nav className="bottom-nav" aria-label="Primary">
-      <NavLink
-        to="/"
-        end
-        className={({ isActive }) =>
-          `bottom-nav-item${isActive ? ' active' : ''}`
-        }
+      <button
+        type="button"
+        className={`bottom-nav-item${activeTab === 'home' ? ' active' : ''}`}
+        aria-current={activeTab === 'home' ? 'page' : undefined}
+        onClick={() => onTabChange('home')}
       >
         <span className="bottom-nav-icon">
           <HomeIcon />
         </span>
         <span className="bottom-nav-label">首页</span>
-      </NavLink>
-      <NavLink
-        to="/books"
-        className={({ isActive }) =>
-          `bottom-nav-item${isActive ? ' active' : ''}`
-        }
+      </button>
+      <button
+        type="button"
+        className={`bottom-nav-item${
+          activeTab === 'bookshelf' ? ' active' : ''
+        }`}
+        aria-current={activeTab === 'bookshelf' ? 'page' : undefined}
+        onClick={() => onTabChange('bookshelf')}
       >
         <span className="bottom-nav-icon">
           <BookIcon />
         </span>
         <span className="bottom-nav-label">书架</span>
-      </NavLink>
+      </button>
       <button
         type="button"
         className="bottom-nav-item"
         aria-label="Syzygy Console"
+        onClick={onOpenConsole}
       >
         <span className="bottom-nav-icon">
           <ConsoleIcon />
@@ -115,6 +121,7 @@ function BottomNav() {
         type="button"
         className="bottom-nav-item"
         aria-label="Settings"
+        onClick={() => onTabChange('settings')}
       >
         <span className="bottom-nav-icon">
           <SettingsIcon />

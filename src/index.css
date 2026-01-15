@@ -120,7 +120,7 @@ textarea {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 30;
+  z-index: 1000;
   justify-content: space-around;
   align-items: center;
   min-height: var(--tabbar-h);
@@ -1071,13 +1071,13 @@ textarea {
   columns: 2;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .container {
     padding: 0 1rem;
   }
 
   .main {
-    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
   }
 
   .header-content {
