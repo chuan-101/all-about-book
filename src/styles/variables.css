@@ -1,44 +1,54 @@
 :root {
-  --bg-primary: #f4e4c1;
-  --text-primary: #4a3b2a;
-  --accent-color: #d95e40;
-  --font-family: 'Times New Roman', 'Noto Serif SC', serif;
-  --texture-overlay: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=');
-  --border-radius: 2px;
-  --box-shadow-out: 0 6px 16px rgba(74, 59, 42, 0.18);
-  --box-shadow-in: inset 2px 2px 6px rgba(74, 59, 42, 0.2);
-  --bg: var(--bg-primary);
-  --text: var(--text-primary);
-  --accent: var(--accent-color);
-  --card: #fff2d9;
-  --muted: #7a6755;
-  --border: #e3cfa8;
+  --font-sans: 'Inter', sans-serif;
+  --transition-speed: 0.2s ease-in-out;
+  --box-shadow-input: none;
 }
 
-:root[data-theme='showa'] {
-  --bg-primary: #f4e4c1;
-  --text-primary: #4a3b2a;
-  --accent-color: #d95e40;
-  --font-family: 'Times New Roman', 'Noto Serif SC', serif;
-  --texture-overlay: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=');
-  --border-radius: 2px;
-  --box-shadow-out: 0 6px 16px rgba(74, 59, 42, 0.18);
-  --box-shadow-in: inset 2px 2px 6px rgba(74, 59, 42, 0.2);
-  --card: #fff2d9;
-  --muted: #7a6755;
-  --border: #e3cfa8;
+/* === THEME A: Showa Cafe (Refined) === */
+[data-theme="retro-cafe"] {
+  --color-bg-main: #f0e6d2;
+  --color-bg-card: #f9f3e6;
+  --color-bg-input: #e8dac3;
+  --color-text-primary: #3d2b1f;
+  --color-text-secondary: #735c49;
+
+  /* Accents: Matcha Green & Faded Red */
+  --color-accent-primary: #a84a32;
+  --color-accent-secondary: #4f6f5e;
+  --color-border: #d4c5b0;
+
+  --border-radius-card: 4px;
+  --border-radius-btn: 2px;
+  --box-shadow-card: 1px 2px 4px rgba(61, 43, 31, 0.1);
+  --box-shadow-btn: none;
+
+  /* Noise Texture */
+  --bg-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  --font-family-base: 'Noto Serif SC', serif;
 }
 
-:root[data-theme='retro'] {
-  --bg-primary: #e0e5ec;
-  --text-primary: #2d3436;
-  --accent-color: #6c5ce7;
-  --font-family: 'Courier New', 'JetBrains Mono', monospace;
-  --texture-overlay: none;
-  --border-radius: 12px;
-  --box-shadow-out: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff;
-  --box-shadow-in: inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff;
-  --card: #f2f5f9;
-  --muted: #636e72;
-  --border: #cfd4dd;
+/* === THEME B: Retro Key Box (Claymorphism) === */
+/* Reference: Soft beige ceramic, deep inner shadows, warm gold accent */
+[data-theme="retro-keyboard"] {
+  --color-bg-main: #eeeee6;
+  --color-bg-card: #eeeee6;
+  --color-bg-input: #e4e4dc;
+  --color-text-primary: #333333;
+  --color-text-secondary: #666666;
+
+  --color-accent-primary: #e6c35c;
+  --color-accent-secondary: #333333;
+  --color-border: transparent;
+
+  --border-radius-card: 20px;
+  --border-radius-btn: 12px;
+
+  /* CLAY EFFECTS */
+  --box-shadow-card: 12px 12px 24px #d1d1c7, -12px -12px 24px #ffffff;
+  --box-shadow-btn: 6px 6px 12px #d1d1c7, -6px -6px 12px #ffffff;
+  /* Deep Inner Shadow for inputs/lists */
+  --box-shadow-input: inset 6px 6px 12px #d1d1c7, inset -6px -6px 12px #ffffff;
+
+  --bg-texture: none;
+  --font-family-base: 'JetBrains Mono', monospace;
 }
