@@ -1223,6 +1223,10 @@ textarea {
     padding: 0.75rem;
   }
 
+  .settings-modal {
+  max-height: calc(75vh - 80px);
+  }
+  
   .excerpt-modal {
   width: 100%;
   max-height: calc(75vh - 80px);
