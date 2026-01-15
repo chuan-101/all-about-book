@@ -1078,6 +1078,7 @@ textarea {
 
   .main {
     padding-bottom: calc(140px + env(safe-area-inset-bottom));
+    margin-bottom: 80px;
   }
 
   .header-content {
