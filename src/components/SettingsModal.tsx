@@ -11,6 +11,7 @@ import {
 } from '../lib/backup'
 import { fetchCloudBackupPayload } from '../lib/cloudExport'
 import { supabase } from '../lib/supabaseClient'
+import ThemeToggle from './ThemeToggle'
 
 type SettingsModalProps = {
   isOpen: boolean
@@ -432,6 +433,16 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               >
                 云端
               </button>
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <div>
+              <h4>主题外观</h4>
+              <p className="muted">在这里切换应用主题。</p>
+            </div>
+            <div className="actions">
+              <ThemeToggle />
             </div>
           </div>
 

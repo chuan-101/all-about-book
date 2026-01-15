@@ -1282,86 +1282,115 @@ function BookDetailPage() {
           <p className="muted">
             后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
           </p>
-          {displayDiscussions.length === 0 && !isStreamingReply ? (
-            <p className="muted">暂无讨论，先写下你的想法吧。</p>
-          ) : (
-            <ul className="list">
-              {displayDiscussions.map((message) => {
-                const isMenuOpen = openDiscussionMenuId === message.id
-                return (
-                  <li key={message.id} className="list-item">
-                    <div className="list-item-main">
-                      <div>
-                        <p className="muted">
-                          {formatExcerptDate(message.createdAt)} ·{' '}
-                          {message.role === 'me' ? '我' : 'Syzygy'}
-                        </p>
-                        <p>{message.content}</p>
-                        {message.role === 'syzygy' &&
-                        (message.metadata?.model ||
-                          typeof message.metadata?.temperature ===
-                            'number') ? (
-                          <p className="muted syzygy-meta">
-                            {message.metadata?.model
-                              ? `model=${message.metadata.model}`
-                              : 'model=unknown'}
-                            {typeof message.metadata?.temperature ===
-                            'number'
-                              ? `, temp=${message.metadata.temperature.toFixed(1)}`
-                              : ''}
-                          </p>
+          <div className="chat-window">
+            {displayDiscussions.length === 0 && !isStreamingReply ? (
+              <p className="muted chat-empty">
+                暂无讨论，先写下你的想法吧。
+              </p>
+            ) : (
+              <ul className="chat-list">
+                {displayDiscussions.map((message) => {
+                  const isMenuOpen = openDiscussionMenuId === message.id
+                  const isMine = message.role === 'me'
+                  const metadataTitle =
+                    message.role === 'syzygy' &&
+                    (message.metadata?.model ||
+                      typeof message.metadata?.temperature === 'number')
+                      ? `model=${
+                          message.metadata?.model ?? 'unknown'
+                        }${typeof message.metadata?.temperature === 'number'
+                          ? `, temp=${message.metadata.temperature.toFixed(1)}`
+                          : ''}`
+                      : undefined
+
+                  return (
+                    <li
+                      key={message.id}
+                      className={`chat-item ${isMine ? 'mine' : 'theirs'}`}
+                    >
+                      <div className="chat-message">
+                        {!isMine ? (
+                          <span className="chat-avatar" aria-hidden="true">
+                            S
+                          </span>
                         ) : null}
-                      </div>
-                    </div>
-                    <div className="actions">
-                      <div className="menu">
-                        <button
-                          className="button ghost"
-                          type="button"
-                          aria-haspopup="menu"
-                          aria-expanded={isMenuOpen}
-                          onClick={() =>
-                            setOpenDiscussionMenuId(
-                              isMenuOpen ? null : message.id,
-                            )
-                          }
-                        >
-                          ⋯ 更多
-                        </button>
-                        {isMenuOpen ? (
-                          <div className="menu-panel" role="menu">
-                            <button
-                              className="menu-item danger"
-                              type="button"
-                              role="menuitem"
-                              onClick={() =>
-                                handleRequestDeleteDiscussion(message)
-                              }
-                            >
-                              删除
-                            </button>
+                        <div className="chat-body">
+                          <div className="chat-bubble">
+                            <p>{message.content}</p>
                           </div>
-                        ) : null}
+                          <div className="chat-meta">
+                            <span className="chat-timestamp">
+                              {formatExcerptDate(message.createdAt)}
+                            </span>
+                            {metadataTitle ? (
+                              <span
+                                className="chat-info"
+                                title={metadataTitle}
+                                aria-label="模型信息"
+                              >
+                                ℹ︎
+                              </span>
+                            ) : null}
+                            <div className="menu">
+                              <button
+                                className="button ghost"
+                                type="button"
+                                aria-haspopup="menu"
+                                aria-expanded={isMenuOpen}
+                                onClick={() =>
+                                  setOpenDiscussionMenuId(
+                                    isMenuOpen ? null : message.id,
+                                  )
+                                }
+                              >
+                                ⋯ 更多
+                              </button>
+                              {isMenuOpen ? (
+                                <div className="menu-panel" role="menu">
+                                  <button
+                                    className="menu-item danger"
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() =>
+                                      handleRequestDeleteDiscussion(message)
+                                    }
+                                  >
+                                    删除
+                                  </button>
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  )
+                })}
+                {isStreamingReply ? (
+                  <li className="chat-item theirs">
+                    <div className="chat-message">
+                      <span className="chat-avatar" aria-hidden="true">
+                        S
+                      </span>
+                      <div className="chat-body">
+                        <div className="chat-bubble">
+                          <p>{streamedReply || '生成中...'}</p>
+                        </div>
+                        <div className="chat-meta">
+                          <span className="chat-timestamp">
+                            {new Date().toLocaleString('zh-CN')}
+                          </span>
+                          <span className="chat-info" title="生成中...">
+                            ℹ︎
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </li>
-                )
-              })}
-              {isStreamingReply ? (
-                <li className="list-item">
-                  <div className="list-item-main">
-                    <div>
-                      <p className="muted">
-                        {new Date().toLocaleString('zh-CN')} · Syzygy
-                      </p>
-                      <p>{streamedReply || '生成中...'}</p>
-                      <p className="muted syzygy-meta">生成中...</p>
-                    </div>
-                  </div>
-                </li>
-              ) : null}
-            </ul>
-          )}
+                ) : null}
+              </ul>
+            )}
+          </div>
           <form className="form" onSubmit={handleCreateDiscussion}>
             <label className="field">
               <span>我的想法</span>
