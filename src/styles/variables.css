@@ -13,7 +13,8 @@
   --color-text-secondary: #735c49;
 
   /* Accents: Matcha Green & Faded Red */
-  --color-accent-primary: #a84a32;
+  --color-accent-primary: #b36a58;
+  --color-accent-hover: #9a5848;
   --color-accent-secondary: #4f6f5e;
   --color-border: #d4c5b0;
 
@@ -25,6 +26,12 @@
   /* Noise Texture */
   --bg-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
   --font-family-base: 'Noto Serif SC', serif;
+
+  /* Contribution Graph Colors (Coffee/Matcha stains) */
+  --color-graph-l1: #e0d0b0;
+  --color-graph-l2: #c7b299;
+  --color-graph-l3: #a89078;
+  --color-graph-l4: #735c49;
 }
 
 /* === THEME B: Retro Key Box (Claymorphism) === */
@@ -44,11 +51,17 @@
   --border-radius-btn: 12px;
 
   /* CLAY EFFECTS */
-  --box-shadow-card: 12px 12px 24px #d1d1c7, -12px -12px 24px #ffffff;
-  --box-shadow-btn: 6px 6px 12px #d1d1c7, -6px -6px 12px #ffffff;
+  --box-shadow-card: 12px 12px 20px #d1d1c7, -10px -10px 20px #fffff2;
+  --box-shadow-btn: 6px 6px 10px #d1d1c7, -5px -5px 10px #fffff2;
   /* Deep Inner Shadow for inputs/lists */
-  --box-shadow-input: inset 6px 6px 12px #d1d1c7, inset -6px -6px 12px #ffffff;
+  --box-shadow-input: inset 6px 6px 12px #d1d1c7, inset -6px -6px 12px #ebebe4;
 
   --bg-texture: none;
   --font-family-base: 'JetBrains Mono', monospace;
+
+  /* Contribution Graph Colors (Warm Gold Glow) */
+  --color-graph-l1: #f3ebd7;
+  --color-graph-l2: #eedc9a;
+  --color-graph-l3: #e6c35c;
+  --color-graph-l4: #cfa840;
 }

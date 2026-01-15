@@ -869,15 +869,36 @@ textarea {
   width: var(--heatmap-cell-size);
   height: var(--heatmap-cell-size);
   border-radius: 4px;
-  background: var(--color-border);
+  background: var(--color-graph-l1, var(--color-border));
 }
 
 .heatmap-cell.active {
-  background: var(--color-accent-primary);
+  background: var(--color-graph-l3, var(--color-accent-primary));
 }
 
 .heatmap-cell.empty {
   background: transparent;
+}
+
+/* Contribution heatmap theming (react-calendar-heatmap compatibility) */
+.react-calendar-heatmap .color-empty {
+  fill: var(--color-bg-input);
+}
+
+.react-calendar-heatmap .color-scale-1 {
+  fill: var(--color-graph-l1);
+}
+
+.react-calendar-heatmap .color-scale-2 {
+  fill: var(--color-graph-l2);
+}
+
+.react-calendar-heatmap .color-scale-3 {
+  fill: var(--color-graph-l3);
+}
+
+.react-calendar-heatmap .color-scale-4 {
+  fill: var(--color-graph-l4);
 }
 
 .print-view {
