@@ -85,15 +85,24 @@ function BookForm({
   }
 
   return (
-    <form className="card form" onSubmit={handleSubmit}>
+    <form className="card form book-form" onSubmit={handleSubmit}>
       <div className="form-grid">
-        <label className="field">
+        <label className="field form-group-title">
           <span>书名 *</span>
           <input
             name="title"
             value={values.title}
             onChange={handleChange}
             required
+          />
+        </label>
+        <label className="field form-group-cover">
+          <span>封面链接</span>
+          <input
+            name="cover"
+            value={values.cover}
+            onChange={handleChange}
+            placeholder="https://..."
           />
         </label>
         <label className="field">
@@ -121,15 +130,6 @@ function BookForm({
               </option>
             ))}
           </select>
-        </label>
-        <label className="field">
-          <span>封面链接</span>
-          <input
-            name="cover"
-            value={values.cover}
-            onChange={handleChange}
-            placeholder="https://..."
-          />
         </label>
         <label className="field">
           <span>开始日期</span>

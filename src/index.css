@@ -61,17 +61,48 @@ textarea {
 }
 
 .header {
-  background: var(--color-bg-card);
+  background: var(--color-bg-main);
   border-bottom: 1px solid var(--color-border);
   padding-top: env(safe-area-inset-top);
 }
 
 .header-content {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 1.25rem;
   padding: 1.5rem 0;
+}
+
+.header-masthead {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) auto minmax(80px, 1fr);
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-masthead-left {
+  justify-self: start;
+}
+
+.header-masthead-center {
+  text-align: center;
+}
+
+.header-masthead-right {
+  justify-self: end;
+}
+
+.header-date {
+  font-family: 'Playfair Display', 'Noto Serif SC', 'Songti SC', serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.header-settings {
+  width: 38px;
+  height: 38px;
 }
 
 .header-actions {
@@ -84,6 +115,9 @@ textarea {
 .title {
   margin: 0.25rem 0 0;
   font-size: 1.5rem;
+  font-family: 'Playfair Display', 'Noto Serif SC', 'Songti SC', serif;
+  font-style: italic;
+  font-weight: 700;
 }
 
 .eyebrow {
@@ -637,11 +671,26 @@ textarea {
   gap: 1rem;
 }
 
+.book-form .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.book-form .form-group-title,
+.book-form .form-group-cover {
+  grid-column: span 2;
+}
+
 .field {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   font-weight: 600;
+}
+
+.book-form .field span {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
 }
 
 .field span {
@@ -677,6 +726,12 @@ textarea {
   color: var(--color-text-primary);
   transition: box-shadow var(--transition-speed),
     background-color var(--transition-speed);
+}
+
+.book-form .field input,
+.book-form .field select {
+  padding: 8px 12px;
+  font-size: 0.95rem;
 }
 
 .theme-toggle {
@@ -1186,18 +1241,7 @@ textarea {
   }
 
   .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1rem 0;
-  }
-
-  .header-actions {
-    display: none;
-  }
-
-  .title {
-    display: none;
+    padding: 1.25rem 0;
   }
 
   .bottom-nav {
