@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import BottomNav from './BottomNav'
 import { useAppData } from '../lib/app-context'
 import SyzygyConsole from './SyzygyConsole'
 import ThemeToggle from './ThemeToggle'
@@ -91,6 +92,7 @@ function Layout() {
         ) : null}
         <Outlet />
       </main>
+      <BottomNav />
     </div>
   )
 }

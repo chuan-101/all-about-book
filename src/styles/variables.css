@@ -11,6 +11,7 @@
   --color-bg-input: #e8dac3;
   --color-text-primary: #3d2b1f;
   --color-text-secondary: #735c49;
+  --color-text-muted: #9b8572;
 
   /* Accents: Matcha Green & Faded Red */
   --color-accent-primary: #b36a58;
@@ -42,6 +43,7 @@
   --color-bg-input: #e4e4dc;
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
+  --color-text-muted: #8b8b8b;
 
   --color-accent-primary: #e6c35c;
   --color-accent-secondary: #333333;
