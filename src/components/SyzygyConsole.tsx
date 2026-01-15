@@ -375,7 +375,7 @@ function SyzygyConsole({ isOpen: controlledOpen, onOpenChange }: SyzygyConsolePr
     <>
       <button
         type="button"
-        className="button ghost"
+        className="button ghost top-nav-button"
         onClick={() => setIsOpen(true)}
         aria-haspopup="dialog"
       >
