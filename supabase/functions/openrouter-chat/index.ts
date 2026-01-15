@@ -5,6 +5,7 @@ type RequestPayload = {
   userMessage?: string
   bookId?: string
   attachContext?: boolean
+  stream?: boolean
 }
 
 type RateLimitEntry = {
@@ -471,6 +472,7 @@ serve(async (req) => {
           temperature,
           top_p: topP,
           max_tokens: maxTokens,
+          stream: payload.stream === true,
           messages: [
             { role: 'system', content: systemPromptWithContext },
             { role: 'user', content: userMessage },
@@ -488,6 +490,119 @@ serve(async (req) => {
         return jsonResponse({ error: 'Upstream rate limit reached.' }, 502)
       }
       return jsonResponse({ error: 'Upstream service error.' }, 502)
+    }
+
+    if (payload.stream === true) {
+      const upstream = response.body
+      if (!upstream) {
+        return jsonResponse({ error: 'Upstream stream unavailable.' }, 502)
+      }
+
+      const encoder = new TextEncoder()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let assistantReply = ''
+      let usedModel: string | undefined
+      const requestId =
+        response.headers.get('x-request-id') ?? undefined
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          const reader = upstream.getReader()
+          try {
+            while (true) {
+              const { value, done } = await reader.read()
+              if (done) break
+              buffer += decoder.decode(value, { stream: true })
+              const chunks = buffer.split('\n\n')
+              buffer = chunks.pop() ?? ''
+
+              for (const chunk of chunks) {
+                const lines = chunk.split('\n')
+                let eventType = 'message'
+                const dataLines: string[] = []
+                for (const line of lines) {
+                  if (line.startsWith('event:')) {
+                    eventType = line.slice(6).trim()
+                  } else if (line.startsWith('data:')) {
+                    dataLines.push(line.slice(5).trim())
+                  }
+                }
+                const data = dataLines.join('\n')
+                if (!data) continue
+                if (data === '[DONE]') {
+                  const donePayload = {
+                    assistantReply,
+                    usedModel: usedModel ?? model,
+                    usedTemperature: temperature,
+                    usedTopP: topP,
+                    usedMaxTokens: maxTokens,
+                    requestId,
+                  }
+                  controller.enqueue(
+                    encoder.encode(
+                      `event: done\ndata: ${JSON.stringify(donePayload)}\n\n`,
+                    ),
+                  )
+                  controller.close()
+                  return
+                }
+                try {
+                  const parsed = JSON.parse(data) as {
+                    model?: string
+                    choices?: Array<{ delta?: { content?: string } }>
+                  }
+                  if (!usedModel && parsed.model) {
+                    usedModel = parsed.model
+                  }
+                  const delta =
+                    parsed.choices?.[0]?.delta?.content ?? ''
+                  if (delta) {
+                    assistantReply += delta
+                    controller.enqueue(
+                      encoder.encode(
+                        `event: delta\ndata: ${JSON.stringify({ delta })}\n\n`,
+                      ),
+                    )
+                  }
+                } catch (error) {
+                  console.error('Failed to parse stream chunk', error)
+                }
+              }
+            }
+            const donePayload = {
+              assistantReply,
+              usedModel: usedModel ?? model,
+              usedTemperature: temperature,
+              usedTopP: topP,
+              usedMaxTokens: maxTokens,
+              requestId,
+            }
+            controller.enqueue(
+              encoder.encode(
+                `event: done\ndata: ${JSON.stringify(donePayload)}\n\n`,
+              ),
+            )
+            controller.close()
+          } catch (error) {
+            console.error('Stream proxy error', error)
+            controller.error(error)
+          }
+        },
+        cancel() {
+          upstream.cancel()
+        },
+      })
+
+      return new Response(stream, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+        },
+      })
     }
 
     const data = (await response.json()) as {

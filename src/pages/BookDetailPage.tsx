@@ -40,7 +40,11 @@ import {
   getCheckInsByBook,
   toggleCheckIn,
 } from '../lib/reading-sessions-storage'
-import { supabase, supabaseAnonKey } from '../lib/supabaseClient'
+import {
+  supabase,
+  supabaseAnonKey,
+  supabaseUrl,
+} from '../lib/supabaseClient'
 
 const statusLabels = {
   unread: '未读',
@@ -120,6 +124,11 @@ function BookDetailPage() {
     useState<DiscussionMessage | null>(null)
   const [isConfirmingClearDiscussions, setIsConfirmingClearDiscussions] =
     useState(false)
+  const [isStreamEnabled, setIsStreamEnabled] = useState(false)
+  const [streamedReply, setStreamedReply] = useState<string | null>(
+    null,
+  )
+  const [isStreamingReply, setIsStreamingReply] = useState(false)
   const [modelOptions, setModelOptions] = useState<ModelOption[]>([])
   const [modelLoading, setModelLoading] = useState(false)
   const [modelError, setModelError] = useState<string | null>(null)
@@ -133,6 +142,7 @@ function BookDetailPage() {
   const [modelStatusMessage, setModelStatusMessage] = useState<
     string | null
   >(null)
+  const isModelSaving = modelStatus === 'saving'
 
   useEffect(() => {
     if (!book || isCloudMode) return
@@ -148,6 +158,21 @@ function BookDetailPage() {
     if (!book || isCloudMode) return
     setDiscussionMessages(getMessagesByBookId(book.id))
   }, [book, isCloudMode])
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(
+      'syzygyStreamEnabled',
+    )
+    if (stored === null) return
+    setIsStreamEnabled(stored === 'true')
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      'syzygyStreamEnabled',
+      String(isStreamEnabled),
+    )
+  }, [isStreamEnabled])
 
   useEffect(() => {
     if (!isCloudMode) return
@@ -459,7 +484,7 @@ function BookDetailPage() {
       setCloudError('Supabase 配置缺失，请稍后再试。')
       return
     }
-    if (isAskingSyzygy) return
+    if (isAskingSyzygy || isStreamingReply) return
     setCloudError(null)
     setIsAskingSyzygy(true)
     try {
@@ -473,6 +498,108 @@ function BookDetailPage() {
         const suffix = supabaseAnonKey.slice(-4)
         console.debug(`Supabase anon key: ${prefix}...${suffix}`)
       }
+      if (isStreamEnabled) {
+        if (!supabaseUrl) {
+          throw new Error('Supabase configuration is missing.')
+        }
+        const endpoint = `${supabaseUrl}/functions/v1/openrouter-chat`
+        setIsStreamingReply(true)
+        setStreamedReply('')
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: supabaseAnonKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userMessage: content,
+            bookId: book.id,
+            attachContext,
+            stream: true,
+          }),
+        })
+
+        if (!response.ok || !response.body) {
+          throw new Error('Streaming response unavailable.')
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let finalReply = ''
+        let finalModel: string | undefined
+        let finalTemperature: number | undefined
+
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const chunks = buffer.split('\n\n')
+          buffer = chunks.pop() ?? ''
+          for (const chunk of chunks) {
+            const lines = chunk.split('\n')
+            let eventType = 'message'
+            const dataLines: string[] = []
+            for (const line of lines) {
+              if (line.startsWith('event:')) {
+                eventType = line.slice(6).trim()
+              } else if (line.startsWith('data:')) {
+                dataLines.push(line.slice(5).trim())
+              }
+            }
+            const data = dataLines.join('\n')
+            if (!data) continue
+            if (eventType === 'delta') {
+              try {
+                const parsed = JSON.parse(data) as { delta?: string }
+                if (parsed.delta) {
+                  finalReply += parsed.delta
+                  setStreamedReply(finalReply)
+                }
+              } catch (error) {
+                console.error('Failed to parse delta chunk', error)
+              }
+              continue
+            }
+            if (eventType === 'done') {
+              try {
+                const parsed = JSON.parse(data) as {
+                  assistantReply?: string
+                  usedModel?: string
+                  usedTemperature?: number
+                }
+                finalReply = parsed.assistantReply ?? finalReply
+                finalModel = parsed.usedModel
+                finalTemperature = parsed.usedTemperature
+              } catch (error) {
+                console.error('Failed to parse final payload', error)
+              }
+            }
+          }
+        }
+
+        if (!finalReply.trim()) {
+          throw new Error('No assistant reply returned.')
+        }
+
+        await createCloudDiscussionMessages(session.user.id, book.id, [
+          { role: 'me', content },
+          {
+            role: 'syzygy',
+            content: finalReply,
+            metadata: {
+              model: finalModel,
+              temperature: finalTemperature,
+            },
+          },
+        ])
+        await refreshCloud()
+        setNewMessageContent('')
+        setStreamedReply(null)
+        return
+      }
+
       const { data, error } = await supabase.functions.invoke(
         'openrouter-chat',
         {
@@ -516,11 +643,14 @@ function BookDetailPage() {
           : undefined
       if (status === 401 || status === 403) {
         setCloudError('请先登录后再让 Syzygy 回复。')
+        setStreamedReply(null)
         return
       }
       setCloudError('Syzygy 回复失败，请稍后再试。')
+      setStreamedReply(null)
     } finally {
       setIsAskingSyzygy(false)
+      setIsStreamingReply(false)
     }
   }
 
@@ -648,6 +778,7 @@ function BookDetailPage() {
 
   const handleModelSelect = async (modelId: string) => {
     if (!session || !supabase) return
+    if (isModelSaving) return
     if (modelId === selectedModel) {
       setIsModelMenuOpen(false)
       return
@@ -1080,9 +1211,15 @@ function BookDetailPage() {
                       aria-haspopup="listbox"
                       aria-expanded={isModelMenuOpen}
                       onClick={() =>
-                        setIsModelMenuOpen((value) => !value)
+                        setIsModelMenuOpen((value) =>
+                          isModelSaving ? false : !value,
+                        )
                       }
-                      disabled={modelLoading || modelOptions.length === 0}
+                      disabled={
+                        modelLoading ||
+                        modelOptions.length === 0 ||
+                        isModelSaving
+                      }
                     >
                       <span className="model-toggle-label">
                         {modelLoading
@@ -1103,6 +1240,7 @@ function BookDetailPage() {
                             className="menu-item"
                             role="option"
                             aria-selected={model.id === selectedModel}
+                            disabled={isModelSaving}
                             onClick={() => handleModelSelect(model.id)}
                           >
                             <span>{model.label}</span>
@@ -1139,7 +1277,7 @@ function BookDetailPage() {
           <p className="muted">
             后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
           </p>
-          {displayDiscussions.length === 0 ? (
+          {displayDiscussions.length === 0 && !isStreamingReply ? (
             <p className="muted">暂无讨论，先写下你的想法吧。</p>
           ) : (
             <ul className="list">
@@ -1204,6 +1342,19 @@ function BookDetailPage() {
                   </li>
                 )
               })}
+              {isStreamingReply ? (
+                <li className="list-item">
+                  <div className="list-item-main">
+                    <div>
+                      <p className="muted">
+                        {new Date().toLocaleString('zh-CN')} · Syzygy
+                      </p>
+                      <p>{streamedReply || '生成中...'}</p>
+                      <p className="muted syzygy-meta">生成中...</p>
+                    </div>
+                  </div>
+                </li>
+              ) : null}
             </ul>
           )}
           <form className="form" onSubmit={handleCreateDiscussion}>
@@ -1228,6 +1379,16 @@ function BookDetailPage() {
               />
               <span>附带阅读上下文</span>
             </label>
+            <label className="field checkbox-field">
+              <input
+                type="checkbox"
+                checked={isStreamEnabled}
+                onChange={(event) =>
+                  setIsStreamEnabled(event.target.checked)
+                }
+              />
+              <span>流式输出</span>
+            </label>
             <div className="form-actions">
               <button type="submit" className="button primary">
                 发送
@@ -1237,10 +1398,13 @@ function BookDetailPage() {
                 className="button ghost"
                 onClick={handleAskSyzygy}
                 disabled={
-                  !session?.user || !isCloudMode || isAskingSyzygy
+                  !session?.user ||
+                  !isCloudMode ||
+                  isAskingSyzygy ||
+                  isStreamingReply
                 }
               >
-                {isAskingSyzygy
+                {isAskingSyzygy || isStreamingReply
                   ? 'Syzygy 思考中...'
                   : '让 Syzygy 回复'}
               </button>
