@@ -12,7 +12,6 @@ import {
 import { fetchCloudBackupPayload } from '../lib/cloudExport'
 import { supabase } from '../lib/supabaseClient'
 import { getReadingSessions } from '../lib/reading-sessions-storage'
-import { getTheme, setTheme } from '../lib/theme'
 import type { ReadingSession } from '../types/reading-session'
 
 const formatDate = (date: Date) => {
@@ -47,7 +46,6 @@ function HomePage() {
     message: string
   } | null>(null)
   const [migrationLoading, setMigrationLoading] = useState(false)
-  const [theme, setThemeState] = useState(getTheme())
   const currentYear = new Date().getFullYear()
 
   useEffect(() => {
@@ -199,12 +197,6 @@ function HomePage() {
       type: 'success',
       message: 'Markdown 归档已生成。',
     })
-  }
-
-  const handleThemeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextTheme = event.target.value as 'light' | 'paper'
-    setThemeState(nextTheme)
-    setTheme(nextTheme)
   }
 
   const handleExportHtml = async () => {
@@ -624,20 +616,6 @@ function HomePage() {
         {isCloudMode ? (
           <p className="notice info">云端模式下暂不支持导入备份。</p>
         ) : null}
-      </div>
-
-      <div className="card stack">
-        <div className="card-header">
-          <h3>设置</h3>
-        </div>
-        <div className="field">
-          <span>主题</span>
-          <select value={theme} onChange={handleThemeChange}>
-            <option value="light">明亮</option>
-            <option value="paper">纸张</option>
-          </select>
-        </div>
-        <p className="muted">选择主题后会自动保存偏好。</p>
       </div>
 
       {session ? (
