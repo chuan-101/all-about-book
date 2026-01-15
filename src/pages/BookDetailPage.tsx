@@ -1173,11 +1173,11 @@ function BookDetailPage() {
                         </div>
                       )}
                     </div>
-                    <div className="actions">
+                    <div className="excerpt-actions">
                       {isEditing ? (
                         <>
                           <button
-                            className="button primary"
+                            className="button ghost"
                             type="button"
                             onClick={() => handleSaveEdit(excerpt.id)}
                           >
