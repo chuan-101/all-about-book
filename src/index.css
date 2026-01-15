@@ -1134,7 +1134,8 @@ textarea {
   }
 
   .main {
-    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom));
+    margin-bottom: 80px;
   }
 
   .header-content {
@@ -1218,16 +1219,16 @@ textarea {
   }
 
   .excerpt-modal-backdrop {
-    align-items: flex-end;
+    align-items: center;
     padding: 0.75rem;
   }
 
   .excerpt-modal {
-    width: 100%;
-    max-height: 85vh;
-    border-radius: 16px 16px 12px 12px;
-    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
-  }
+  width: 100%;
+  max-height: calc(75vh - 80px);
+  border-radius: 16px;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+}
 
   .calendar-header {
     flex-direction: column;

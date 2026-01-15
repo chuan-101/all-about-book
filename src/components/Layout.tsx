@@ -55,6 +55,24 @@ function Layout({ onOpenSettings }: LayoutProps) {
               </NavLink>
               <NavLink to="/books">书架</NavLink>
             </nav>
+            <div className="data-source">
+              <span className="muted">数据来源：</span>
+              <button
+                type="button"
+                className={`chip${dataSource === 'local' ? '' : ' ghost'}`}
+                onClick={() => handleSelectSource('local')}
+              >
+                本地
+              </button>
+              <button
+                type="button"
+                className={`chip${dataSource === 'cloud' ? '' : ' ghost'}`}
+                onClick={() => handleSelectSource('cloud')}
+                disabled={!canUseCloud}
+              >
+                云端
+              </button>
+            </div>
             {session ? (
               <button
                 type="button"
