@@ -112,6 +112,8 @@ function BookDetailPage() {
   const [discussionMessages, setDiscussionMessages] = useState<
     DiscussionMessage[]
   >([])
+  const [infoDiscussion, setInfoDiscussion] =
+    useState<DiscussionMessage | null>(null)
   const [newMessageContent, setNewMessageContent] = useState('')
   const [editingExcerptId, setEditingExcerptId] = useState<string | null>(
     null,
@@ -143,6 +145,22 @@ function BookDetailPage() {
     string | null
   >(null)
   const isModelSaving = modelStatus === 'saving'
+
+  const getMetadataNumber = (value: unknown) =>
+    typeof value === 'number' ? value : undefined
+
+  const getTokenCount = (
+    metadata: DiscussionMessage['metadata'] | undefined,
+  ) => {
+    if (!metadata) return undefined
+    const meta = metadata as Record<string, unknown>
+    return (
+      getMetadataNumber(meta.tokens) ??
+      getMetadataNumber(meta.tokenCount) ??
+      getMetadataNumber(meta.totalTokens) ??
+      getMetadataNumber(meta.total_tokens)
+    )
+  }
 
   useEffect(() => {
     if (!book || isCloudMode) return
@@ -179,6 +197,30 @@ function BookDetailPage() {
     setEditingExcerptId(null)
     setEditingContent('')
   }, [isCloudMode])
+
+  const handleCopyDiscussionMessage = useCallback(
+    async (message: DiscussionMessage) => {
+      setOpenDiscussionMenuId(null)
+      try {
+        await navigator.clipboard.writeText(message.content)
+      } catch (error) {
+        console.error('Failed to copy discussion message', error)
+        const textarea = document.createElement('textarea')
+        textarea.value = message.content
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        try {
+          document.execCommand('copy')
+        } finally {
+          document.body.removeChild(textarea)
+        }
+      }
+    },
+    [],
+  )
 
   const canSwitchModel = isCloudMode && Boolean(session)
 
@@ -1292,16 +1334,6 @@ function BookDetailPage() {
                 {displayDiscussions.map((message) => {
                   const isMenuOpen = openDiscussionMenuId === message.id
                   const isMine = message.role === 'me'
-                  const metadataTitle =
-                    message.role === 'syzygy' &&
-                    (message.metadata?.model ||
-                      typeof message.metadata?.temperature === 'number')
-                      ? `model=${
-                          message.metadata?.model ?? 'unknown'
-                        }${typeof message.metadata?.temperature === 'number'
-                          ? `, temp=${message.metadata.temperature.toFixed(1)}`
-                          : ''}`
-                      : undefined
 
                   return (
                     <li
@@ -1322,15 +1354,6 @@ function BookDetailPage() {
                             <span className="chat-timestamp">
                               {formatExcerptDate(message.createdAt)}
                             </span>
-                            {metadataTitle ? (
-                              <span
-                                className="chat-info"
-                                title={metadataTitle}
-                                aria-label="模型信息"
-                              >
-                                ℹ︎
-                              </span>
-                            ) : null}
                             <div className="menu">
                               <button
                                 className="button ghost"
@@ -1347,6 +1370,27 @@ function BookDetailPage() {
                               </button>
                               {isMenuOpen ? (
                                 <div className="menu-panel" role="menu">
+                                  <button
+                                    className="menu-item"
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() =>
+                                      handleCopyDiscussionMessage(message)
+                                    }
+                                  >
+                                    📋 Copy Text
+                                  </button>
+                                  <button
+                                    className="menu-item"
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                      setOpenDiscussionMenuId(null)
+                                      setInfoDiscussion(message)
+                                    }}
+                                  >
+                                    ℹ️ View Info
+                                  </button>
                                   <button
                                     className="menu-item danger"
                                     type="button"
@@ -1379,9 +1423,6 @@ function BookDetailPage() {
                         <div className="chat-meta">
                           <span className="chat-timestamp">
                             {new Date().toLocaleString('zh-CN')}
-                          </span>
-                          <span className="chat-info" title="生成中...">
-                            ℹ︎
                           </span>
                         </div>
                       </div>
@@ -1446,6 +1487,56 @@ function BookDetailPage() {
           </form>
         </div>
       </section>
+      {infoDiscussion ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="讨论消息详情"
+          onClick={() => setInfoDiscussion(null)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>消息详情</h4>
+            </header>
+            <div className="stack">
+              <div className="info-row">
+                <span>Model</span>
+                <strong>
+                  {infoDiscussion.metadata?.model ?? '未知'}
+                </strong>
+              </div>
+              <div className="info-row">
+                <span>Temperature</span>
+                <strong>
+                  {typeof infoDiscussion.metadata?.temperature ===
+                  'number'
+                    ? infoDiscussion.metadata.temperature.toFixed(2)
+                    : '未知'}
+                </strong>
+              </div>
+              <div className="info-row">
+                <span>Tokens</span>
+                <strong>
+                  {getTokenCount(infoDiscussion.metadata) ?? '未知'}
+                </strong>
+              </div>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button primary"
+                onClick={() => setInfoDiscussion(null)}
+              >
+                知道了
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {confirmingDiscussion ? (
         <div
           className="confirm-modal-backdrop"

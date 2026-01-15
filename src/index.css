@@ -1208,13 +1208,31 @@ textarea {
 }
 
 .excerpt-content {
+  position: relative;
   white-space: pre-wrap;
   line-height: 1.8;
+  font-family: var(--font-family-base);
   font-style: italic;
-  border-left: 4px solid var(--color-accent-secondary);
-  padding: 1rem 1rem 1rem 1.2rem;
-  background: color-mix(in srgb, var(--color-bg-card) 90%, transparent);
+  border-left: 3px solid var(--color-accent-primary);
+  padding: 1rem 1rem 1rem 1.6rem;
+  background: linear-gradient(
+    to right,
+    var(--color-bg-card),
+    var(--color-bg-main)
+  );
   border-radius: 10px;
+}
+
+.excerpt-content::before {
+  content: '❝';
+  position: absolute;
+  top: -0.35rem;
+  left: 0.35rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 4rem;
+  color: var(--color-text-secondary);
+  opacity: 0.1;
+  pointer-events: none;
 }
 
 .heatmap-container {
