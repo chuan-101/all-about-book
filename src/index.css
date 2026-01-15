@@ -606,6 +606,31 @@ textarea {
   flex-wrap: wrap;
 }
 
+.excerpt-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding-top: 12px;
+}
+
+.excerpt-actions > .button,
+.excerpt-actions .menu {
+  flex: 1;
+}
+
+.excerpt-actions .button {
+  font-size: 0.9rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  box-shadow: none;
+}
+
+.excerpt-actions .menu .button {
+  width: 100%;
+}
+
 .menu {
   position: relative;
 }
@@ -1215,11 +1240,7 @@ textarea {
   font-style: italic;
   border-left: 3px solid var(--color-accent-primary);
   padding: 1rem 1rem 1rem 1.6rem;
-  background: linear-gradient(
-    to right,
-    var(--color-bg-card),
-    var(--color-bg-main)
-  );
+  background-color: var(--color-bg-input);
   border-radius: 10px;
 }
 
