@@ -190,6 +190,21 @@ textarea {
   flex-wrap: wrap;
 }
 
+.dashboard-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dashboard-title {
+  margin: 0;
+}
+
+.button.compact {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.9rem;
+}
+
 .section-title {
   margin-bottom: 0.75rem;
 }
@@ -1003,6 +1018,7 @@ textarea {
 
 .heatmap-container {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .heatmap-grid {
@@ -1149,6 +1165,10 @@ textarea {
     display: none;
   }
 
+  .title {
+    display: none;
+  }
+
   .bottom-nav {
     display: flex;
   }
@@ -1174,6 +1194,30 @@ textarea {
     gap: 1rem;
   }
 
+  .dashboard-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .dashboard-header .muted,
+  .dashboard-header .notice {
+    display: none;
+  }
+
+  .dashboard-title {
+    font-size: 1.2rem;
+  }
+
+  .dashboard-action {
+    white-space: nowrap;
+  }
+
+  .dashboard-header + .stats-grid {
+    margin-top: -0.5rem;
+  }
+
   .page-header-actions {
     width: 100%;
     flex-direction: column;
@@ -1196,6 +1240,33 @@ textarea {
   .form-grid,
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stats-grid .card {
+    padding: 1rem;
+  }
+
+  .stat {
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  .top-nav-button {
+    display: none;
   }
 
   .list-item {

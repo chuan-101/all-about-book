@@ -58,13 +58,13 @@ function Layout({ onOpenSettings }: LayoutProps) {
             {session ? (
               <button
                 type="button"
-                className="button ghost"
+                className="button ghost top-nav-button"
                 onClick={() => signOut()}
               >
                 退出登录
               </button>
             ) : (
-              <NavLink className="button ghost" to="/login">
+              <NavLink className="button ghost top-nav-button" to="/login">
                 登录
               </NavLink>
             )}

@@ -92,9 +92,9 @@ function HomePage() {
 
   return (
     <section className="stack">
-      <div className="page-header">
-        <div>
-          <h2>仪表盘</h2>
+      <div className="page-header dashboard-header">
+        <div className="dashboard-header-text">
+          <h1 className="dashboard-title">仪表盘</h1>
           <p className="muted">
             记录你的阅读进度，管理你的书架。
           </p>
@@ -105,7 +105,7 @@ function HomePage() {
             <p className="notice info">云端数据加载中...</p>
           ) : null}
         </div>
-        <Link className="button primary" to="/books">
+        <Link className="button primary compact dashboard-action" to="/books">
           管理书籍
         </Link>
       </div>
