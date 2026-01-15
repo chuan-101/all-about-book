@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import BottomNav from './BottomNav'
 import { useAppData } from '../lib/app-context'
 import SyzygyConsole from './SyzygyConsole'
@@ -6,7 +7,9 @@ import ThemeToggle from './ThemeToggle'
 import UpdatePrompt from './UpdatePrompt'
 
 function Layout() {
+  const location = useLocation()
   const navigate = useNavigate()
+  const [isConsoleOpen, setIsConsoleOpen] = useState(false)
   const {
     dataSource,
     setDataSource,
@@ -18,6 +21,25 @@ function Layout() {
     cloudLoading,
     signOut,
   } = useAppData()
+
+  const activeTab = useMemo(() => {
+    if (location.pathname.startsWith('/books')) return 'bookshelf'
+    return 'home'
+  }, [location.pathname])
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'home') {
+      navigate('/')
+      return
+    }
+    if (tab === 'bookshelf') {
+      navigate('/books')
+      return
+    }
+    if (tab === 'settings') {
+      window.alert('设置功能即将推出。')
+    }
+  }
 
   const handleSelectSource = (source: 'local' | 'cloud') => {
     if (source === 'cloud' && !session) {
@@ -62,7 +84,10 @@ function Layout() {
                 云端
               </button>
             </div>
-            <SyzygyConsole />
+            <SyzygyConsole
+              isOpen={isConsoleOpen}
+              onOpenChange={setIsConsoleOpen}
+            />
             {session ? (
               <button
                 type="button"
@@ -92,7 +117,11 @@ function Layout() {
         ) : null}
         <Outlet />
       </main>
-      <BottomNav />
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        onOpenConsole={() => setIsConsoleOpen(true)}
+      />
     </div>
   )
 }
