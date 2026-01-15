@@ -44,7 +44,6 @@ function Layout({ onOpenSettings }: LayoutProps) {
       <header className="header">
         <div className="container header-content">
           <div>
-            <p className="eyebrow">阅读记录</p>
             <h1 className="title">我的读书追踪器</h1>
           </div>
           <div className="header-actions">
@@ -58,13 +57,13 @@ function Layout({ onOpenSettings }: LayoutProps) {
             {session ? (
               <button
                 type="button"
-                className="button ghost"
+                className="button ghost top-nav-button"
                 onClick={() => signOut()}
               >
                 退出登录
               </button>
             ) : (
-              <NavLink className="button ghost" to="/login">
+              <NavLink className="button ghost top-nav-button" to="/login">
                 登录
               </NavLink>
             )}
