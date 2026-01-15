@@ -84,10 +84,6 @@ function Layout() {
                 云端
               </button>
             </div>
-            <SyzygyConsole
-              isOpen={isConsoleOpen}
-              onOpenChange={setIsConsoleOpen}
-            />
             {session ? (
               <button
                 type="button"
@@ -104,6 +100,10 @@ function Layout() {
           </div>
         </div>
       </header>
+      <SyzygyConsole
+        isOpen={isConsoleOpen}
+        onOpenChange={setIsConsoleOpen}
+      />
       <main className="container main">
         <UpdatePrompt />
         {authWarning ? (
