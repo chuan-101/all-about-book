@@ -1,9 +1,9 @@
 :root {
-  font-family: var(--font-family);
+  font-family: var(--font-family-base, var(--font-sans));
   line-height: 1.5;
   font-weight: 400;
-  color: var(--text);
-  background-color: var(--bg);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-main);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -17,8 +17,8 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: var(--bg);
-  background-image: var(--texture-overlay);
+  background-color: var(--color-bg-main);
+  background-image: var(--bg-texture);
   background-repeat: repeat;
   background-size: 240px 240px;
   overflow-x: hidden;
@@ -60,8 +60,8 @@ textarea {
 }
 
 .header {
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
   padding-top: env(safe-area-inset-top);
 }
 
@@ -89,7 +89,7 @@ textarea {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
@@ -104,13 +104,13 @@ textarea {
   justify-content: center;
   padding: 0.5rem 0.85rem;
   border-radius: 999px;
-  color: var(--text);
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 
 .nav a.active {
-  background: var(--accent);
-  color: #ffffff;
+  background: var(--color-accent-primary);
+  color: var(--color-text-primary);
 }
 
 .main {
@@ -144,11 +144,11 @@ textarea {
 }
 
 .card {
-  background: var(--card);
-  border-radius: var(--border-radius);
+  background: var(--color-bg-card);
+  border-radius: var(--border-radius-card);
   padding: 1.5rem;
-  border: 1px solid var(--border);
-  box-shadow: var(--box-shadow-out);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--box-shadow-card);
 }
 
 .card-header {
@@ -233,7 +233,7 @@ textarea {
 }
 
 .stat-label {
-  color: var(--muted);
+  color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -243,17 +243,21 @@ textarea {
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--color-text-secondary);
   margin: 0.25rem 0 0;
 }
 
 .list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  border-radius: var(--border-radius-card);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  box-shadow: var(--box-shadow-input, none);
 }
 
 .list-item {
@@ -291,13 +295,13 @@ textarea {
   width: 60px;
   height: 80px;
   border-radius: 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   object-fit: cover;
-  background: var(--bg);
+  background: var(--color-bg-main);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--muted);
+  color: var(--color-text-secondary);
   font-size: 0.75rem;
   text-align: center;
 }
@@ -328,8 +332,8 @@ textarea {
   top: calc(100% + 0.4rem);
   right: 0;
   min-width: 140px;
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 0.35rem;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15);
@@ -350,7 +354,7 @@ textarea {
 
 .menu-item:hover,
 .menu-item:focus-visible {
-  background: var(--bg);
+  background: var(--color-bg-main);
 }
 
 .menu-item.danger {
@@ -370,9 +374,9 @@ textarea {
 
 .confirm-modal {
   width: min(520px, 100%);
-  background: var(--card);
+  background: var(--color-bg-card);
   border-radius: 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -419,24 +423,28 @@ textarea {
 }
 
 .button {
-  border: none;
-  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-btn);
   padding: 0.5rem 1rem;
   cursor: pointer;
   font-weight: 600;
-  background: var(--bg);
-  color: var(--text);
-  box-shadow: var(--box-shadow-out);
+  background: var(--color-accent-primary);
+  color: var(--color-text-primary);
+  box-shadow: var(--box-shadow-btn);
+  transition: box-shadow var(--transition-speed),
+    transform var(--transition-speed),
+    background-color var(--transition-speed);
 }
 
 .button.primary {
-  background: var(--accent);
-  color: #ffffff;
+  background: var(--color-accent-primary);
+  color: var(--color-text-primary);
+  box-shadow: var(--box-shadow-btn);
 }
 
 .button.ghost {
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   box-shadow: none;
 }
 
@@ -446,7 +454,7 @@ textarea {
 }
 
 .button:active {
-  box-shadow: var(--box-shadow-in);
+  box-shadow: var(--box-shadow-input, inset 2px 2px 6px rgba(61, 43, 31, 0.2));
   transform: translateY(1px);
 }
 
@@ -454,7 +462,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.6rem;
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-btn);
   background: #e0ecff;
   color: #175cd3;
   font-size: 0.75rem;
@@ -462,8 +470,8 @@ textarea {
 }
 
 .chip.ghost {
-  background: var(--bg);
-  color: var(--muted);
+  background: var(--color-bg-main);
+  color: var(--color-text-secondary);
 }
 
 .data-source {
@@ -501,7 +509,7 @@ textarea {
 
 .field span {
   font-size: 0.85rem;
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 .field.checkbox-field {
@@ -525,9 +533,13 @@ textarea {
 .field select,
 .field textarea {
   padding: 0.6rem 0.75rem;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border);
-  background: var(--card);
+  border-radius: var(--border-radius-btn);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  box-shadow: var(--box-shadow-input, none);
+  color: var(--color-text-primary);
+  transition: box-shadow var(--transition-speed),
+    background-color var(--transition-speed);
 }
 
 .theme-toggle {
@@ -535,20 +547,23 @@ textarea {
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.85rem;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--text);
+  border-radius: var(--border-radius-btn);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
   font-weight: 600;
-  box-shadow: var(--box-shadow-out);
+  box-shadow: var(--box-shadow-btn);
   cursor: pointer;
+  transition: box-shadow var(--transition-speed),
+    transform var(--transition-speed),
+    background-color var(--transition-speed);
 }
 
 .theme-toggle-label {
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 .theme-toggle-current {
@@ -556,7 +571,7 @@ textarea {
 }
 
 .theme-toggle:active {
-  box-shadow: var(--box-shadow-in);
+  box-shadow: var(--box-shadow-input, inset 2px 2px 6px rgba(61, 43, 31, 0.2));
   transform: translateY(1px);
 }
 
@@ -574,7 +589,7 @@ textarea {
 }
 
 .syzygy-section {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--color-border);
   padding-top: 1rem;
   display: flex;
   flex-direction: column;
@@ -604,8 +619,9 @@ textarea {
   overflow: auto;
   padding: 0.25rem;
   border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  box-shadow: var(--box-shadow-input, none);
 }
 
 .syzygy-catalog-row {
@@ -614,8 +630,8 @@ textarea {
   gap: 1rem;
   padding: 0.75rem;
   border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--card);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
 }
 
 .syzygy-catalog-meta {
@@ -675,9 +691,9 @@ textarea {
 .excerpt-modal {
   width: min(760px, 100%);
   max-height: 85vh;
-  background: var(--card);
+  background: var(--color-bg-card);
   border-radius: 16px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--color-border);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
@@ -742,7 +758,7 @@ textarea {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--color-border);
   padding-bottom: 0.75rem;
 }
 
@@ -776,7 +792,7 @@ textarea {
   gap: 0.35rem;
   text-align: center;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 .calendar-grid {
@@ -787,8 +803,8 @@ textarea {
 
 .calendar-day {
   position: relative;
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   min-height: 64px;
   padding: 0.5rem;
@@ -803,8 +819,8 @@ textarea {
 }
 
 .calendar-day.checked {
-  border-color: var(--accent);
-  background: var(--card);
+  border-color: var(--color-accent-primary);
+  background: var(--color-bg-card);
 }
 
 .calendar-day.today {
@@ -823,7 +839,7 @@ textarea {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--color-accent-primary);
 }
 
 .excerpt-content {
@@ -846,18 +862,18 @@ textarea {
 .heatmap-month-label {
   white-space: nowrap;
   font-size: clamp(0.7rem, 2.5vw, 0.8rem);
-  color: var(--muted);
+  color: var(--color-text-secondary);
 }
 
 .heatmap-cell {
   width: var(--heatmap-cell-size);
   height: var(--heatmap-cell-size);
   border-radius: 4px;
-  background: var(--border);
+  background: var(--color-border);
 }
 
 .heatmap-cell.active {
-  background: var(--accent);
+  background: var(--color-accent-primary);
 }
 
 .heatmap-cell.empty {

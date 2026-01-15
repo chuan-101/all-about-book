@@ -1,13 +1,14 @@
 import { useTheme } from '../lib/ThemeContext'
 
 const themeLabels = {
-  showa: '昭和喫茶店',
-  retro: '复古键盘',
+  'retro-cafe': '昭和喫茶店',
+  'retro-keyboard': '复古键盘',
 }
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
-  const nextTheme = theme === 'showa' ? 'retro' : 'showa'
+  const nextTheme =
+    theme === 'retro-cafe' ? 'retro-keyboard' : 'retro-cafe'
 
   return (
     <button
