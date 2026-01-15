@@ -1096,12 +1096,12 @@ function BookDetailPage() {
           {displayExcerpts.length === 0 ? (
             <p className="muted">暂无书摘，先记录第一条吧。</p>
           ) : (
-            <ul className="list">
+            <ul className="list excerpt-list">
               {displayExcerpts.map((excerpt) => {
                 const isEditing = editingExcerptId === excerpt.id
                 const isMenuOpen = openExcerptMenuId === excerpt.id
                 return (
-                  <li key={excerpt.id} className="list-item">
+                  <li key={excerpt.id} className="list-item excerpt-card">
                     <div className="list-item-main">
                       {isEditing ? (
                         <label className="field">
@@ -1116,10 +1116,15 @@ function BookDetailPage() {
                           />
                         </label>
                       ) : (
-                        <div>
-                          <p className="muted">
-                            {formatExcerptDate(excerpt.createdAt)}
-                          </p>
+                        <div className="excerpt-body">
+                          <div className="excerpt-meta">
+                            <span className="excerpt-book-title">
+                              {book?.title ?? '未命名书籍'}
+                            </span>
+                            <span className="excerpt-date">
+                              {formatExcerptDate(excerpt.createdAt)}
+                            </span>
+                          </div>
                           <p className="excerpt-content">
                             {excerpt.content}
                           </p>

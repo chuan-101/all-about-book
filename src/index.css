@@ -113,6 +113,52 @@ textarea {
   color: var(--color-text-primary);
 }
 
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-border);
+}
+
+.bottom-nav-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bottom-nav-item.active {
+  color: var(--color-accent-primary);
+}
+
+.bottom-nav-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
 .main {
   padding: 2rem 0 calc(3rem + env(safe-area-inset-bottom));
   flex: 1;
@@ -291,6 +337,43 @@ textarea {
   align-self: stretch;
 }
 
+.excerpt-list {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.excerpt-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: var(--box-shadow-card);
+  padding: 1rem;
+}
+
+.excerpt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.excerpt-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.excerpt-book-title {
+  font-weight: 700;
+}
+
+.excerpt-date {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 .cover {
   width: 60px;
   height: 80px;
@@ -446,6 +529,10 @@ textarea {
   background: transparent;
   border: 1px solid var(--color-border);
   box-shadow: none;
+}
+
+.btn-outline {
+  border: 1px solid var(--color-border);
 }
 
 .button.danger {
@@ -844,6 +931,12 @@ textarea {
 
 .excerpt-content {
   white-space: pre-wrap;
+  line-height: 1.8;
+  font-style: italic;
+  border-left: 4px solid var(--color-accent-secondary);
+  padding: 1rem 1rem 1rem 1.2rem;
+  background: color-mix(in srgb, var(--color-bg-card) 90%, transparent);
+  border-radius: 10px;
 }
 
 .heatmap-container {
@@ -978,6 +1071,10 @@ textarea {
     padding: 0 1rem;
   }
 
+  .main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
   .header-content {
     flex-direction: column;
     align-items: flex-start;
@@ -986,9 +1083,11 @@ textarea {
   }
 
   .header-actions {
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
+    display: none;
+  }
+
+  .bottom-nav {
+    display: flex;
   }
 
   .nav {
@@ -1044,6 +1143,10 @@ textarea {
   .list-item-main {
     min-width: 0;
     align-items: flex-start;
+  }
+
+  .excerpt-card {
+    gap: 0.75rem;
   }
 
   .excerpt-textarea {
