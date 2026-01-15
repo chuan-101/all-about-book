@@ -133,6 +133,7 @@ function BookDetailPage() {
   const [modelStatusMessage, setModelStatusMessage] = useState<
     string | null
   >(null)
+  const isModelSaving = modelStatus === 'saving'
 
   useEffect(() => {
     if (!book || isCloudMode) return
@@ -648,6 +649,7 @@ function BookDetailPage() {
 
   const handleModelSelect = async (modelId: string) => {
     if (!session || !supabase) return
+    if (isModelSaving) return
     if (modelId === selectedModel) {
       setIsModelMenuOpen(false)
       return
@@ -1080,9 +1082,15 @@ function BookDetailPage() {
                       aria-haspopup="listbox"
                       aria-expanded={isModelMenuOpen}
                       onClick={() =>
-                        setIsModelMenuOpen((value) => !value)
+                        setIsModelMenuOpen((value) =>
+                          isModelSaving ? false : !value,
+                        )
                       }
-                      disabled={modelLoading || modelOptions.length === 0}
+                      disabled={
+                        modelLoading ||
+                        modelOptions.length === 0 ||
+                        isModelSaving
+                      }
                     >
                       <span className="model-toggle-label">
                         {modelLoading
@@ -1103,6 +1111,7 @@ function BookDetailPage() {
                             className="menu-item"
                             role="option"
                             aria-selected={model.id === selectedModel}
+                            disabled={isModelSaving}
                             onClick={() => handleModelSelect(model.id)}
                           >
                             <span>{model.label}</span>
