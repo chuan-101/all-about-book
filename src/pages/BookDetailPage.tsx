@@ -1177,14 +1177,14 @@ function BookDetailPage() {
                       {isEditing ? (
                         <>
                           <button
-                            className="button ghost"
+                            className="button btn-outline"
                             type="button"
                             onClick={() => handleSaveEdit(excerpt.id)}
                           >
                             保存
                           </button>
                           <button
-                            className="button ghost"
+                            className="button btn-outline"
                             type="button"
                             onClick={handleCancelEdit}
                           >
@@ -1194,7 +1194,7 @@ function BookDetailPage() {
                       ) : (
                         <>
                           <button
-                            className="button ghost"
+                            className="button btn-outline"
                             type="button"
                             onClick={() => handleStartEdit(excerpt)}
                           >
@@ -1202,7 +1202,7 @@ function BookDetailPage() {
                           </button>
                           <div className="menu">
                             <button
-                              className="button ghost"
+                              className="button btn-outline"
                               type="button"
                               aria-haspopup="menu"
                               aria-expanded={isMenuOpen}

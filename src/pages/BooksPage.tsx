@@ -220,12 +220,12 @@ function BooksPage() {
                   </div>
                 </div>
                 <div className="actions">
-                  <Link className="button ghost" to={`/books/${book.id}`}>
+                  <Link className="button btn-outline" to={`/books/${book.id}`}>
                     查看详情
                   </Link>
                   <div className="menu">
                     <button
-                      className="button ghost"
+                      className="button btn-outline"
                       type="button"
                       aria-haspopup="menu"
                       aria-expanded={openBookMenuId === book.id}
