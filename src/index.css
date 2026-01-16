@@ -984,7 +984,7 @@ textarea {
   box-shadow: none;
 }
 
-.btn-outline {
+.button.outline {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-btn);
   min-height: 40px;

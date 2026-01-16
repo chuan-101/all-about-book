@@ -26,6 +26,7 @@ import type { DiscussionMessage } from '../types/discussion'
 import type { ReadingSession } from '../types/reading-session'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
+import { Button } from '../components/Button'
 import {
   createCloudDiscussion,
   createCloudDiscussionMessages,
@@ -1176,33 +1177,33 @@ function BookDetailPage() {
                     <div className="excerpt-actions">
                       {isEditing ? (
                         <>
-                          <button
-                            className="button btn-outline"
+                          <Button
+                            variant="outline"
                             type="button"
                             onClick={() => handleSaveEdit(excerpt.id)}
                           >
                             保存
-                          </button>
-                          <button
-                            className="button btn-outline"
+                          </Button>
+                          <Button
+                            variant="outline"
                             type="button"
                             onClick={handleCancelEdit}
                           >
                             取消
-                          </button>
+                          </Button>
                         </>
                       ) : (
                         <>
-                          <button
-                            className="button btn-outline"
+                          <Button
+                            variant="outline"
                             type="button"
                             onClick={() => handleStartEdit(excerpt)}
                           >
                             编辑
-                          </button>
+                          </Button>
                           <div className="menu">
-                            <button
-                              className="button btn-outline"
+                            <Button
+                              variant="outline"
                               type="button"
                               aria-haspopup="menu"
                               aria-expanded={isMenuOpen}
@@ -1213,7 +1214,7 @@ function BookDetailPage() {
                               }
                             >
                               ⋯ 更多
-                            </button>
+                            </Button>
                             {isMenuOpen ? (
                               <div className="menu-panel" role="menu">
                                 <button

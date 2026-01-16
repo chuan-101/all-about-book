@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Button, ButtonLink } from '../components/Button'
 import BookForm, { type BookFormValues } from '../components/BookForm'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
@@ -220,12 +220,12 @@ function BooksPage() {
                   </div>
                 </div>
                 <div className="actions">
-                  <Link className="button btn-outline" to={`/books/${book.id}`}>
+                  <ButtonLink variant="outline" to={`/books/${book.id}`}>
                     查看详情
-                  </Link>
+                  </ButtonLink>
                   <div className="menu">
-                    <button
-                      className="button btn-outline"
+                    <Button
+                      variant="outline"
                       type="button"
                       aria-haspopup="menu"
                       aria-expanded={openBookMenuId === book.id}
@@ -236,7 +236,7 @@ function BooksPage() {
                       }
                     >
                       ⋯ 更多
-                    </button>
+                    </Button>
                     {openBookMenuId === book.id ? (
                       <div className="menu-panel" role="menu">
                         <button
