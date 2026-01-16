@@ -64,6 +64,37 @@ body {
   background-size: 4px 4px;
 }
 
+[data-theme='pixel-farm'] .header,
+[data-theme='pixel-farm'] .bottom-nav {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  color: var(--color-bg-main);
+}
+
+[data-theme='pixel-farm'] .header-date,
+[data-theme='pixel-farm'] .title,
+[data-theme='pixel-farm'] .nav a {
+  color: var(--color-bg-main);
+}
+
+[data-theme='pixel-farm'] .nav a.active {
+  border-bottom-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+[data-theme='pixel-farm'] .top-nav-button.button.ghost {
+  color: var(--color-bg-main);
+  border-color: var(--color-bg-main);
+}
+
+[data-theme='pixel-farm'] .bottom-nav-item {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+[data-theme='pixel-farm'] .bottom-nav-item.active {
+  color: var(--color-accent-primary);
+}
+
 [data-theme='retro-cafe'] body {
   background-image: var(--bg-texture);
   background-color: var(--color-bg-main);
