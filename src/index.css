@@ -46,6 +46,24 @@ body {
   box-shadow: 2px 2px 0px #543675;
 }
 
+[data-theme='pixel-farm'] .card,
+[data-theme='pixel-farm'] .btn,
+[data-theme='pixel-farm'] .button,
+[data-theme='pixel-farm'] input,
+[data-theme='pixel-farm'] .bottom-nav {
+  border: 3px solid var(--color-border);
+}
+
+[data-theme='pixel-farm'] .card {
+  background-image: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.03) 50%,
+      transparent 50%
+    ),
+    linear-gradient(rgba(0, 0, 0, 0.03) 50%, transparent 50%);
+  background-size: 4px 4px;
+}
+
 [data-theme='retro-cafe'] body {
   background-image: var(--bg-texture);
   background-color: var(--color-bg-main);
@@ -111,10 +129,28 @@ body {
   padding-top: 8px;
 }
 
+[data-theme='pixel-farm'] .card .card-actions,
+[data-theme='pixel-farm'] .excerpt-card .button-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  padding-top: 8px;
+}
+
 [data-theme='retro-cafe'] .card .card-actions .btn,
 [data-theme='retro-cafe'] .card .card-actions a,
 [data-theme='retro-cafe'] .excerpt-card .button-group .btn {
   flex: 1;
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
+}
+
+[data-theme='pixel-farm'] .card .card-actions .btn,
+[data-theme='pixel-farm'] .card .card-actions a,
+[data-theme='pixel-farm'] .excerpt-card .button-group .btn {
+  width: 100%;
   justify-content: center;
   text-align: center;
   min-width: 0;
