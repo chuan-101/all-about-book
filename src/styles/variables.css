@@ -20,14 +20,14 @@
 
   /* Borders & Accents: The Soul of the theme */
   /* Primary Accent: Deep Moss Green (墨绿) */
-  --color-accent-primary: #3a5f48;
+  --color-accent-primary: #7e8d6c;
   --color-accent-hover: #2d4a38;
 
   /* Secondary Accent: Vintage Brick Red (for tapes/stamps) */
   --color-accent-secondary: #c85a48;
 
   /* Borders: Deep Green instead of black */
-  --color-border: #3a5f48;
+  --color-border: #7e8d6c;
   --dropdown-border: 2px solid var(--color-border);
   --separator-groove: none;
 
