@@ -647,7 +647,8 @@ textarea {
 
 .excerpt-actions > .button,
 .excerpt-actions .menu {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .excerpt-actions .button {
