@@ -3,12 +3,17 @@ import { useTheme } from '../lib/ThemeContext'
 const themeLabels = {
   'retro-cafe': '昭和喫茶店',
   'retro-keyboard': '复古键盘',
+  'pixel-dream': '像素梦境',
 }
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
+  const themeOrder = ['retro-cafe', 'retro-keyboard', 'pixel-dream'] as const
+  const currentIndex = themeOrder.indexOf(theme)
   const nextTheme =
-    theme === 'retro-cafe' ? 'retro-keyboard' : 'retro-cafe'
+    currentIndex === -1
+      ? themeOrder[0]
+      : themeOrder[(currentIndex + 1) % themeOrder.length]
 
   return (
     <button

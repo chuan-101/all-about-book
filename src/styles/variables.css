@@ -79,3 +79,43 @@
   --color-status-reading: var(--color-accent-primary);
   --color-status-reading-bg: rgba(230, 195, 92, 0.15);
 }
+
+/* === THEME C: Pixel Dream (90s Cute Retro) === */
+[data-theme="pixel-dream"] {
+  /* Palette: Sweet Pinks, Lavenders, and contrasting chunky purples */
+  --color-bg-main: #ffecf7;
+  --color-bg-card: #ffffff;
+  --color-bg-input: #fce4f4;
+
+  --color-text-primary: #543675;
+  --color-text-secondary: #9c84b5;
+
+  /* Accents: Vibrant Magenta & Cyan/Turquoise */
+  --color-accent-primary: #ff6ac2;
+  --color-accent-hover: #e05da6;
+  --color-accent-secondary: #5deee0;
+
+  /* Borders are crucial for pixel look: Thick and Dark Purple */
+  --color-border: #7f64a6;
+
+  /* Shape & Structure: Chunky and Hard */
+  --border-radius-card: 4px;
+  --border-radius-btn: 2px;
+
+  /* Hard "Block" Shadows (No blur!) */
+  --box-shadow-card: 6px 6px 0px var(--color-border);
+  --box-shadow-btn: 4px 4px 0px #543675;
+  --box-shadow-input: inset 3px 3px 0px rgba(84, 54, 117, 0.2);
+
+  /* Separator for Clay theme compatibility (not used here, set to border) */
+  --separator-groove: none;
+  --dropdown-border: 3px solid var(--color-border);
+
+  /* Typography: Pixel Fonts */
+  --font-family-heading: 'Press Start 2P', cursive;
+  --font-family-base: 'VT323', monospace;
+  --font-size-base: 1.2rem;
+
+  /* Background Texture: Cute Dithering Pattern */
+  --bg-texture: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1h2v2H1V1zm4 4h2v2H5V5z' fill='%23FFCFE8' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+}

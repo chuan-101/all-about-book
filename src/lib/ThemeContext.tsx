@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 
-type Theme = 'retro-cafe' | 'retro-keyboard'
+type Theme = 'retro-cafe' | 'retro-keyboard' | 'pixel-dream'
 
 type ThemeContextValue = {
   theme: Theme
@@ -17,7 +17,11 @@ type ThemeContextValue = {
 
 const THEME_STORAGE_KEY = 'all-about-book:theme'
 const DEFAULT_THEME: Theme = 'retro-cafe'
-const AVAILABLE_THEMES: Theme[] = ['retro-cafe', 'retro-keyboard']
+const AVAILABLE_THEMES: Theme[] = [
+  'retro-cafe',
+  'retro-keyboard',
+  'pixel-dream',
+]
 
 const isTheme = (value: string | null): value is Theme =>
   !!value && AVAILABLE_THEMES.includes(value as Theme)
@@ -50,9 +54,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       theme,
       setTheme: setThemeState,
       toggleTheme: () =>
-        setThemeState((current) =>
-          current === 'retro-cafe' ? 'retro-keyboard' : 'retro-cafe',
-        ),
+        setThemeState((current) => {
+          const currentIndex = AVAILABLE_THEMES.indexOf(current)
+          const nextIndex =
+            currentIndex === -1
+              ? 0
+              : (currentIndex + 1) % AVAILABLE_THEMES.length
+          return AVAILABLE_THEMES[nextIndex]
+        }),
     }),
     [theme],
   )
