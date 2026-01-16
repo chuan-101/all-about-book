@@ -1011,6 +1011,19 @@ textarea {
   transform: translateY(1px);
 }
 
+.button.wrap-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.2;
+  height: auto;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
