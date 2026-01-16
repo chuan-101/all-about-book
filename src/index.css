@@ -538,10 +538,11 @@ textarea {
 }
 
 .model-menu {
-  max-height: min(320px, 60vh);
+  max-height: min(320px, 50vh);
   overflow-y: auto;
-  overscroll-behavior: contain;
-  min-width: 240px;
+  bottom: 100%;
+  top: auto;
+  margin-bottom: 0.4rem;
 }
 
 .model-option-id {
