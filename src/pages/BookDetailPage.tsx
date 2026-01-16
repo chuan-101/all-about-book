@@ -26,6 +26,7 @@ import type { DiscussionMessage } from '../types/discussion'
 import type { ReadingSession } from '../types/reading-session'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
+import { ActionButton } from '../components/ActionButton'
 import { Button } from '../components/Button'
 import {
   createCloudDiscussion,
@@ -1194,16 +1195,14 @@ function BookDetailPage() {
                         </>
                       ) : (
                         <>
-                          <Button
-                            variant="outline"
+                          <ActionButton
                             type="button"
                             onClick={() => handleStartEdit(excerpt)}
                           >
                             编辑
-                          </Button>
+                          </ActionButton>
                           <div className="menu">
-                            <Button
-                              variant="outline"
+                            <ActionButton
                               type="button"
                               aria-haspopup="menu"
                               aria-expanded={isMenuOpen}
@@ -1214,7 +1213,7 @@ function BookDetailPage() {
                               }
                             >
                               ⋯ 更多
-                            </Button>
+                            </ActionButton>
                             {isMenuOpen ? (
                               <div className="menu-panel" role="menu">
                                 <button

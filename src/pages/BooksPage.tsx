@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, ButtonLink } from '../components/Button'
+import { ActionButton, ActionButtonLink } from '../components/ActionButton'
 import BookForm, { type BookFormValues } from '../components/BookForm'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
@@ -220,12 +220,11 @@ function BooksPage() {
                   </div>
                 </div>
                 <div className="actions">
-                  <ButtonLink variant="outline" to={`/books/${book.id}`}>
+                  <ActionButtonLink to={`/books/${book.id}`}>
                     查看详情
-                  </ButtonLink>
+                  </ActionButtonLink>
                   <div className="menu">
-                    <Button
-                      variant="outline"
+                    <ActionButton
                       type="button"
                       aria-haspopup="menu"
                       aria-expanded={openBookMenuId === book.id}
@@ -236,7 +235,7 @@ function BooksPage() {
                       }
                     >
                       ⋯ 更多
-                    </Button>
+                    </ActionButton>
                     {openBookMenuId === book.id ? (
                       <div className="menu-panel" role="menu">
                         <button
