@@ -456,13 +456,13 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
             <div className="actions">
               <button
-                className="button primary"
+                className="button primary wrap-label"
                 onClick={handleExportBackup}
                 disabled={backupLoading}
               >
                 导出备份 (JSON)
               </button>
-              <label className="button ghost">
+              <label className="button ghost wrap-label">
                 导入备份 (JSON)
                 <input
                   type="file"
@@ -473,14 +473,14 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 />
               </label>
               <button
-                className="button"
+                className="button wrap-label"
                 onClick={handleExportMarkdown}
                 disabled={backupLoading}
               >
                 导出归档 (Markdown)
               </button>
               <button
-                className="button"
+                className="button wrap-label"
                 onClick={handleExportHtml}
                 disabled={backupLoading}
               >
