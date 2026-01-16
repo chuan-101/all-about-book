@@ -102,6 +102,24 @@ body {
   z-index: 10;
 }
 
+/* === Retro Cafe Theme: Fix Button Layouts === */
+[data-theme='retro-cafe'] .card .card-actions,
+[data-theme='retro-cafe'] .excerpt-card .button-group {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+[data-theme='retro-cafe'] .card .card-actions .btn,
+[data-theme='retro-cafe'] .card .card-actions a,
+[data-theme='retro-cafe'] .excerpt-card .button-group .btn {
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
+}
+
 @keyframes dropdownPop {
   0% {
     opacity: 0;
