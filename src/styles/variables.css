@@ -6,8 +6,8 @@
 
 /* === THEME A: Showa Cafe (Refined) === */
 [data-theme="retro-cafe"] {
-  --color-bg-main: #f0e6d2;
-  --color-bg-card: #f9f3e6;
+  --color-bg-main: #efe6d5;
+  --color-bg-card: #f7f0e2;
   --color-bg-input: #e8dac3;
   --color-text-primary: #3d2b1f;
   --color-text-secondary: #735c49;
@@ -20,14 +20,23 @@
   --color-border: #d4c5b0;
   --separator-groove: none;
 
-  --border-radius-card: 4px;
+  --border-radius-card: 2px;
   --border-radius-btn: 2px;
-  --box-shadow-card: 1px 2px 4px rgba(61, 43, 31, 0.1);
+  --box-shadow-card: 3px 3px 6px rgba(0, 0, 0, 0.15),
+    0 0 40px rgba(0, 0, 0, 0.05) inset;
   --box-shadow-btn: none;
   --dropdown-border: 1px solid var(--color-border);
 
   /* Noise Texture */
-  --bg-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  --bg-texture: repeating-linear-gradient(
+      45deg,
+      #efe6d5 0px,
+      #efe6d5 10px,
+      #e8dec0 10px,
+      #e8dec0 11px
+    ),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
+  --bg-size: 220px 220px, 280px 280px;
   --font-family-base: 'Noto Serif SC', serif;
 
   /* Contribution Graph Colors (Coffee/Matcha stains) */
@@ -43,8 +52,8 @@
 /* === THEME B: Retro Key Box (Claymorphism) === */
 /* Reference: Soft beige ceramic, deep inner shadows, warm gold accent */
 [data-theme="retro-keyboard"] {
-  --color-bg-main: #eeeee6;
-  --color-bg-card: #eeeee6;
+  --color-bg-main: #f0f2f5;
+  --color-bg-card: rgba(255, 255, 255, 0.85);
   --color-bg-input: #e4e4dc;
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
@@ -52,7 +61,7 @@
 
   --color-accent-primary: #e6c35c;
   --color-accent-secondary: #333333;
-  --color-border: transparent;
+  --color-border: #ffffff;
   --color-border-subtle: #d1d1c7;
   --dropdown-border: 2px solid var(--color-border-subtle);
 
@@ -60,14 +69,18 @@
   --border-radius-btn: 12px;
 
   /* CLAY EFFECTS */
-  --box-shadow-card: 12px 12px 20px #d1d1c7, -10px -10px 20px #fffff2;
+  --box-shadow-card: 8px 8px 16px rgba(163, 177, 198, 0.6),
+    -8px -8px 16px rgba(255, 255, 255, 0.5),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.5);
   --box-shadow-btn: 6px 6px 10px #d1d1c7, -5px -5px 10px #fffff2;
   /* Deep Inner Shadow for inputs/lists */
   --box-shadow-input: inset 6px 6px 12px #d1d1c7, inset -6px -6px 12px #ebebe4;
   --separator-groove: inset 0 -1px 1px rgba(255, 255, 255, 0.5),
     inset 0 1px 1px rgba(0, 0, 0, 0.1);
 
-  --bg-texture: none;
+  --bg-texture: radial-gradient(#d1d5db 2px, transparent 2px);
+  --bg-size: 20px 20px;
+  --backdrop-filter: blur(12px);
   --font-family-base: 'JetBrains Mono', monospace;
 
   /* Contribution Graph Colors (Warm Gold Glow) */
