@@ -6,47 +6,50 @@
 
 /* === THEME A: Showa Cafe (Refined) === */
 [data-theme="retro-cafe"] {
-  --color-bg-main: #efe6d5;
-  --color-bg-card: #f7f0e2;
-  --color-bg-input: #e8dac3;
-  --color-text-primary: #3d2b1f;
-  --color-text-secondary: #735c49;
-  --color-text-muted: #9b8572;
+  /* === Palette: Vintage Scrapbook === */
 
-  /* Accents: Matcha Green & Faded Red */
-  --color-accent-primary: #b36a58;
-  --color-accent-hover: #9a5848;
-  --color-accent-secondary: #4f6f5e;
-  --color-border: #d4c5b0;
+  /* Background: Warm, aged paper (Cream/Beige) */
+  --color-bg-main: #f4f1ea;
+  --color-bg-card: #fdfcf8;
+  --color-bg-input: #e8e4d9;
+
+  /* Text: Soft Charcoal & Deep Green (No pure black!) */
+  --color-text-primary: #2c2825;
+  --color-text-secondary: #5c5550;
+  --color-text-muted: #8a817a;
+
+  /* Borders & Accents: The Soul of the theme */
+  /* Primary Accent: Deep Moss Green (墨绿) */
+  --color-accent-primary: #3a5f48;
+  --color-accent-hover: #2d4a38;
+
+  /* Secondary Accent: Vintage Brick Red (for tapes/stamps) */
+  --color-accent-secondary: #c85a48;
+
+  /* Borders: Deep Green instead of black */
+  --color-border: #3a5f48;
+  --dropdown-border: 2px solid var(--color-border);
   --separator-groove: none;
 
+  /* Visuals */
   --border-radius-card: 2px;
-  --border-radius-btn: 2px;
-  --box-shadow-card: 3px 3px 6px rgba(0, 0, 0, 0.15),
-    0 0 40px rgba(0, 0, 0, 0.05) inset;
-  --box-shadow-btn: none;
-  --dropdown-border: 1px solid var(--color-border);
+  --border-radius-btn: 4px;
+  --box-shadow-card: 2px 3px 5px rgba(58, 95, 72, 0.15),
+    1px 1px 0px rgba(0, 0, 0, 0.05);
+  --box-shadow-btn: 0px 4px 0px var(--color-text-primary);
 
-  /* Noise Texture */
-  --bg-texture: repeating-linear-gradient(
-      45deg,
-      #efe6d5 0px,
-      #efe6d5 10px,
-      #e8dec0 10px,
-      #e8dec0 11px
-    ),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.06'/%3E%3C/svg%3E");
-  --bg-size: 220px 220px, 280px 280px;
+  /* Texture: Subtle Grain/Noise */
+  --bg-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
   --font-family-base: 'Noto Serif SC', serif;
 
   /* Contribution Graph Colors (Coffee/Matcha stains) */
-  --color-graph-l1: #e0d0b0;
-  --color-graph-l2: #c7b299;
-  --color-graph-l3: #a89078;
-  --color-graph-l4: #735c49;
+  --color-graph-l1: #e4d8bf;
+  --color-graph-l2: #cdbca3;
+  --color-graph-l3: #a8937c;
+  --color-graph-l4: #5c5550;
 
-  --color-status-reading: #749f82;
-  --color-status-reading-bg: rgba(116, 159, 130, 0.15);
+  --color-status-reading: var(--color-accent-primary);
+  --color-status-reading-bg: rgba(58, 95, 72, 0.15);
 }
 
 /* === THEME B: Retro Key Box (Claymorphism) === */
