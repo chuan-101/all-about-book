@@ -18,6 +18,7 @@
   --color-accent-hover: #9a5848;
   --color-accent-secondary: #4f6f5e;
   --color-border: #d4c5b0;
+  --separator-groove: none;
 
   --border-radius-card: 4px;
   --border-radius-btn: 2px;
@@ -63,6 +64,8 @@
   --box-shadow-btn: 6px 6px 10px #d1d1c7, -5px -5px 10px #fffff2;
   /* Deep Inner Shadow for inputs/lists */
   --box-shadow-input: inset 6px 6px 12px #d1d1c7, inset -6px -6px 12px #ebebe4;
+  --separator-groove: inset 0 -1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 1px 1px rgba(0, 0, 0, 0.1);
 
   --bg-texture: none;
   --font-family-base: 'JetBrains Mono', monospace;

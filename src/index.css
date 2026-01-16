@@ -386,6 +386,27 @@ textarea {
   margin-bottom: 1rem;
 }
 
+/* === Retro Keyboard Theme Separators === */
+[data-theme="retro-keyboard"] .list-item + .list-item {
+  border-top: none;
+  box-shadow: var(--separator-groove);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+[data-theme="retro-keyboard"] .card-header,
+[data-theme="retro-keyboard"] .section-title {
+  border-bottom: none;
+  box-shadow: var(--separator-groove);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+[data-theme="retro-keyboard"] .menu-item + .menu-item {
+  border-top: none;
+  box-shadow: var(--separator-groove);
+}
+
 .discussion-header {
   flex-wrap: wrap;
   align-items: center;
