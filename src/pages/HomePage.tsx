@@ -22,16 +22,6 @@ function HomePage() {
   const finishedBooks = books.filter((book) => book.status === 'finished')
   const [checkIns, setCheckIns] = useState<ReadingSession[]>([])
   const currentYear = new Date().getFullYear()
-  const todayLabel = useMemo(
-    () =>
-      new Date()
-        .toLocaleDateString('en-US', {
-          month: 'short',
-          day: '2-digit',
-        })
-        .toUpperCase(),
-    [],
-  )
 
   useEffect(() => {
     if (isCloudMode) return
@@ -103,10 +93,9 @@ function HomePage() {
   return (
     <section className="stack">
       <div className="page-header dashboard-header">
-        <div className="dashboard-header-text">
+        <div className="dashboard-header-text">                       
           <div className="dashboard-heading">
-            <span className="dashboard-date">{todayLabel}</span>
-            <span className="dashboard-subtitle">仪表盘</span>
+            <span className="dashboard-date">Reading Dashboard</span>
           </div>
           <p className="muted">
             记录你的阅读进度，管理你的书架。
