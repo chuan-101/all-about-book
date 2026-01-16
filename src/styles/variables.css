@@ -141,11 +141,11 @@
   /* === Palette: Stardew Valley Inspired === */
 
   /* Background: Soft, warm, sunny earth tone */
-  --color-bg-main: #fffcf0;
+  --color-bg-main: #f4f1ea;
 
   /* Card: The "Oak Wood" Panel Look */
-  --color-bg-card: #e09f5d;
-  --color-bg-input: #fbebd4;
+  --color-bg-card: #fffdf9;
+  --color-bg-input: #fffdf9;
 
   /* Typography: Dark Coffee Brown (No black) */
   --color-text-primary: #4a2810;
