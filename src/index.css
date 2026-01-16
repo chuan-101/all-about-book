@@ -843,41 +843,48 @@ textarea {
 }
 
 .actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-  flex-wrap: wrap;
 }
 
-.actions > .button,
-.actions > .action-button,
-.actions > .menu {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.actions .menu .button,
-.actions .menu .action-button {
+.actions .button {
   width: 100%;
   text-align: center;
 }
 
+.actions .menu {
+  width: 100%;
+}
+
+.actions .menu .button {
+  width: 100%;
+}
+
 .excerpt-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-top: 16px;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding-top: 12px;
 }
 
-.excerpt-actions > .button,
-.excerpt-actions > .action-button,
-.excerpt-actions .menu {
-  flex: 1 1 0;
-  min-width: 0;
+.excerpt-actions .button {
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  box-shadow: none;
 }
 
-.excerpt-actions .menu .button,
-.excerpt-actions .menu .action-button {
+.excerpt-actions .menu {
+  width: 100%;
+}
+
+.excerpt-actions .menu .button {
   width: 100%;
 }
 
