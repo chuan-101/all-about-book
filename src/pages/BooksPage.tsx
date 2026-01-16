@@ -22,12 +22,19 @@ function BooksPage() {
   const [cloudError, setCloudError] = useState<string | null>(null)
   const [openBookMenuId, setOpenBookMenuId] = useState<string | null>(null)
   const [confirmingBook, setConfirmingBook] = useState<Book | null>(null)
+  const [isFormExpanded, setIsFormExpanded] = useState(false)
 
   useEffect(() => {
     if (isCloudMode) {
       setEditingBook(null)
     }
   }, [isCloudMode])
+
+  useEffect(() => {
+    if (editingBook) {
+      setIsFormExpanded(true)
+    }
+  }, [editingBook])
 
   const handleSubmit = async (values: BookFormValues) => {
     const now = new Date().toISOString()
@@ -102,13 +109,14 @@ function BooksPage() {
 
   return (
     <section className="stack">
-      <div>
-        <h2>书架</h2>
-        <p className="muted">
-          添加和管理你的书单，当前数据来源：
-          {isCloudMode ? '云端' : '本地'}。
-        </p>
+      <div className="page-header dashboard-header">
+        <div className="dashboard-header-text">
+          <div className="dashboard-heading">
+            <span className="dashboard-date">Bookshelf</span>
+          </div>
+        </div>
       </div>
+      <div className="dashboard-divider" role="presentation" />
 
       {cloudLoading ? (
         <div className="notice info">云端数据加载中...</div>
@@ -116,16 +124,35 @@ function BooksPage() {
       {cloudError ? (
         <div className="notice error">{cloudError}</div>
       ) : null}
-      <div>
-        <h3 className="section-title">
-          {editingBook ? '编辑书籍' : '添加新书'}
-        </h3>
-        <BookForm
-          initialValues={editingBook ?? undefined}
-          onSubmit={handleSubmit}
-          onCancel={editingBook ? () => setEditingBook(null) : undefined}
-          submitLabel={editingBook ? '更新' : '添加'}
-        />
+      <div className="collapsible-section">
+        <button
+          className="collapsible-header"
+          type="button"
+          aria-expanded={isFormExpanded}
+          onClick={() => setIsFormExpanded((prev) => !prev)}
+        >
+          <span>
+            {editingBook ? '编辑书籍' : '添加新书'}
+          </span>
+          <span className="collapsible-icon" aria-hidden="true">
+            {isFormExpanded ? '−' : '+'}
+          </span>
+        </button>
+        <div
+          className={`collapsible-panel${isFormExpanded ? ' is-expanded' : ''}`}
+          aria-hidden={!isFormExpanded}
+        >
+          <div className="collapsible-content">
+            <BookForm
+              initialValues={editingBook ?? undefined}
+              onSubmit={handleSubmit}
+              onCancel={
+                editingBook ? () => setEditingBook(null) : undefined
+              }
+              submitLabel={editingBook ? '更新' : '添加'}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="card stack">
