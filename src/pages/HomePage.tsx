@@ -98,20 +98,12 @@ function HomePage() {
             <span className="dashboard-date">Reading Dashboard</span>
           </div>
           <p className="muted">
-            记录你的阅读进度，管理你的书架。
+            记录阅读进度，管理书架。
           </p>
           {isCloudMode && cloudLoading ? (
             <p className="notice info">云端数据加载中...</p>
           ) : null}
         </div>
-        <Link
-          className="icon-btn dashboard-action"
-          to="/books"
-          aria-label="管理书籍"
-          title="管理书籍"
-        >
-          <span aria-hidden="true">📚</span>
-        </Link>
       </div>
       <div className="dashboard-divider" role="presentation" />
 
