@@ -302,6 +302,62 @@ textarea {
   margin-bottom: 0.75rem;
 }
 
+.collapsible-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--border-radius-card);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--transition-speed),
+    box-shadow var(--transition-speed),
+    border-color var(--transition-speed);
+}
+
+.collapsible-header:hover {
+  box-shadow: var(--box-shadow-card);
+}
+
+.collapsible-header:active {
+  transform: translateY(1px);
+}
+
+.collapsible-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.collapsible-panel {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.collapsible-panel.is-expanded {
+  max-height: 1200px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.collapsible-content {
+  padding-top: 0.5rem;
+}
+
 .card {
   background: var(--color-bg-card);
   border-radius: var(--border-radius-card);
