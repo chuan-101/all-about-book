@@ -102,6 +102,24 @@ body {
   z-index: 10;
 }
 
+/* === Retro Cafe Theme: Fix Button Layouts === */
+[data-theme='retro-cafe'] .card .card-actions,
+[data-theme='retro-cafe'] .excerpt-card .button-group {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+[data-theme='retro-cafe'] .card .card-actions .btn,
+[data-theme='retro-cafe'] .card .card-actions a,
+[data-theme='retro-cafe'] .excerpt-card .button-group .btn {
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
+}
+
 @keyframes dropdownPop {
   0% {
     opacity: 0;
@@ -825,41 +843,48 @@ textarea {
 }
 
 .actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-  flex-wrap: wrap;
 }
 
-.actions > .button,
-.actions > .action-button,
-.actions > .menu {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.actions .menu .button,
-.actions .menu .action-button {
+.actions .button {
   width: 100%;
   text-align: center;
 }
 
+.actions .menu {
+  width: 100%;
+}
+
+.actions .menu .button {
+  width: 100%;
+}
+
 .excerpt-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-top: 16px;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding-top: 12px;
 }
 
-.excerpt-actions > .button,
-.excerpt-actions > .action-button,
-.excerpt-actions .menu {
-  flex: 1 1 0;
-  min-width: 0;
+.excerpt-actions .button {
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  box-shadow: none;
 }
 
-.excerpt-actions .menu .button,
-.excerpt-actions .menu .action-button {
+.excerpt-actions .menu {
+  width: 100%;
+}
+
+.excerpt-actions .menu .button {
   width: 100%;
 }
 
