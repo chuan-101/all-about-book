@@ -9,6 +9,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   --tabbar-h: 64px;
+  --border-color: var(--color-border);
+  --radius-md: var(--border-radius-btn);
 }
 
 *,
@@ -829,12 +831,14 @@ textarea {
 }
 
 .actions > .button,
+.actions > .action-button,
 .actions > .menu {
   flex: 1 1 0;
   min-width: 0;
 }
 
-.actions .menu .button {
+.actions .menu .button,
+.actions .menu .action-button {
   width: 100%;
   text-align: center;
 }
@@ -848,12 +852,14 @@ textarea {
 }
 
 .excerpt-actions > .button,
+.excerpt-actions > .action-button,
 .excerpt-actions .menu {
   flex: 1 1 0;
   min-width: 0;
 }
 
-.excerpt-actions .menu .button {
+.excerpt-actions .menu .button,
+.excerpt-actions .menu .action-button {
   width: 100%;
 }
 
@@ -976,6 +982,30 @@ textarea {
   transition: box-shadow var(--transition-speed),
     transform var(--transition-speed),
     background-color var(--transition-speed);
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: none;
+  transition: transform var(--transition-speed),
+    background-color var(--transition-speed);
+}
+
+.action-button:active {
+  box-shadow: none;
+  transform: translateY(1px);
 }
 
 .button.primary {
