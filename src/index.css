@@ -537,13 +537,13 @@ textarea {
   max-width: 100%;
 }
 
-.model-menu {
+.menu-panel.model-menu {
+  top: auto;
+  bottom: calc(100% + 0.4rem);
   max-height: min(320px, 50vh);
   overflow-y: auto;
   overscroll-behavior: contain;
   min-width: 240px;
-  top: auto;
-  bottom: calc(100% + 0.4rem);
 }
 
 .model-option-id {
