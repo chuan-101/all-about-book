@@ -1242,74 +1242,12 @@ function BookDetailPage() {
         <div className="card stack">
           <div className="card-header discussion-header">
             <div className="discussion-header-main">
-              <div>
+              <div className="discussion-title-group">
                 <h3>与 Syzygy 讨论</h3>
                 <span className="muted">
                   {displayDiscussions.length} 条
                 </span>
               </div>
-              {canSwitchModel ? (
-                <div className="discussion-model">
-                  <span className="muted">Model</span>
-                  <div className="menu">
-                    <button
-                      type="button"
-                      className="button ghost model-toggle"
-                      aria-haspopup="listbox"
-                      aria-expanded={isModelMenuOpen}
-                      onClick={() =>
-                        setIsModelMenuOpen((value) =>
-                          isModelSaving ? false : !value,
-                        )
-                      }
-                      disabled={
-                        modelLoading ||
-                        modelOptions.length === 0 ||
-                        isModelSaving
-                      }
-                    >
-                      <span className="model-toggle-label">
-                        {modelLoading
-                          ? '加载中...'
-                          : selectedModelLabel}
-                      </span>
-                      <span aria-hidden="true">▾</span>
-                    </button>
-                    {isModelMenuOpen ? (
-                      <div
-                        className="menu-panel model-menu"
-                        role="listbox"
-                      >
-                        {modelOptions.map((model) => (
-                          <button
-                            key={model.id}
-                            type="button"
-                            className="menu-item"
-                            role="option"
-                            aria-selected={model.id === selectedModel}
-                            disabled={isModelSaving}
-                            onClick={() => handleModelSelect(model.id)}
-                          >
-                            <span>{model.label}</span>
-                            <span className="muted model-option-id">
-                              {model.id}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  {modelStatusMessage ? (
-                    <span
-                      className={`model-status ${
-                        modelStatus === 'error' ? 'error' : 'success'
-                      }`}
-                    >
-                      {modelStatusMessage}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
             </div>
             <button
               type="button"
@@ -1464,25 +1402,89 @@ function BookDetailPage() {
               />
               <span>流式输出</span>
             </label>
-            <div className="form-actions">
-              <button type="submit" className="button primary">
-                发送
-              </button>
-              <button
-                type="button"
-                className="button ghost"
-                onClick={handleAskSyzygy}
-                disabled={
-                  !session?.user ||
-                  !isCloudMode ||
-                  isAskingSyzygy ||
-                  isStreamingReply
-                }
-              >
-                {isAskingSyzygy || isStreamingReply
-                  ? 'Syzygy 思考中...'
-                  : '让 Syzygy 回复'}
-              </button>
+            <div className="discussion-form-footer">
+              {canSwitchModel ? (
+                <div className="discussion-model">
+                  <span className="muted">Model</span>
+                  <div className="menu">
+                    <button
+                      type="button"
+                      className="button ghost model-toggle"
+                      aria-haspopup="listbox"
+                      aria-expanded={isModelMenuOpen}
+                      onClick={() =>
+                        setIsModelMenuOpen((value) =>
+                          isModelSaving ? false : !value,
+                        )
+                      }
+                      disabled={
+                        modelLoading ||
+                        modelOptions.length === 0 ||
+                        isModelSaving
+                      }
+                    >
+                      <span className="model-toggle-label">
+                        {modelLoading
+                          ? '加载中...'
+                          : selectedModelLabel}
+                      </span>
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                    {isModelMenuOpen ? (
+                      <div
+                        className="menu-panel model-menu"
+                        role="listbox"
+                      >
+                        {modelOptions.map((model) => (
+                          <button
+                            key={model.id}
+                            type="button"
+                            className="menu-item"
+                            role="option"
+                            aria-selected={model.id === selectedModel}
+                            disabled={isModelSaving}
+                            onClick={() => handleModelSelect(model.id)}
+                          >
+                            <span>{model.label}</span>
+                            <span className="muted model-option-id">
+                              {model.id}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                  {modelStatusMessage ? (
+                    <span
+                      className={`model-status ${
+                        modelStatus === 'error' ? 'error' : 'success'
+                      }`}
+                    >
+                      {modelStatusMessage}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              <div className="form-actions">
+                <button type="submit" className="button primary">
+                  发送
+                </button>
+                <button
+                  type="button"
+                  className="button ghost"
+                  onClick={handleAskSyzygy}
+                  disabled={
+                    !session?.user ||
+                    !isCloudMode ||
+                    isAskingSyzygy ||
+                    isStreamingReply
+                  }
+                >
+                  {isAskingSyzygy || isStreamingReply
+                    ? 'Syzygy 思考中...'
+                    : '让 Syzygy 回复'}
+                </button>
+              </div>
             </div>
           </form>
         </div>
