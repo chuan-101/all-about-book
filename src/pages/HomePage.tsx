@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
 import { getReadingSessions } from '../lib/reading-sessions-storage'
