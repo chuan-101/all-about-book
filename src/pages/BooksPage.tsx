@@ -186,7 +186,13 @@ function BooksPage() {
                       {book.author || '作者未知'}
                     </p>
                     <div className="metadata">
-                      <span className="chip">
+                      <span
+                        className={`chip${
+                          book.status === 'reading'
+                            ? ' status-badge-reading'
+                            : ''
+                        }`}
+                      >
                         {statusLabels[book.status]}
                       </span>
                       {book.genre ? (
