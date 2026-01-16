@@ -4,11 +4,17 @@ const themeLabels = {
   'retro-cafe': '昭和喫茶店',
   'retro-keyboard': '复古键盘',
   'pixel-dream': '像素梦境',
+  'pixel-farm': '像素农场',
 }
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
-  const themeOrder = ['retro-cafe', 'retro-keyboard', 'pixel-dream'] as const
+  const themeOrder = [
+    'retro-cafe',
+    'retro-keyboard',
+    'pixel-dream',
+    'pixel-farm',
+  ] as const
   const currentIndex = themeOrder.indexOf(theme)
   const nextTheme =
     currentIndex === -1
