@@ -23,7 +23,7 @@ body {
   background-color: var(--color-bg-main);
   background-image: var(--bg-texture);
   background-repeat: repeat;
-  background-size: 240px 240px;
+  background-size: var(--bg-size, 240px 240px);
   overflow-x: hidden;
 }
 
@@ -42,6 +42,56 @@ body {
 [data-theme='pixel-dream'] .btn:active {
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0px #543675;
+}
+
+[data-theme='retro-cafe'] .header {
+  position: relative;
+  overflow: visible;
+}
+
+[data-theme='retro-cafe'] .header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -12px;
+  height: 18px;
+  background: var(--color-bg-main);
+  background-image: radial-gradient(
+    circle at 12px 0,
+    transparent 9px,
+    var(--color-bg-main) 10px
+  );
+  background-size: 24px 18px;
+  background-repeat: repeat-x;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.12);
+  z-index: 1;
+}
+
+[data-theme='retro-cafe'] .card {
+  position: relative;
+  overflow: visible;
+}
+
+[data-theme='retro-cafe'] .card::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 92px;
+  height: 22px;
+  background-color: var(--color-accent-primary);
+  opacity: 0.6;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  z-index: 2;
 }
 
 @keyframes dropdownPop {
@@ -424,6 +474,11 @@ textarea {
 [data-theme="retro-keyboard"] .menu-item + .menu-item {
   border-top: none;
   box-shadow: var(--separator-groove);
+}
+
+[data-theme='retro-keyboard'] .card {
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
 }
 
 .discussion-header {
