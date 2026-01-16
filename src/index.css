@@ -244,8 +244,10 @@ textarea {
 .dashboard-heading {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+  margin-top: 1rem;
 }
 
 .dashboard-date {
