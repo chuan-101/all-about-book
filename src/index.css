@@ -540,9 +540,10 @@ textarea {
 .model-menu {
   max-height: min(320px, 50vh);
   overflow-y: auto;
-  bottom: 100%;
+  overscroll-behavior: contain;
+  min-width: 240px;
   top: auto;
-  margin-bottom: 0.4rem;
+  bottom: calc(100% + 0.4rem);
 }
 
 .model-option-id {
