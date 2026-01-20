@@ -99,11 +99,14 @@ export const getMessagesByBookId = (
 ): DiscussionMessage[] =>
   getDiscussions()
     .filter((message) => message.bookId === bookId)
-    .sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() -
-        new Date(b.createdAt).getTime(),
-    )
+    .sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime()
+      const timeB = new Date(b.createdAt).getTime()
+      if (timeA !== timeB) {
+        return timeA - timeB
+      }
+      return a.id.localeCompare(b.id)
+    })
 
 export const addMessage = (message: DiscussionMessage): void => {
   const messages = getDiscussions()

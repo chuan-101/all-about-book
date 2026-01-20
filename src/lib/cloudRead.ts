@@ -177,6 +177,7 @@ export const fetchDiscussions = async (
     .from('discussions')
     .select('*')
     .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
 
   if (error) {
     throw error
