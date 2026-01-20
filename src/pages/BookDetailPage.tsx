@@ -65,6 +65,48 @@ type ModelOption = {
   label: string
 }
 
+type OptimisticDiscussionMessage = {
+  clientId: string
+  bookId: string
+  role: 'me' | 'syzygy'
+  content: string
+  metadata?: DiscussionMessage['metadata']
+  createdAt?: string
+  id?: string
+  isPending?: boolean
+}
+
+type DiscussionEntry = DiscussionMessage | OptimisticDiscussionMessage
+
+const sortDiscussionEntries = (
+  entries: DiscussionEntry[],
+): DiscussionEntry[] =>
+  entries
+    .map((message, index) => ({ message, index }))
+    .sort((a, b) => {
+      const createdA = a.message.createdAt
+      const createdB = b.message.createdAt
+      if (createdA && createdB) {
+        const timeDiff =
+          new Date(createdA).getTime() - new Date(createdB).getTime()
+        if (timeDiff !== 0) return timeDiff
+        if (a.message.id && b.message.id) {
+          const idDiff = a.message.id.localeCompare(b.message.id)
+          if (idDiff !== 0) return idDiff
+        }
+      }
+      return a.index - b.index
+    })
+    .map((item) => item.message)
+
+const getDiscussionKey = (message: DiscussionEntry) =>
+  'clientId' in message ? message.clientId : message.id
+
+const isServerDiscussionMessage = (
+  message: DiscussionEntry,
+): message is DiscussionMessage =>
+  Boolean(message.id && message.createdAt)
+
 const MISSING_TABLE_MESSAGE =
   'Table missing: openrouter_models/syzygy_settings. Run SQL schema in Supabase.'
 
@@ -132,9 +174,9 @@ function BookDetailPage() {
   const [isConfirmingClearDiscussions, setIsConfirmingClearDiscussions] =
     useState(false)
   const [isStreamEnabled, setIsStreamEnabled] = useState(false)
-  const [streamedReply, setStreamedReply] = useState<string | null>(
-    null,
-  )
+  const [optimisticMessages, setOptimisticMessages] = useState<
+    OptimisticDiscussionMessage[]
+  >([])
   const [isStreamingReply, setIsStreamingReply] = useState(false)
   const [modelOptions, setModelOptions] = useState<ModelOption[]>([])
   const [modelLoading, setModelLoading] = useState(false)
@@ -202,6 +244,17 @@ function BookDetailPage() {
     setEditingExcerptId(null)
     setEditingContent('')
   }, [isCloudMode])
+
+  useEffect(() => {
+    if (!isCloudMode) {
+      setOptimisticMessages([])
+      return
+    }
+    if (!book) return
+    setOptimisticMessages((messages) =>
+      messages.filter((message) => message.bookId === book.id),
+    )
+  }, [book, isCloudMode])
 
   const handleCopyDiscussionMessage = useCallback(
     async (message: DiscussionMessage) => {
@@ -347,10 +400,23 @@ function BookDetailPage() {
 
   const displayDiscussions = useMemo(() => {
     if (!book) return []
-    return isCloudMode
+    const baseMessages = isCloudMode
       ? cloudDiscussions.filter((message) => message.bookId === book.id)
       : discussionMessages
-  }, [book, cloudDiscussions, discussionMessages, isCloudMode])
+    const pendingMessages = isCloudMode
+      ? optimisticMessages.filter((message) => message.bookId === book.id)
+      : []
+    return sortDiscussionEntries([
+      ...baseMessages,
+      ...pendingMessages,
+    ])
+  }, [
+    book,
+    cloudDiscussions,
+    discussionMessages,
+    isCloudMode,
+    optimisticMessages,
+  ])
 
   const selectedModelLabel = useMemo(() => {
     const current = modelOptions.find(
@@ -515,6 +581,56 @@ function BookDetailPage() {
     refreshDiscussions()
   }
 
+  const addOptimisticDiscussionPair = (content: string) => {
+    if (!book) return null
+    const userClientId = crypto.randomUUID()
+    const assistantClientId = crypto.randomUUID()
+    setOptimisticMessages((messages) => [
+      ...messages,
+      {
+        clientId: userClientId,
+        bookId: book.id,
+        role: 'me',
+        content,
+        isPending: true,
+      },
+      {
+        clientId: assistantClientId,
+        bookId: book.id,
+        role: 'syzygy',
+        content: '',
+        isPending: true,
+      },
+    ])
+    return { userClientId, assistantClientId }
+  }
+
+  const updateOptimisticAssistant = (
+    clientId: string,
+    content: string,
+  ) => {
+    setOptimisticMessages((messages) =>
+      messages.map((message) =>
+        message.clientId === clientId
+          ? { ...message, content }
+          : message,
+      ),
+    )
+  }
+
+  const clearOptimisticPair = (clientIds: {
+    userClientId: string
+    assistantClientId: string
+  }) => {
+    setOptimisticMessages((messages) =>
+      messages.filter(
+        (message) =>
+          message.clientId !== clientIds.userClientId &&
+          message.clientId !== clientIds.assistantClientId,
+      ),
+    )
+  }
+
   const handleAskSyzygy = async () => {
     if (!book) return
     const content = newMessageContent.trim()
@@ -534,10 +650,15 @@ function BookDetailPage() {
     if (isAskingSyzygy || isStreamingReply) return
     setCloudError(null)
     setIsAskingSyzygy(true)
+    let optimisticIds: {
+      userClientId: string
+      assistantClientId: string
+    } | null = null
     try {
       const accessToken = session.access_token
       if (!accessToken) {
         setCloudError('请先登录后再让 Syzygy 回复。')
+        setIsAskingSyzygy(false)
         return
       }
       if (import.meta.env.DEV) {
@@ -545,13 +666,18 @@ function BookDetailPage() {
         const suffix = supabaseAnonKey.slice(-4)
         console.debug(`Supabase anon key: ${prefix}...${suffix}`)
       }
+      optimisticIds = addOptimisticDiscussionPair(content)
+      if (!optimisticIds) {
+        setIsAskingSyzygy(false)
+        return
+      }
+      setNewMessageContent('')
       if (isStreamEnabled) {
         if (!supabaseUrl) {
           throw new Error('Supabase configuration is missing.')
         }
         const endpoint = `${supabaseUrl}/functions/v1/openrouter-chat`
         setIsStreamingReply(true)
-        setStreamedReply('')
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -602,7 +728,10 @@ function BookDetailPage() {
                 const parsed = JSON.parse(data) as { delta?: string }
                 if (parsed.delta) {
                   finalReply += parsed.delta
-                  setStreamedReply(finalReply)
+                  updateOptimisticAssistant(
+                    optimisticIds.assistantClientId,
+                    finalReply,
+                  )
                 }
               } catch (error) {
                 console.error('Failed to parse delta chunk', error)
@@ -629,6 +758,10 @@ function BookDetailPage() {
         if (!finalReply.trim()) {
           throw new Error('No assistant reply returned.')
         }
+        updateOptimisticAssistant(
+          optimisticIds.assistantClientId,
+          finalReply,
+        )
 
         await createCloudDiscussionMessages(session.user.id, book.id, [
           { role: 'me', content },
@@ -642,8 +775,7 @@ function BookDetailPage() {
           },
         ])
         await refreshCloud()
-        setNewMessageContent('')
-        setStreamedReply(null)
+        clearOptimisticPair(optimisticIds)
         return
       }
 
@@ -666,6 +798,10 @@ function BookDetailPage() {
         throw error ?? new Error('No assistant reply returned.')
       }
 
+      updateOptimisticAssistant(
+        optimisticIds.assistantClientId,
+        data.assistantReply,
+      )
       await createCloudDiscussionMessages(session.user.id, book.id, [
         { role: 'me', content },
         {
@@ -678,9 +814,12 @@ function BookDetailPage() {
         },
       ])
       await refreshCloud()
-      setNewMessageContent('')
+      clearOptimisticPair(optimisticIds)
     } catch (error) {
       console.error(error)
+      if (optimisticIds) {
+        clearOptimisticPair(optimisticIds)
+      }
       const status =
         typeof error === 'object' &&
         error !== null &&
@@ -690,11 +829,9 @@ function BookDetailPage() {
           : undefined
       if (status === 401 || status === 403) {
         setCloudError('请先登录后再让 Syzygy 回复。')
-        setStreamedReply(null)
         return
       }
       setCloudError('Syzygy 回复失败，请稍后再试。')
-      setStreamedReply(null)
     } finally {
       setIsAskingSyzygy(false)
       setIsStreamingReply(false)
@@ -1266,19 +1403,32 @@ function BookDetailPage() {
             后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
           </p>
           <div className="chat-window">
-            {displayDiscussions.length === 0 && !isStreamingReply ? (
+            {displayDiscussions.length === 0 ? (
               <p className="muted chat-empty">
                 暂无讨论，先写下你的想法吧。
               </p>
             ) : (
               <ul className="chat-list">
                 {displayDiscussions.map((message) => {
-                  const isMenuOpen = openDiscussionMenuId === message.id
                   const isMine = message.role === 'me'
+                  const serverMessage = isServerDiscussionMessage(message)
+                    ? message
+                    : null
+                  const isMenuOpen = serverMessage
+                    ? openDiscussionMenuId === serverMessage.id
+                    : false
+                  const isPending =
+                    'isPending' in message && message.isPending
+                  const bubbleContent =
+                    message.role === 'syzygy' &&
+                    isPending &&
+                    !message.content
+                      ? '生成中...'
+                      : message.content
 
                   return (
                     <li
-                      key={message.id}
+                      key={getDiscussionKey(message)}
                       className={`chat-item ${isMine ? 'mine' : 'theirs'}`}
                     >
                       <div className="chat-message">
@@ -1290,92 +1440,81 @@ function BookDetailPage() {
                         <div className="chat-body">
                           <div className="chat-bubble">
                             <div className="chat-bubble-content">
-                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-                                {message.content}
-                            </ReactMarkdown>
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm, remarkBreaks]}
+                              >
+                                {bubbleContent}
+                              </ReactMarkdown>
+                            </div>
                           </div>
-                        </div>
                           <div className="chat-meta">
                             <span className="chat-timestamp">
-                              {formatExcerptDate(message.createdAt)}
+                              {message.createdAt
+                                ? formatExcerptDate(message.createdAt)
+                                : '发送中...'}
                             </span>
-                            <div className="menu">
-                              <button
-                                className="button ghost"
-                                type="button"
-                                aria-haspopup="menu"
-                                aria-expanded={isMenuOpen}
-                                onClick={() =>
-                                  setOpenDiscussionMenuId(
-                                    isMenuOpen ? null : message.id,
-                                  )
-                                }
-                              >
-                                ⋯ 更多
-                              </button>
-                              {isMenuOpen ? (
-                                <div className="menu-panel" role="menu">
-                                  <button
-                                    className="menu-item"
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() =>
-                                      handleCopyDiscussionMessage(message)
-                                    }
-                                  >
-                                    📋 Copy Text
-                                  </button>
-                                  <button
-                                    className="menu-item"
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() => {
-                                      setOpenDiscussionMenuId(null)
-                                      setInfoDiscussion(message)
-                                    }}
-                                  >
-                                    ℹ️ View Info
-                                  </button>
-                                  <button
-                                    className="menu-item danger"
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() =>
-                                      handleRequestDeleteDiscussion(message)
-                                    }
-                                  >
-                                    删除
-                                  </button>
-                                </div>
-                              ) : null}
-                            </div>
+                            {serverMessage ? (
+                              <div className="menu">
+                                <button
+                                  className="button ghost"
+                                  type="button"
+                                  aria-haspopup="menu"
+                                  aria-expanded={isMenuOpen}
+                                  onClick={() =>
+                                    setOpenDiscussionMenuId(
+                                      isMenuOpen ? null : serverMessage.id,
+                                    )
+                                  }
+                                >
+                                  ⋯ 更多
+                                </button>
+                                {isMenuOpen ? (
+                                  <div className="menu-panel" role="menu">
+                                    <button
+                                      className="menu-item"
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() =>
+                                        handleCopyDiscussionMessage(
+                                          serverMessage,
+                                        )
+                                      }
+                                    >
+                                      📋 Copy Text
+                                    </button>
+                                    <button
+                                      className="menu-item"
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() => {
+                                        setOpenDiscussionMenuId(null)
+                                        setInfoDiscussion(serverMessage)
+                                      }}
+                                    >
+                                      ℹ️ View Info
+                                    </button>
+                                    <button
+                                      className="menu-item danger"
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() =>
+                                        handleRequestDeleteDiscussion(
+                                          serverMessage,
+                                        )
+                                      }
+                                    >
+                                      删除
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                       </div>
                     </li>
                   )
                 })}
-                {isStreamingReply ? (
-                  <li className="chat-item theirs">
-                    <div className="chat-message">
-                      <span className="chat-avatar" aria-hidden="true">
-                        S
-                      </span>
-                      <div className="chat-body">
-                        <div className="chat-bubble">
-                          <p className="chat-bubble-text">
-                            {streamedReply || '生成中...'}
-                          </p>
-                        </div>
-                        <div className="chat-meta">
-                          <span className="chat-timestamp">
-                            {new Date().toLocaleString('zh-CN')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                ) : null}
               </ul>
             )}
           </div>
