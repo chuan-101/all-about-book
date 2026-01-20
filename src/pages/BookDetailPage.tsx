@@ -7,6 +7,9 @@ import {
   type FormEvent,
 } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
+import remarkGfm from 'remark-gfm'
 import AutoResizeTextarea from '../components/AutoResizeTextarea'
 import {
   deleteExcerpt,
@@ -1286,7 +1289,12 @@ function BookDetailPage() {
                         ) : null}
                         <div className="chat-body">
                           <div className="chat-bubble">
-                            <p>{message.content}</p>
+                            <ReactMarkdown
+                              className="chat-bubble-content"
+                              remarkPlugins={[remarkGfm, remarkBreaks]}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
                           </div>
                           <div className="chat-meta">
                             <span className="chat-timestamp">
@@ -1356,7 +1364,9 @@ function BookDetailPage() {
                       </span>
                       <div className="chat-body">
                         <div className="chat-bubble">
-                          <p>{streamedReply || '生成中...'}</p>
+                          <p className="chat-bubble-text">
+                            {streamedReply || '生成中...'}
+                          </p>
                         </div>
                         <div className="chat-meta">
                           <span className="chat-timestamp">

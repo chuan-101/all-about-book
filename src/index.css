@@ -783,10 +783,72 @@ textarea {
   border-radius: 18px 18px 0 18px;
 }
 
-.chat-bubble p {
+.chat-bubble-content,
+.chat-bubble-text {
   margin: 0;
   line-height: 1.6;
   font-size: clamp(0.95rem, 2.8vw, 1.05rem);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.chat-bubble-text {
+  white-space: pre-wrap;
+}
+
+.chat-bubble-content > :first-child {
+  margin-top: 0;
+}
+
+.chat-bubble-content > :last-child {
+  margin-bottom: 0;
+}
+
+.chat-bubble-content p {
+  margin: 0;
+}
+
+.chat-bubble-content p + p {
+  margin-top: 0.65rem;
+}
+
+.chat-bubble-content ul,
+.chat-bubble-content ol {
+  margin: 0.4rem 0 0.4rem 1.2rem;
+  padding: 0;
+}
+
+.chat-bubble-content li {
+  margin: 0.2rem 0;
+}
+
+.chat-bubble-content code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0.1rem 0.3rem;
+  border-radius: 6px;
+}
+
+.chat-bubble-content pre {
+  margin: 0.6rem 0;
+  padding: 0.65rem 0.75rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: auto;
+}
+
+.chat-bubble-content pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.chat-item.mine .chat-bubble .chat-bubble-content code {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.chat-item.mine .chat-bubble .chat-bubble-content pre {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .chat-meta {
