@@ -548,6 +548,122 @@ textarea {
   margin-bottom: 1rem;
 }
 
+.bookshelf-summary {
+  gap: 1.25rem;
+}
+
+.bookshelf-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bookshelf-search input {
+  flex: 1;
+  min-width: 220px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-main);
+  font: inherit;
+  color: var(--color-text-primary);
+}
+
+.bookshelf-search input:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}
+
+.bookshelf-pinned {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px dashed var(--color-border);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.bookshelf-pinned-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pinned-reading-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pinned-reading-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pinned-reading-title {
+  font-weight: 700;
+  color: inherit;
+  text-decoration: none;
+}
+
+.pinned-reading-title:hover,
+.pinned-reading-title:focus-visible {
+  text-decoration: underline;
+}
+
+.bookshelf-empty-state {
+  border-top: 1px dashed var(--color-border);
+  padding-top: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.bookshelf-section {
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.bookshelf-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem 0;
+  min-height: 48px;
+  gap: 1rem;
+}
+
+.bookshelf-section-header:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.bookshelf-section-header h4 {
+  margin: 0;
+}
+
+.bookshelf-section-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  white-space: nowrap;
+}
+
+.bookshelf-section-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 /* === Retro Keyboard Theme Separators === */
 [data-theme="retro-keyboard"] .list-item + .list-item {
   border-top: none;
