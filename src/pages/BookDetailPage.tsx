@@ -1289,13 +1289,12 @@ function BookDetailPage() {
                         ) : null}
                         <div className="chat-body">
                           <div className="chat-bubble">
-                            <ReactMarkdown
-                              className="chat-bubble-content"
-                              remarkPlugins={[remarkGfm, remarkBreaks]}
-                            >
-                              {message.content}
+                            <div className="chat-bubble-content">
+                              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                                {message.content}
                             </ReactMarkdown>
                           </div>
+                        </div>
                           <div className="chat-meta">
                             <span className="chat-timestamp">
                               {formatExcerptDate(message.createdAt)}
