@@ -45,6 +45,7 @@ import {
   getCheckInsByBook,
   toggleCheckIn,
 } from '../lib/reading-sessions-storage'
+import { fetchDiscussionsByBookId } from '../lib/cloudRead'
 import {
   supabase,
   supabaseAnonKey,
@@ -136,7 +137,6 @@ function BookDetailPage() {
     cloudBooks,
     cloudCheckIns,
     cloudExcerpts,
-    cloudDiscussions,
     cloudLoading,
     session,
     refreshCloud,
@@ -157,6 +157,9 @@ function BookDetailPage() {
   const [openDiscussionMenuId, setOpenDiscussionMenuId] =
     useState<string | null>(null)
   const [discussionMessages, setDiscussionMessages] = useState<
+    DiscussionMessage[]
+  >([])
+  const [cloudDiscussionMessages, setCloudDiscussionMessages] = useState<
     DiscussionMessage[]
   >([])
   const [infoDiscussion, setInfoDiscussion] =
@@ -192,6 +195,7 @@ function BookDetailPage() {
     string | null
   >(null)
   const isModelSaving = modelStatus === 'saving'
+  const activeDiscussionBookIdRef = useRef<string | null>(null)
 
   const getMetadataNumber = (value: unknown) =>
     typeof value === 'number' ? value : undefined
@@ -223,6 +227,52 @@ function BookDetailPage() {
     if (!book || isCloudMode) return
     setDiscussionMessages(getMessagesByBookId(book.id))
   }, [book, isCloudMode])
+
+  const loadCloudDiscussions = useCallback(
+    async (targetBookId: string) => {
+      if (!session?.user) return
+      if (!targetBookId) {
+        setCloudError('缺少书籍 ID，无法加载讨论。')
+        setCloudDiscussionMessages([])
+        return
+      }
+      activeDiscussionBookIdRef.current = targetBookId
+      try {
+        const discussions = await fetchDiscussionsByBookId(
+          session.user,
+          targetBookId,
+        )
+        if (activeDiscussionBookIdRef.current !== targetBookId) return
+        setCloudDiscussionMessages(discussions)
+      } catch (error) {
+        if (activeDiscussionBookIdRef.current !== targetBookId) return
+        console.error('Failed to load cloud discussions', error)
+        setCloudError('云端讨论加载失败，请稍后重试。')
+      }
+    },
+    [session],
+  )
+
+  useEffect(() => {
+    if (!isCloudMode) {
+      activeDiscussionBookIdRef.current = null
+      setCloudDiscussionMessages([])
+      return
+    }
+    if (!book?.id) {
+      activeDiscussionBookIdRef.current = null
+      setCloudDiscussionMessages([])
+      setCloudError('缺少书籍 ID，无法加载讨论。')
+      return
+    }
+    if (!session?.user) {
+      setCloudDiscussionMessages([])
+      return
+    }
+    setCloudError(null)
+    setCloudDiscussionMessages([])
+    void loadCloudDiscussions(book.id)
+  }, [book?.id, isCloudMode, loadCloudDiscussions, session?.user])
 
   useEffect(() => {
     const stored = window.localStorage.getItem(
@@ -401,7 +451,7 @@ function BookDetailPage() {
   const displayDiscussions = useMemo(() => {
     if (!book) return []
     const baseMessages = isCloudMode
-      ? cloudDiscussions.filter((message) => message.bookId === book.id)
+      ? cloudDiscussionMessages
       : discussionMessages
     const pendingMessages = isCloudMode
       ? optimisticMessages.filter((message) => message.bookId === book.id)
@@ -412,7 +462,7 @@ function BookDetailPage() {
     ])
   }, [
     book,
-    cloudDiscussions,
+    cloudDiscussionMessages,
     discussionMessages,
     isCloudMode,
     optimisticMessages,
@@ -548,7 +598,10 @@ function BookDetailPage() {
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault()
-    if (!book) return
+    if (!book?.id) {
+      setCloudError('无法发送讨论：缺少书籍 ID。')
+      return
+    }
     const content = newMessageContent.trim()
     if (!content) return
     if (isCloudMode) {
@@ -559,7 +612,7 @@ function BookDetailPage() {
       setCloudError(null)
       try {
         await createCloudDiscussion(session.user.id, book.id, content)
-        await refreshCloud()
+        await loadCloudDiscussions(book.id)
         setNewMessageContent('')
       } catch (error) {
         console.error(error)
@@ -632,7 +685,10 @@ function BookDetailPage() {
   }
 
   const handleAskSyzygy = async () => {
-    if (!book) return
+    if (!book?.id) {
+      setCloudError('无法发送讨论：缺少书籍 ID。')
+      return
+    }
     const content = newMessageContent.trim()
     if (!content) return
     if (!isCloudMode) {
@@ -774,7 +830,7 @@ function BookDetailPage() {
             },
           },
         ])
-        await refreshCloud()
+        await loadCloudDiscussions(book.id)
         clearOptimisticPair(optimisticIds)
         return
       }
@@ -813,7 +869,7 @@ function BookDetailPage() {
           },
         },
       ])
-      await refreshCloud()
+      await loadCloudDiscussions(book.id)
       clearOptimisticPair(optimisticIds)
     } catch (error) {
       console.error(error)
@@ -921,7 +977,7 @@ function BookDetailPage() {
           message.bookId,
           message.id,
         )
-        await refreshCloud()
+        await loadCloudDiscussions(message.bookId)
       } catch (error) {
         console.error(error)
         setCloudError('云端讨论删除失败，请稍后重试。')
@@ -948,7 +1004,7 @@ function BookDetailPage() {
       setCloudError(null)
       try {
         await deleteCloudDiscussionsByBook(session.user.id, book.id)
-        await refreshCloud()
+        await loadCloudDiscussions(book.id)
       } catch (error) {
         console.error(error)
         setCloudError('云端讨论清空失败，请稍后重试。')
