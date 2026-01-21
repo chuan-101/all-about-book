@@ -170,12 +170,33 @@ export const fetchExcerpts = async (_user: User): Promise<Excerpt[]> => {
 }
 
 export const fetchDiscussions = async (
-  _user: User,
+  user: User,
 ): Promise<DiscussionMessage[]> => {
   const client = ensureClient()
   const { data, error } = await client
     .from('discussions')
     .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) => normalizeDiscussion(row as SupabaseRow))
+}
+
+export const fetchDiscussionsByBookId = async (
+  user: User,
+  bookId: string,
+): Promise<DiscussionMessage[]> => {
+  const client = ensureClient()
+  const { data, error } = await client
+    .from('discussions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('book_id', bookId)
     .order('created_at', { ascending: true })
     .order('id', { ascending: true })
 
