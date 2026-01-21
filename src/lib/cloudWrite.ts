@@ -196,14 +196,16 @@ export const createCloudDiscussionMessages = async (
   if (!bookId) {
     throw new Error('Missing bookId for discussion insert.')
   }
-  const payload = messages.map((message) => ({
-    id: crypto.randomUUID(),
-    user_id: userId,
-    book_id: bookId,
-    role: message.role,
-    content: message.content,
-    metadata: message.role === 'syzygy' ? message.metadata ?? null : null,
-  }))
+  const now = Date.now()
+const payload = messages.map((message, index) => ({
+  id: crypto.randomUUID(),
+  user_id: userId,
+  book_id: bookId,
+  role: message.role,
+  content: message.content,
+  metadata: message.role === 'syzygy' ? message.metadata ?? null : null,
+  created_at: new Date(now + index).toISOString(),
+}))
 
   const { error } = await client.from('discussions').insert(payload)
 
