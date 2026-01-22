@@ -1734,11 +1734,11 @@ function BookDetailPage() {
             </ul>
           )}
         </div>
-        <div className="card stack">
+        <div className="card stack discussion-card">
           <div className="card-header discussion-header">
             <div className="discussion-header-main">
               <div className="discussion-title-group">
-                <h3>与 Syzygy 讨论</h3>
+                <h3 className="discussion-title">With Syzygy</h3>
                 <span className="muted">
                   {displayDiscussions.length} 条
                 </span>
@@ -1753,7 +1753,7 @@ function BookDetailPage() {
             <div className="discussion-header-actions">
               <button
                 type="button"
-                className="button ghost"
+                className="button ghost discussion-stamp"
                 onClick={handleCreateConversation}
               >
                 新建对话
