@@ -693,6 +693,8 @@ textarea {
 .discussion-header {
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .discussion-header-main {
@@ -726,6 +728,33 @@ textarea {
   min-width: min(260px, 70vw);
 }
 
+.discussion-thread-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.discussion-thread-name {
+  font-weight: 600;
+}
+
+.discussion-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.75rem;
+}
+
 .discussion-conversations {
   border: 1px solid var(--card-border);
   border-radius: 12px;
@@ -746,6 +775,33 @@ textarea {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+}
+
+.discussion-conversations-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.discussion-conversations-body {
+  margin-top: 0.75rem;
+}
+
+.discussion-conversations-chevron {
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.discussion-conversations.is-open .discussion-conversations-chevron {
+  transform: rotate(180deg);
 }
 
 .discussion-conversation-list {

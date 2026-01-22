@@ -170,6 +170,8 @@ function BookDetailPage() {
   >(null)
   const [openDiscussionMenuId, setOpenDiscussionMenuId] =
     useState<string | null>(null)
+  const [isConversationMenuOpen, setIsConversationMenuOpen] =
+    useState(false)
   const [discussionMessages, setDiscussionMessages] = useState<
     DiscussionMessage[]
   >([])
@@ -184,6 +186,8 @@ function BookDetailPage() {
     useState('')
   const [isSavingConversationTitle, setIsSavingConversationTitle] =
     useState(false)
+  const [isRenamingConversation, setIsRenamingConversation] =
+    useState(false)
   const [infoDiscussion, setInfoDiscussion] =
     useState<DiscussionMessage | null>(null)
   const [newMessageContent, setNewMessageContent] = useState('')
@@ -196,7 +200,14 @@ function BookDetailPage() {
   const [attachContext, setAttachContext] = useState(true)
   const [confirmingDiscussion, setConfirmingDiscussion] =
     useState<DiscussionMessage | null>(null)
+  const [isConfirmingDeleteConversation, setIsConfirmingDeleteConversation] =
+    useState(false)
   const [isConfirmingClearDiscussions, setIsConfirmingClearDiscussions] =
+    useState(false)
+  const [deleteConversationText, setDeleteConversationText] =
+    useState('')
+  const [clearConversationText, setClearConversationText] = useState('')
+  const [isConversationListOpen, setIsConversationListOpen] =
     useState(false)
   const [isStreamEnabled, setIsStreamEnabled] = useState(false)
   const [optimisticMessages, setOptimisticMessages] = useState<
@@ -218,6 +229,8 @@ function BookDetailPage() {
   >(null)
   const isModelSaving = modelStatus === 'saving'
   const activeDiscussionKeyRef = useRef<string | null>(null)
+  const deleteConfirmPhrase = '删除'
+  const clearConfirmPhrase = '清空'
 
   const getMetadataNumber = (value: unknown) =>
     typeof value === 'number' ? value : undefined
@@ -590,6 +603,11 @@ function BookDetailPage() {
     return current?.label ?? selectedModel
   }, [modelOptions, selectedModel])
 
+  const isDeleteConfirmationValid =
+    deleteConversationText.trim() === deleteConfirmPhrase
+  const isClearConfirmationValid =
+    clearConversationText.trim() === clearConfirmPhrase
+
   const monthStart = useMemo(
     () =>
       new Date(
@@ -726,9 +744,15 @@ function BookDetailPage() {
     setActiveConversationId(created.id)
   }
 
-  const handleDeleteConversation = async () => {
-    if (!book || !activeConversationId) return
-    if (!window.confirm('确定要删除当前对话吗？此操作无法撤销。')) return
+  const handleRequestDeleteConversation = () => {
+    setIsConversationMenuOpen(false)
+    setDeleteConversationText('')
+    setIsConfirmingDeleteConversation(true)
+  }
+
+  const handleConfirmDeleteConversation = async () => {
+    if (!book || !activeConversationId || !isDeleteConfirmationValid) return
+    setIsConfirmingDeleteConversation(false)
     if (isCloudMode) {
       if (!session?.user) {
         setCloudError('请先登录后再删除云端对话。')
@@ -1260,11 +1284,13 @@ function BookDetailPage() {
   }
 
   const handleRequestClearDiscussions = () => {
+    setIsConversationMenuOpen(false)
+    setClearConversationText('')
     setIsConfirmingClearDiscussions(true)
   }
 
   const handleConfirmClearDiscussions = async () => {
-    if (!book || !activeConversationId) return
+    if (!book || !activeConversationId || !isClearConfirmationValid) return
     setIsConfirmingClearDiscussions(false)
     if (isCloudMode) {
       if (!session?.user) {
@@ -1717,61 +1743,14 @@ function BookDetailPage() {
                   {displayDiscussions.length} 条
                 </span>
               </div>
-              <div className="discussion-conversation-editor">
-                <label className="field">
-                  <span className="muted">当前对话</span>
-                  <input
-                    type="text"
-                    value={conversationTitleDraft}
-                    onChange={(event) =>
-                      setConversationTitleDraft(event.target.value)
-                    }
-                    onBlur={() => {
-                      void handleSaveConversationTitle()
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault()
-                        void handleSaveConversationTitle()
-                      }
-                    }}
-                    placeholder="输入对话名称"
-                    disabled={!activeConversation || isSavingConversationTitle}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="button ghost"
-                  onClick={handleDeleteConversation}
-                  disabled={!activeConversationId}
-                >
-                  删除对话
-                </button>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="button ghost"
-              onClick={handleRequestClearDiscussions}
-              disabled={
-                displayDiscussions.length === 0 || !activeConversationId
-              }
-            >
-              清空当前对话
-            </button>
-          </div>
-          {modelError ? <p className="notice error">{modelError}</p> : null}
-          <p className="muted">
-            后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
-          </p>
-          <div className="discussion-conversations">
-            <div className="discussion-conversations-header">
-              <div className="discussion-conversations-title">
-                <h4>对话列表</h4>
-                <span className="muted">
-                  {conversations.length} 个
+              <div className="discussion-thread-summary">
+                <span className="muted">当前对话</span>
+                <span className="discussion-thread-name">
+                  {activeConversation?.title || '未命名对话'}
                 </span>
               </div>
+            </div>
+            <div className="discussion-header-actions">
               <button
                 type="button"
                 className="button ghost"
@@ -1779,36 +1758,126 @@ function BookDetailPage() {
               >
                 新建对话
               </button>
-            </div>
-            {conversations.length === 0 ? (
-              <p className="muted">
-                暂无对话，点击「新建对话」开始聊天。
-              </p>
-            ) : (
-              <div className="discussion-conversation-list">
-                {conversations.map((conversation) => (
-                  <button
-                    key={conversation.id}
-                    type="button"
-                    className={`conversation-chip${
-                      conversation.id === activeConversationId
-                        ? ' active'
-                        : ''
-                    }`}
-                    onClick={() =>
-                      setActiveConversationId(conversation.id)
-                    }
-                  >
-                    <span className="conversation-chip-title">
-                      {conversation.title || '未命名对话'}
-                    </span>
-                    <span className="muted conversation-chip-date">
-                      {formatExcerptDate(conversation.updatedAt)}
-                    </span>
-                  </button>
-                ))}
+              <div className="menu">
+                <button
+                  type="button"
+                  className="button ghost icon-button"
+                  aria-haspopup="menu"
+                  aria-expanded={isConversationMenuOpen}
+                  aria-label="更多对话操作"
+                  onClick={() =>
+                    setIsConversationMenuOpen((value) => !value)
+                  }
+                >
+                  ⋯
+                </button>
+                {isConversationMenuOpen ? (
+                  <div className="menu-panel" role="menu">
+                    <button
+                      className="menu-item"
+                      type="button"
+                      role="menuitem"
+                      disabled={!activeConversationId}
+                      onClick={() => {
+                        setIsConversationMenuOpen(false)
+                        setConversationTitleDraft(
+                          activeConversation?.title ?? '',
+                        )
+                        setIsRenamingConversation(true)
+                      }}
+                    >
+                      重命名对话
+                    </button>
+                    <button
+                      className="menu-item danger"
+                      type="button"
+                      role="menuitem"
+                      disabled={
+                        !activeConversationId ||
+                        displayDiscussions.length === 0
+                      }
+                      onClick={handleRequestClearDiscussions}
+                    >
+                      清空当前对话
+                    </button>
+                    <button
+                      className="menu-item danger"
+                      type="button"
+                      role="menuitem"
+                      disabled={!activeConversationId}
+                      onClick={handleRequestDeleteConversation}
+                    >
+                      删除当前对话
+                    </button>
+                  </div>
+                ) : null}
               </div>
-            )}
+            </div>
+          </div>
+          {modelError ? <p className="notice error">{modelError}</p> : null}
+          <p className="muted">
+            后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
+          </p>
+          <div
+            className={`discussion-conversations${
+              isConversationListOpen ? ' is-open' : ''
+            }`}
+          >
+            <button
+              type="button"
+              className="discussion-conversations-toggle"
+              aria-expanded={isConversationListOpen}
+              onClick={() =>
+                setIsConversationListOpen((value) => !value)
+              }
+            >
+              <div className="discussion-conversations-title">
+                <h4>对话列表</h4>
+                <span className="muted">
+                  {conversations.length} 个
+                </span>
+              </div>
+              <span
+                className="discussion-conversations-chevron"
+                aria-hidden="true"
+              >
+                ▾
+              </span>
+            </button>
+            {isConversationListOpen ? (
+              <div className="discussion-conversations-body">
+                {conversations.length === 0 ? (
+                  <p className="muted">
+                    暂无对话，点击「新建对话」开始聊天。
+                  </p>
+                ) : (
+                  <div className="discussion-conversation-list">
+                    {conversations.map((conversation) => (
+                      <button
+                        key={conversation.id}
+                        type="button"
+                        className={`conversation-chip${
+                          conversation.id === activeConversationId
+                            ? ' active'
+                            : ''
+                        }`}
+                        onClick={() => {
+                          setActiveConversationId(conversation.id)
+                          setIsConversationListOpen(false)
+                        }}
+                      >
+                        <span className="conversation-chip-title">
+                          {conversation.title || '未命名对话'}
+                        </span>
+                        <span className="muted conversation-chip-date">
+                          {formatExcerptDate(conversation.updatedAt)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
           <div className="chat-window">
             {displayDiscussions.length === 0 ? (
@@ -2136,6 +2205,118 @@ function BookDetailPage() {
           </div>
         </div>
       ) : null}
+      {isRenamingConversation ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="重命名对话"
+          onClick={() => setIsRenamingConversation(false)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>重命名对话</h4>
+            </header>
+            <form
+              className="stack"
+              onSubmit={(event) => {
+                event.preventDefault()
+                void handleSaveConversationTitle()
+                setIsRenamingConversation(false)
+              }}
+            >
+              <label className="field">
+                <span>对话名称</span>
+                <input
+                  type="text"
+                  value={conversationTitleDraft}
+                  onChange={(event) =>
+                    setConversationTitleDraft(event.target.value)
+                  }
+                  placeholder="输入对话名称"
+                  autoFocus
+                  disabled={!activeConversation || isSavingConversationTitle}
+                />
+              </label>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="button ghost"
+                  onClick={() => setIsRenamingConversation(false)}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={
+                    !activeConversation ||
+                    isSavingConversationTitle ||
+                    !conversationTitleDraft.trim()
+                  }
+                >
+                  保存
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+      {isConfirmingDeleteConversation ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="确认删除当前对话"
+          onClick={() => setIsConfirmingDeleteConversation(false)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>删除当前对话？</h4>
+            </header>
+            <div className="stack">
+              <p>删除后将无法恢复。</p>
+              <p className="muted">
+                请输入“{deleteConfirmPhrase}”确认删除。
+              </p>
+              <label className="field">
+                <span>确认文字</span>
+                <input
+                  type="text"
+                  value={deleteConversationText}
+                  onChange={(event) =>
+                    setDeleteConversationText(event.target.value)
+                  }
+                  placeholder={`输入“${deleteConfirmPhrase}”`}
+                />
+              </label>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button ghost"
+                onClick={() => setIsConfirmingDeleteConversation(false)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                disabled={!isDeleteConfirmationValid}
+                onClick={handleConfirmDeleteConversation}
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {isConfirmingClearDiscussions ? (
         <div
           className="confirm-modal-backdrop"
@@ -2153,7 +2334,20 @@ function BookDetailPage() {
             </header>
             <div className="stack">
               <p>将删除当前对话的全部讨论消息。</p>
-              <p className="muted">此操作无法撤销。</p>
+              <p className="muted">
+                请输入“{clearConfirmPhrase}”确认清空。
+              </p>
+              <label className="field">
+                <span>确认文字</span>
+                <input
+                  type="text"
+                  value={clearConversationText}
+                  onChange={(event) =>
+                    setClearConversationText(event.target.value)
+                  }
+                  placeholder={`输入“${clearConfirmPhrase}”`}
+                />
+              </label>
             </div>
             <div className="form-actions">
               <button
@@ -2167,6 +2361,7 @@ function BookDetailPage() {
               <button
                 type="button"
                 className="button danger"
+                disabled={!isClearConfirmationValid}
                 onClick={handleConfirmClearDiscussions}
               >
                 确认清空
