@@ -20,32 +20,45 @@ import {
 import {
   addMessage,
   deleteMessage,
-  deleteMessagesByBookId,
+  deleteMessagesByConversationId,
   getMessagesByBookId,
 } from '../lib/discussion-storage'
+import {
+  createConversation as createLocalConversation,
+  deleteConversation as deleteLocalConversation,
+  ensureDefaultConversation,
+  getConversationsByBookId,
+  updateConversationTitle as updateLocalConversationTitle,
+} from '../lib/conversation-storage'
 import { SYZYGY_DEFAULTS } from '../lib/syzygyDefaults'
 import type { Excerpt } from '../types/excerpt'
-import type { DiscussionMessage } from '../types/discussion'
+import type { Conversation, DiscussionMessage } from '../types/discussion'
 import type { ReadingSession } from '../types/reading-session'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
 import { ActionButton } from '../components/ActionButton'
 import { Button } from '../components/Button'
 import {
+  createConversation,
   createCloudDiscussion,
   createCloudDiscussionMessages,
   createCloudExcerpt,
+  deleteConversation,
   deleteCloudDiscussion,
-  deleteCloudDiscussionsByBook,
+  deleteCloudDiscussionsByConversation,
   deleteCloudExcerpt,
   toggleCloudCheckIn,
+  updateConversationTitle,
   updateCloudExcerpt,
 } from '../lib/cloudWrite'
 import {
   getCheckInsByBook,
   toggleCheckIn,
 } from '../lib/reading-sessions-storage'
-import { fetchDiscussionsByBookId } from '../lib/cloudRead'
+import {
+  fetchConversationsByBookId,
+  fetchDiscussionsByBookId,
+} from '../lib/cloudRead'
 import {
   supabase,
   supabaseAnonKey,
@@ -69,6 +82,7 @@ type ModelOption = {
 type OptimisticDiscussionMessage = {
   clientId: string
   bookId: string
+  conversationId: string
   role: 'me' | 'syzygy'
   content: string
   metadata?: DiscussionMessage['metadata']
@@ -162,6 +176,14 @@ function BookDetailPage() {
   const [cloudDiscussionMessages, setCloudDiscussionMessages] = useState<
     DiscussionMessage[]
   >([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | null
+  >(null)
+  const [conversationTitleDraft, setConversationTitleDraft] =
+    useState('')
+  const [isSavingConversationTitle, setIsSavingConversationTitle] =
+    useState(false)
   const [infoDiscussion, setInfoDiscussion] =
     useState<DiscussionMessage | null>(null)
   const [newMessageContent, setNewMessageContent] = useState('')
@@ -195,7 +217,7 @@ function BookDetailPage() {
     string | null
   >(null)
   const isModelSaving = modelStatus === 'saving'
-  const activeDiscussionBookIdRef = useRef<string | null>(null)
+  const activeDiscussionKeyRef = useRef<string | null>(null)
 
   const getMetadataNumber = (value: unknown) =>
     typeof value === 'number' ? value : undefined
@@ -226,26 +248,43 @@ function BookDetailPage() {
   useEffect(() => {
     if (!book || isCloudMode) return
     setDiscussionMessages(getMessagesByBookId(book.id))
+    const existing = getConversationsByBookId(book.id)
+    const nextConversations =
+      existing.length > 0
+        ? existing
+        : [ensureDefaultConversation(book.id)]
+    setConversations(nextConversations)
+    setActiveConversationId((current) => {
+      if (
+        current &&
+        nextConversations.some((conversation) => conversation.id === current)
+      ) {
+        return current
+      }
+      return nextConversations[0]?.id ?? null
+    })
   }, [book, isCloudMode])
 
   const loadCloudDiscussions = useCallback(
-    async (targetBookId: string) => {
+    async (targetBookId: string, targetConversationId?: string | null) => {
       if (!session?.user) return
       if (!targetBookId) {
         setCloudError('缺少书籍 ID，无法加载讨论。')
         setCloudDiscussionMessages([])
         return
       }
-      activeDiscussionBookIdRef.current = targetBookId
+      const discussionKey = `${targetBookId}:${targetConversationId ?? ''}`
+      activeDiscussionKeyRef.current = discussionKey
       try {
         const discussions = await fetchDiscussionsByBookId(
           session.user,
           targetBookId,
+          targetConversationId ?? undefined,
         )
-        if (activeDiscussionBookIdRef.current !== targetBookId) return
+        if (activeDiscussionKeyRef.current !== discussionKey) return
         setCloudDiscussionMessages(discussions)
       } catch (error) {
-        if (activeDiscussionBookIdRef.current !== targetBookId) return
+        if (activeDiscussionKeyRef.current !== discussionKey) return
         console.error('Failed to load cloud discussions', error)
         setCloudError('云端讨论加载失败，请稍后重试。')
       }
@@ -253,26 +292,78 @@ function BookDetailPage() {
     [session],
   )
 
+  const loadCloudConversations = useCallback(
+    async (targetBookId: string) => {
+      if (!session?.user) return
+      if (!targetBookId) {
+        setConversations([])
+        setActiveConversationId(null)
+        return
+      }
+      try {
+        const list = await fetchConversationsByBookId(
+          session.user,
+          targetBookId,
+        )
+        setConversations(list)
+        setActiveConversationId((current) => {
+          if (current && list.some((item) => item.id === current)) {
+            return current
+          }
+          return list[0]?.id ?? null
+        })
+      } catch (error) {
+        console.error('Failed to load cloud conversations', error)
+        setCloudError('云端对话加载失败，请稍后重试。')
+      }
+    },
+    [session],
+  )
+
   useEffect(() => {
     if (!isCloudMode) {
-      activeDiscussionBookIdRef.current = null
+      activeDiscussionKeyRef.current = null
       setCloudDiscussionMessages([])
+      setConversations([])
+      setActiveConversationId(null)
       return
     }
     if (!book?.id) {
-      activeDiscussionBookIdRef.current = null
+      activeDiscussionKeyRef.current = null
       setCloudDiscussionMessages([])
+      setConversations([])
+      setActiveConversationId(null)
       setCloudError('缺少书籍 ID，无法加载讨论。')
       return
     }
     if (!session?.user) {
       setCloudDiscussionMessages([])
+      setConversations([])
+      setActiveConversationId(null)
       return
     }
     setCloudError(null)
     setCloudDiscussionMessages([])
-    void loadCloudDiscussions(book.id)
-  }, [book?.id, isCloudMode, loadCloudDiscussions, session?.user])
+    void loadCloudConversations(book.id)
+  }, [book?.id, isCloudMode, loadCloudConversations, session?.user])
+
+  useEffect(() => {
+    if (!isCloudMode) return
+    if (!book?.id || !session?.user) return
+    if (!activeConversationId) {
+      setCloudDiscussionMessages([])
+      return
+    }
+    setCloudError(null)
+    setCloudDiscussionMessages([])
+    void loadCloudDiscussions(book.id, activeConversationId)
+  }, [
+    activeConversationId,
+    book?.id,
+    isCloudMode,
+    loadCloudDiscussions,
+    session?.user,
+  ])
 
   useEffect(() => {
     const stored = window.localStorage.getItem(
@@ -448,19 +539,43 @@ function BookDetailPage() {
       : excerpts
   }, [book, cloudExcerpts, excerpts, isCloudMode])
 
+  const activeConversation = useMemo(
+    () =>
+      conversations.find(
+        (conversation) => conversation.id === activeConversationId,
+      ) ?? null,
+    [activeConversationId, conversations],
+  )
+
+  useEffect(() => {
+    setConversationTitleDraft(activeConversation?.title ?? '')
+  }, [activeConversation?.title, activeConversationId])
+
   const displayDiscussions = useMemo(() => {
     if (!book) return []
+    if (!activeConversationId) return []
     const baseMessages = isCloudMode
       ? cloudDiscussionMessages
       : discussionMessages
     const pendingMessages = isCloudMode
       ? optimisticMessages.filter((message) => message.bookId === book.id)
       : []
+    const filteredBase = activeConversationId
+      ? baseMessages.filter(
+          (message) => message.conversationId === activeConversationId,
+        )
+      : baseMessages
+    const filteredPending = activeConversationId
+      ? pendingMessages.filter(
+          (message) => message.conversationId === activeConversationId,
+        )
+      : pendingMessages
     return sortDiscussionEntries([
-      ...baseMessages,
-      ...pendingMessages,
+      ...filteredBase,
+      ...filteredPending,
     ])
   }, [
+    activeConversationId,
     book,
     cloudDiscussionMessages,
     discussionMessages,
@@ -556,6 +671,127 @@ function BookDetailPage() {
     setDiscussionMessages(getMessagesByBookId(book.id))
   }
 
+  const ensureActiveConversation = useCallback(async () => {
+    if (activeConversationId) return activeConversationId
+    if (!book?.id) return null
+    if (isCloudMode) {
+      if (!session?.user) return null
+      const createdId = await createConversation(
+        session.user.id,
+        book.id,
+        '新对话',
+      )
+      setActiveConversationId(createdId)
+      await loadCloudConversations(book.id)
+      return createdId
+    }
+
+    const created = createLocalConversation(book.id, '新对话')
+    setConversations(getConversationsByBookId(book.id))
+    setActiveConversationId(created.id)
+    return created.id
+  }, [
+    activeConversationId,
+    book?.id,
+    isCloudMode,
+    loadCloudConversations,
+    session?.user,
+  ])
+
+  const handleCreateConversation = async () => {
+    if (!book) return
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再创建云端对话。')
+        return
+      }
+      setCloudError(null)
+      try {
+        const newId = await createConversation(
+          session.user.id,
+          book.id,
+          '新对话',
+        )
+        setActiveConversationId(newId)
+        await loadCloudConversations(book.id)
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端对话创建失败，请稍后重试。')
+      }
+      return
+    }
+
+    const created = createLocalConversation(book.id, '新对话')
+    setConversations(getConversationsByBookId(book.id))
+    setActiveConversationId(created.id)
+  }
+
+  const handleDeleteConversation = async () => {
+    if (!book || !activeConversationId) return
+    if (!window.confirm('确定要删除当前对话吗？此操作无法撤销。')) return
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再删除云端对话。')
+        return
+      }
+      setCloudError(null)
+      try {
+        await deleteConversation(session.user.id, activeConversationId)
+        await loadCloudConversations(book.id)
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端对话删除失败，请稍后重试。')
+      }
+      return
+    }
+
+    deleteLocalConversation(activeConversationId)
+    deleteMessagesByConversationId(activeConversationId)
+    const nextConversations = getConversationsByBookId(book.id)
+    const nextList =
+      nextConversations.length > 0
+        ? nextConversations
+        : [ensureDefaultConversation(book.id)]
+    setConversations(nextList)
+    setActiveConversationId(nextList[0]?.id ?? null)
+    refreshDiscussions()
+  }
+
+  const handleSaveConversationTitle = async () => {
+    if (!activeConversation) return
+    const trimmed = conversationTitleDraft.trim()
+    if (!trimmed) {
+      setConversationTitleDraft(activeConversation.title)
+      return
+    }
+    if (trimmed === activeConversation.title) return
+    if (isCloudMode) {
+      if (!session?.user) {
+        setCloudError('请先登录后再修改对话名称。')
+        return
+      }
+      setCloudError(null)
+      setIsSavingConversationTitle(true)
+      try {
+        await updateConversationTitle(
+          session.user.id,
+          activeConversation.id,
+          trimmed,
+        )
+        await loadCloudConversations(activeConversation.bookId)
+      } catch (error) {
+        console.error(error)
+        setCloudError('云端对话更新失败，请稍后重试。')
+      } finally {
+        setIsSavingConversationTitle(false)
+      }
+      return
+    }
+
+    updateLocalConversationTitle(activeConversation.id, trimmed)
+    setConversations(getConversationsByBookId(activeConversation.bookId))
+  }
+
   const handleCreateExcerpt = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
@@ -604,6 +840,11 @@ function BookDetailPage() {
     }
     const content = newMessageContent.trim()
     if (!content) return
+    const conversationId = await ensureActiveConversation()
+    if (!conversationId) {
+      setCloudError('无法发送讨论：缺少对话信息。')
+      return
+    }
     if (isCloudMode) {
       if (!session?.user) {
         setCloudError('请先登录后再同步云端讨论。')
@@ -611,8 +852,13 @@ function BookDetailPage() {
       }
       setCloudError(null)
       try {
-        await createCloudDiscussion(session.user.id, book.id, content)
-        await loadCloudDiscussions(book.id)
+        await createCloudDiscussion(
+          session.user.id,
+          book.id,
+          conversationId,
+          content,
+        )
+        await loadCloudDiscussions(book.id, conversationId)
         setNewMessageContent('')
       } catch (error) {
         console.error(error)
@@ -625,6 +871,7 @@ function BookDetailPage() {
     const message: DiscussionMessage = {
       id: crypto.randomUUID(),
       bookId: book.id,
+      conversationId,
       role: 'me',
       content,
       createdAt: now,
@@ -635,7 +882,7 @@ function BookDetailPage() {
   }
 
   const addOptimisticDiscussionPair = (content: string) => {
-    if (!book) return null
+    if (!book || !activeConversationId) return null
     const userClientId = crypto.randomUUID()
     const assistantClientId = crypto.randomUUID()
     setOptimisticMessages((messages) => [
@@ -643,6 +890,7 @@ function BookDetailPage() {
       {
         clientId: userClientId,
         bookId: book.id,
+        conversationId: activeConversationId,
         role: 'me',
         content,
         isPending: true,
@@ -650,6 +898,7 @@ function BookDetailPage() {
       {
         clientId: assistantClientId,
         bookId: book.id,
+        conversationId: activeConversationId,
         role: 'syzygy',
         content: '',
         isPending: true,
@@ -710,6 +959,12 @@ function BookDetailPage() {
       userClientId: string
       assistantClientId: string
     } | null = null
+    const conversationId = await ensureActiveConversation()
+    if (!conversationId) {
+      setCloudError('无法发送讨论：缺少对话信息。')
+      setIsAskingSyzygy(false)
+      return
+    }
     try {
       const accessToken = session.access_token
       if (!accessToken) {
@@ -744,6 +999,7 @@ function BookDetailPage() {
           body: JSON.stringify({
             userMessage: content,
             bookId: book.id,
+            conversationId,
             attachContext,
             stream: true,
           }),
@@ -819,18 +1075,23 @@ function BookDetailPage() {
           finalReply,
         )
 
-        await createCloudDiscussionMessages(session.user.id, book.id, [
-          { role: 'me', content },
-          {
-            role: 'syzygy',
-            content: finalReply,
-            metadata: {
-              model: finalModel,
-              temperature: finalTemperature,
+        await createCloudDiscussionMessages(
+          session.user.id,
+          book.id,
+          conversationId,
+          [
+            { role: 'me', content },
+            {
+              role: 'syzygy',
+              content: finalReply,
+              metadata: {
+                model: finalModel,
+                temperature: finalTemperature,
+              },
             },
-          },
-        ])
-        await loadCloudDiscussions(book.id)
+          ],
+        )
+        await loadCloudDiscussions(book.id, conversationId)
         clearOptimisticPair(optimisticIds)
         return
       }
@@ -841,6 +1102,7 @@ function BookDetailPage() {
           body: {
             userMessage: content,
             bookId: book.id,
+            conversationId,
             attachContext,
           },
           headers: {
@@ -858,18 +1120,23 @@ function BookDetailPage() {
         optimisticIds.assistantClientId,
         data.assistantReply,
       )
-      await createCloudDiscussionMessages(session.user.id, book.id, [
-        { role: 'me', content },
-        {
-          role: 'syzygy',
-          content: data.assistantReply,
-          metadata: {
-            model: data.usedModel,
-            temperature: data.usedTemperature,
+      await createCloudDiscussionMessages(
+        session.user.id,
+        book.id,
+        conversationId,
+        [
+          { role: 'me', content },
+          {
+            role: 'syzygy',
+            content: data.assistantReply,
+            metadata: {
+              model: data.usedModel,
+              temperature: data.usedTemperature,
+            },
           },
-        },
-      ])
-      await loadCloudDiscussions(book.id)
+        ],
+      )
+      await loadCloudDiscussions(book.id, conversationId)
       clearOptimisticPair(optimisticIds)
     } catch (error) {
       console.error(error)
@@ -977,7 +1244,10 @@ function BookDetailPage() {
           message.bookId,
           message.id,
         )
-        await loadCloudDiscussions(message.bookId)
+        await loadCloudDiscussions(
+          message.bookId,
+          message.conversationId,
+        )
       } catch (error) {
         console.error(error)
         setCloudError('云端讨论删除失败，请稍后重试。')
@@ -994,7 +1264,7 @@ function BookDetailPage() {
   }
 
   const handleConfirmClearDiscussions = async () => {
-    if (!book) return
+    if (!book || !activeConversationId) return
     setIsConfirmingClearDiscussions(false)
     if (isCloudMode) {
       if (!session?.user) {
@@ -1003,8 +1273,11 @@ function BookDetailPage() {
       }
       setCloudError(null)
       try {
-        await deleteCloudDiscussionsByBook(session.user.id, book.id)
-        await loadCloudDiscussions(book.id)
+        await deleteCloudDiscussionsByConversation(
+          session.user.id,
+          activeConversationId,
+        )
+        await loadCloudDiscussions(book.id, activeConversationId)
       } catch (error) {
         console.error(error)
         setCloudError('云端讨论清空失败，请稍后重试。')
@@ -1012,7 +1285,7 @@ function BookDetailPage() {
       return
     }
 
-    deleteMessagesByBookId(book.id)
+    deleteMessagesByConversationId(activeConversationId)
     refreshDiscussions()
   }
 
@@ -1444,20 +1717,99 @@ function BookDetailPage() {
                   {displayDiscussions.length} 条
                 </span>
               </div>
+              <div className="discussion-conversation-editor">
+                <label className="field">
+                  <span className="muted">当前对话</span>
+                  <input
+                    type="text"
+                    value={conversationTitleDraft}
+                    onChange={(event) =>
+                      setConversationTitleDraft(event.target.value)
+                    }
+                    onBlur={() => {
+                      void handleSaveConversationTitle()
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        void handleSaveConversationTitle()
+                      }
+                    }}
+                    placeholder="输入对话名称"
+                    disabled={!activeConversation || isSavingConversationTitle}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="button ghost"
+                  onClick={handleDeleteConversation}
+                  disabled={!activeConversationId}
+                >
+                  删除对话
+                </button>
+              </div>
             </div>
             <button
               type="button"
               className="button ghost"
               onClick={handleRequestClearDiscussions}
-              disabled={displayDiscussions.length === 0}
+              disabled={
+                displayDiscussions.length === 0 || !activeConversationId
+              }
             >
-              清空本书讨论
+              清空当前对话
             </button>
           </div>
           {modelError ? <p className="notice error">{modelError}</p> : null}
           <p className="muted">
             后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
           </p>
+          <div className="discussion-conversations">
+            <div className="discussion-conversations-header">
+              <div className="discussion-conversations-title">
+                <h4>对话列表</h4>
+                <span className="muted">
+                  {conversations.length} 个
+                </span>
+              </div>
+              <button
+                type="button"
+                className="button ghost"
+                onClick={handleCreateConversation}
+              >
+                新建对话
+              </button>
+            </div>
+            {conversations.length === 0 ? (
+              <p className="muted">
+                暂无对话，点击「新建对话」开始聊天。
+              </p>
+            ) : (
+              <div className="discussion-conversation-list">
+                {conversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    type="button"
+                    className={`conversation-chip${
+                      conversation.id === activeConversationId
+                        ? ' active'
+                        : ''
+                    }`}
+                    onClick={() =>
+                      setActiveConversationId(conversation.id)
+                    }
+                  >
+                    <span className="conversation-chip-title">
+                      {conversation.title || '未命名对话'}
+                    </span>
+                    <span className="muted conversation-chip-date">
+                      {formatExcerptDate(conversation.updatedAt)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="chat-window">
             {displayDiscussions.length === 0 ? (
               <p className="muted chat-empty">
@@ -1789,7 +2141,7 @@ function BookDetailPage() {
           className="confirm-modal-backdrop"
           role="dialog"
           aria-modal="true"
-          aria-label="确认清空本书讨论"
+          aria-label="确认清空当前对话"
           onClick={() => setIsConfirmingClearDiscussions(false)}
         >
           <div
@@ -1797,12 +2149,10 @@ function BookDetailPage() {
             onClick={(event) => event.stopPropagation()}
           >
             <header className="confirm-modal-header">
-              <h4>清空本书讨论？</h4>
+              <h4>清空当前对话？</h4>
             </header>
             <div className="stack">
-              <p>
-                将删除《{book.title}》的全部讨论消息。
-              </p>
+              <p>将删除当前对话的全部讨论消息。</p>
               <p className="muted">此操作无法撤销。</p>
             </div>
             <div className="form-actions">

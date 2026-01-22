@@ -710,6 +710,75 @@ textarea {
   gap: 0.75rem;
 }
 
+.discussion-conversation-editor {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.discussion-conversation-editor .field {
+  margin: 0;
+  min-width: min(260px, 70vw);
+}
+
+.discussion-conversation-editor input {
+  min-width: min(260px, 70vw);
+}
+
+.discussion-conversations {
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--surface);
+}
+
+.discussion-conversations-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.discussion-conversations-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.discussion-conversation-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.conversation-chip {
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  border-radius: 999px;
+  padding: 0.5rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.conversation-chip.active {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--card-bg));
+}
+
+.conversation-chip-title {
+  font-weight: 600;
+}
+
+.conversation-chip-date {
+  font-size: 0.8rem;
+}
+
 .discussion-model {
   display: flex;
   align-items: center;

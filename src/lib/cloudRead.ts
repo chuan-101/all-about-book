@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 import type { Book } from '../types/book'
-import type { DiscussionMessage } from '../types/discussion'
+import type { Conversation, DiscussionMessage } from '../types/discussion'
 import type { Excerpt } from '../types/excerpt'
 import type { ReadingSession } from '../types/reading-session'
 import { supabase } from './supabaseClient'
@@ -113,10 +113,26 @@ const normalizeDiscussion = (row: SupabaseRow): DiscussionMessage => {
   return {
     id: asString(row.id),
     bookId: asString(row.book_id ?? row.bookId),
+    conversationId: asString(row.conversation_id ?? row.conversationId),
     role: row.role === 'syzygy' ? 'syzygy' : 'me',
     content: asString(row.content),
     createdAt,
     metadata: asMetadata(row.metadata),
+  }
+}
+
+const normalizeConversation = (row: SupabaseRow): Conversation => {
+  const createdAt =
+    asString(row.created_at) || asString(row.createdAt) ||
+    new Date().toISOString()
+  const updatedAt =
+    asString(row.updated_at) || asString(row.updatedAt) || createdAt
+  return {
+    id: asString(row.id),
+    bookId: asString(row.book_id ?? row.bookId),
+    title: asString(row.title),
+    createdAt,
+    updatedAt,
   }
 }
 
@@ -187,12 +203,33 @@ export const fetchDiscussions = async (
   return (data ?? []).map((row) => normalizeDiscussion(row as SupabaseRow))
 }
 
+export const fetchConversations = async (
+  user: User,
+): Promise<Conversation[]> => {
+  const client = ensureClient()
+  const { data, error } = await client
+    .from('conversations')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) =>
+    normalizeConversation(row as SupabaseRow),
+  )
+}
+
 export const fetchDiscussionsByBookId = async (
   user: User,
   bookId: string,
+  conversationId?: string | null,
 ): Promise<DiscussionMessage[]> => {
   const client = ensureClient()
-  const { data, error } = await client
+  let query = client
     .from('discussions')
     .select('*')
     .eq('user_id', user.id)
@@ -200,9 +237,37 @@ export const fetchDiscussionsByBookId = async (
     .order('created_at', { ascending: true })
     .order('id', { ascending: true })
 
+  if (conversationId) {
+    query = query.eq('conversation_id', conversationId)
+  }
+
+  const { data, error } = await query
+
   if (error) {
     throw error
   }
 
   return (data ?? []).map((row) => normalizeDiscussion(row as SupabaseRow))
+}
+
+export const fetchConversationsByBookId = async (
+  user: User,
+  bookId: string,
+): Promise<Conversation[]> => {
+  const client = ensureClient()
+  const { data, error } = await client
+    .from('conversations')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('book_id', bookId)
+    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) =>
+    normalizeConversation(row as SupabaseRow),
+  )
 }

@@ -1,4 +1,5 @@
 import type { DiscussionMessage } from '../types/discussion'
+import { ensureDefaultConversation } from './conversation-storage'
 
 const STORAGE_KEY = 'all-about-book:discussions'
 
@@ -63,6 +64,9 @@ const normalizeMessage = (
   return {
     id: normalizeString(message.id) || crypto.randomUUID(),
     bookId: normalizeString(message.bookId),
+    conversationId:
+      normalizeString(message.conversationId) ||
+      ensureDefaultConversation(normalizeString(message.bookId)).id,
     role:
       message.role === 'me' || message.role === 'syzygy'
         ? message.role
@@ -126,6 +130,15 @@ export const deleteMessagesByBookId = (bookId: string): void => {
   saveDiscussions(messages)
 }
 
+export const deleteMessagesByConversationId = (
+  conversationId: string,
+): void => {
+  const messages = getDiscussions().filter(
+    (message) => message.conversationId !== conversationId,
+  )
+  saveDiscussions(messages)
+}
+
 export const updateMessage = (
   id: string,
   content: string,
@@ -139,6 +152,7 @@ export const updateMessage = (
     content,
     id: current.id,
     bookId: current.bookId,
+    conversationId: current.conversationId,
     role: current.role,
     createdAt: current.createdAt,
   })
