@@ -685,6 +685,18 @@ textarea {
   box-shadow: var(--separator-groove);
 }
 
+[data-theme="retro-keyboard"] .card,
+[data-theme="retro-keyboard"] .btn,
+[data-theme="retro-keyboard"] .button,
+[data-theme="retro-keyboard"] input,
+[data-theme="retro-keyboard"] .bottom-nav,
+[data-theme="retro-keyboard"] .collapsible-header,
+[data-theme="retro-keyboard"] .bookshelf-search input,
+[data-theme="retro-keyboard"] .bookshelf-pinned,
+[data-theme="retro-keyboard"] .theme-toggle {
+  border-width: 3px;
+}
+
 [data-theme='retro-keyboard'] .card {
   backdrop-filter: var(--backdrop-filter);
   -webkit-backdrop-filter: var(--backdrop-filter);
@@ -742,8 +754,9 @@ textarea {
 }
 
 [data-theme='retro-keyboard'] .discussion-card {
-  --discussion-card-radius: 20px;
+  --discussion-card-radius: 28px;
   --discussion-card-border-style: solid;
+  --discussion-card-border-width: 3px;
 }
 
 .discussion-title {
