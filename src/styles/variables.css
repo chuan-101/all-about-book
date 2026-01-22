@@ -55,38 +55,33 @@
 /* === THEME B: Retro Key Box (Claymorphism) === */
 /* Reference: Soft beige ceramic, deep inner shadows, warm gold accent */
 [data-theme="retro-keyboard"] {
-  --color-bg-main: #f3f0e6;
-  --color-bg-card: #fffcf2;
-  --color-bg-input: #e9e4d6;
+  --color-bg-main: #f2e9e4;
+  --color-bg-card: #fffaf0;
+  --color-bg-input: #ffffff;
   --color-text-primary: #264653;
   --color-text-secondary: #5b6156;
   --color-text-muted: #8a8277;
 
   --color-accent-primary: #2a9d8f;
-  --color-accent-secondary: #e76f51;
+  --color-accent-secondary: #e9c46a;
   --color-border: #2a9d8f;
   --color-border-subtle: rgba(42, 157, 143, 0.35);
-  --dropdown-border: 2px solid var(--color-border-subtle);
+  --dropdown-border: 3px solid var(--color-border);
 
-  --border-radius-card: 24px;
+  --border-radius-card: 32px;
   --border-radius-btn: 12px;
 
-  /* CLAY EFFECTS */
-  --box-shadow-card: 8px 8px 16px rgba(231, 111, 81, 0.18),
-    -8px -8px 16px rgba(255, 252, 242, 0.75),
-    inset 0 0 0 2px rgba(42, 157, 143, 0.15);
-  --box-shadow-btn: 6px 6px 10px rgba(231, 111, 81, 0.25),
-    -5px -5px 10px rgba(255, 252, 242, 0.9);
-  /* Deep Inner Shadow for inputs/lists */
-  --box-shadow-input: inset 6px 6px 12px rgba(231, 111, 81, 0.18),
-    inset -6px -6px 12px rgba(255, 252, 242, 0.7);
-  --separator-groove: inset 0 -1px 1px rgba(255, 252, 242, 0.7),
-    inset 0 1px 1px rgba(38, 70, 83, 0.12);
+  /* ATOMIC PLASTIC EFFECTS */
+  --box-shadow-card: 4px 4px 0px 0px var(--color-border-subtle);
+  --box-shadow-btn: 3px 3px 0px 0px var(--color-border-subtle);
+  --box-shadow-input: inset 2px 2px 5px rgba(0, 0, 0, 0.1);
+  --separator-groove: inset 0 -2px 0 var(--color-border-subtle),
+    inset 0 2px 0 rgba(38, 70, 83, 0.08);
 
   --bg-texture: radial-gradient(rgba(42, 157, 143, 0.18) 2px, transparent 2px);
   --bg-size: 20px 20px;
   --backdrop-filter: blur(12px);
-  --font-family-base: 'JetBrains Mono', monospace;
+  --font-family-base: 'Courier New', monospace;
 
   /* Contribution Graph Colors (Warm Gold Glow) */
   --color-graph-l1: #efe7d3;
