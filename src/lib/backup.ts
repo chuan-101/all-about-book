@@ -1,5 +1,9 @@
 import type { Book, BookProgress } from '../types/book'
-import type { DiscussionMessage } from '../types/discussion'
+import type { Conversation, DiscussionMessage } from '../types/discussion'
+import {
+  getConversations,
+  saveConversations,
+} from './conversation-storage'
 import type { Excerpt } from '../types/excerpt'
 import type { ReadingSession } from '../types/reading-session'
 import { getDiscussions, saveDiscussions } from './discussion-storage'
@@ -7,7 +11,7 @@ import { getExcerpts, saveExcerpts } from './excerpts-storage'
 import { getReadingSessions, saveReadingSessions } from './reading-sessions-storage'
 import { getBooks, saveBooks } from './storage'
 
-export const BACKUP_VERSION = '1.0'
+export const BACKUP_VERSION = '1.1'
 
 type BackupMeta = {
   version: string
@@ -19,6 +23,7 @@ export type BackupPayload = {
   books: Book[]
   checkIns: ReadingSession[]
   excerpts: Excerpt[]
+  conversations: Conversation[]
   discussions: DiscussionMessage[]
 }
 
@@ -185,6 +190,7 @@ const normalizeDiscussion = (
   return {
     id: normalizeString(message.id) || crypto.randomUUID(),
     bookId: normalizeString(message.bookId),
+    conversationId: normalizeString(message.conversationId),
     role:
       message.role === 'me' || message.role === 'syzygy'
         ? message.role
@@ -192,6 +198,28 @@ const normalizeDiscussion = (
     content: normalizeString(message.content),
     createdAt,
     metadata,
+  }
+}
+
+const normalizeConversation = (
+  conversation: Partial<Conversation>,
+): Conversation => {
+  const now = new Date().toISOString()
+  const createdAt =
+    typeof conversation.createdAt === 'string' && conversation.createdAt
+      ? conversation.createdAt
+      : now
+  const updatedAt =
+    typeof conversation.updatedAt === 'string' && conversation.updatedAt
+      ? conversation.updatedAt
+      : createdAt
+
+  return {
+    id: normalizeString(conversation.id) || crypto.randomUUID(),
+    bookId: normalizeString(conversation.bookId),
+    title: normalizeString(conversation.title) || '默认对话',
+    createdAt,
+    updatedAt,
   }
 }
 
@@ -211,6 +239,11 @@ const normalizeDiscussions = (value: unknown): DiscussionMessage[] =>
     ? value.map((item) => normalizeDiscussion(item))
     : []
 
+const normalizeConversations = (value: unknown): Conversation[] =>
+  Array.isArray(value)
+    ? value.map((item) => normalizeConversation(item))
+    : []
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
@@ -222,6 +255,7 @@ export const createBackupPayload = (): BackupPayload => ({
   books: normalizeBooks(getBooks()),
   checkIns: normalizeCheckIns(getReadingSessions()),
   excerpts: normalizeExcerpts(getExcerpts()),
+  conversations: normalizeConversations(getConversations()),
   discussions: normalizeDiscussions(getDiscussions()),
 })
 
@@ -247,7 +281,8 @@ export const parseBackupPayload = (raw: string): ParseResult => {
   if (
     meta &&
     typeof meta.version === 'string' &&
-    meta.version !== BACKUP_VERSION
+    meta.version !== BACKUP_VERSION &&
+    meta.version !== '1.0'
   ) {
     return {
       ok: false,
@@ -269,6 +304,46 @@ export const parseBackupPayload = (raw: string): ParseResult => {
     }
   }
 
+  const books = normalizeBooks(parsed.books)
+  const checkIns = normalizeCheckIns(checkInsSource)
+  const excerpts = normalizeExcerpts(parsed.excerpts)
+  const discussions = normalizeDiscussions(parsed.discussions)
+  const conversations = normalizeConversations(parsed.conversations)
+
+  if (conversations.length === 0 && discussions.length > 0) {
+    const createdAtByBook = new Map<string, string>()
+    discussions.forEach((message) => {
+      if (!message.bookId) return
+      const existing = createdAtByBook.get(message.bookId)
+      if (!existing || message.createdAt < existing) {
+        createdAtByBook.set(message.bookId, message.createdAt)
+      }
+    })
+
+    createdAtByBook.forEach((createdAt, bookId) => {
+      const now = new Date().toISOString()
+      conversations.push({
+        id: crypto.randomUUID(),
+        bookId,
+        title: '默认对话',
+        createdAt: createdAt || now,
+        updatedAt: createdAt || now,
+      })
+    })
+  }
+
+  const conversationMap = new Map(
+    conversations.map((conversation) => [conversation.bookId, conversation]),
+  )
+  const normalizedDiscussions = discussions.map((message) => {
+    if (message.conversationId) return message
+    const fallback = conversationMap.get(message.bookId)
+    return {
+      ...message,
+      conversationId: fallback?.id ?? message.conversationId,
+    }
+  })
+
   return {
     ok: true,
     data: {
@@ -279,10 +354,11 @@ export const parseBackupPayload = (raw: string): ParseResult => {
             ? meta.exportedAt
             : new Date().toISOString(),
       },
-      books: normalizeBooks(parsed.books),
-      checkIns: normalizeCheckIns(checkInsSource),
-      excerpts: normalizeExcerpts(parsed.excerpts),
-      discussions: normalizeDiscussions(parsed.discussions),
+      books,
+      checkIns,
+      excerpts,
+      conversations,
+      discussions: normalizedDiscussions,
     },
   }
 }
@@ -291,6 +367,7 @@ export const applyBackupPayload = (payload: BackupPayload): void => {
   saveBooks(payload.books)
   saveReadingSessions(payload.checkIns)
   saveExcerpts(payload.excerpts)
+  saveConversations(payload.conversations)
   saveDiscussions(payload.discussions)
 }
 

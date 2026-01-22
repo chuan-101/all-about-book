@@ -3,6 +3,7 @@ import { BACKUP_VERSION, type BackupPayload } from './backup'
 import {
   fetchBooks,
   fetchCheckIns,
+  fetchConversations,
   fetchDiscussions,
   fetchExcerpts,
 } from './cloudRead'
@@ -10,10 +11,12 @@ import {
 export const fetchCloudBackupPayload = async (
   user: User,
 ): Promise<BackupPayload> => {
-  const [books, checkIns, excerpts, discussions] = await Promise.all([
+  const [books, checkIns, excerpts, conversations, discussions] =
+    await Promise.all([
     fetchBooks(user),
     fetchCheckIns(user),
     fetchExcerpts(user),
+    fetchConversations(user),
     fetchDiscussions(user),
   ])
 
@@ -25,6 +28,7 @@ export const fetchCloudBackupPayload = async (
     books,
     checkIns,
     excerpts,
+    conversations,
     discussions,
   }
 }

@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.90.0'
 type RequestPayload = {
   userMessage?: string
   bookId?: string
+  conversationId?: string
   attachContext?: boolean
   stream?: boolean
 }
@@ -163,14 +164,21 @@ const fetchDiscussions = async (
   client: ReturnType<typeof createAuthedClient>,
   userId: string,
   bookId: string,
+  conversationId?: string | null,
 ): Promise<DiscussionRow[]> => {
-  const { data, error } = await client
+  let query = client
     .from('discussions')
     .select('role,content,created_at,metadata')
     .eq('user_id', userId)
     .eq('book_id', bookId)
     .order('created_at', { ascending: true })
     .limit(DISCUSSION_LIMIT)
+
+  if (conversationId) {
+    query = query.eq('conversation_id', conversationId)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     throw error
@@ -433,6 +441,7 @@ serve(async (req) => {
 
     const attachContext = payload.attachContext !== false
     const bookId = payload.bookId?.trim()
+    const conversationId = payload.conversationId?.trim()
     let contextPack: string | null = null
 
     if (attachContext && bookId) {
@@ -440,7 +449,12 @@ serve(async (req) => {
         const [bookInfo, excerpts, discussions] = await Promise.all([
           fetchBookInfo(supabaseClient, userId, bookId),
           fetchExcerpts(supabaseClient, userId, bookId),
-          fetchDiscussions(supabaseClient, userId, bookId),
+          fetchDiscussions(
+            supabaseClient,
+            userId,
+            bookId,
+            conversationId,
+          ),
         ])
         contextPack = buildContextPack({
           book: bookInfo,

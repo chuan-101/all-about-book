@@ -161,6 +161,7 @@ export const deleteCloudExcerpt = async (
 export const createCloudDiscussion = async (
   userId: string,
   bookId: string,
+  conversationId: string,
   content: string,
 ): Promise<void> => {
   const client = ensureClient()
@@ -171,6 +172,7 @@ export const createCloudDiscussion = async (
     id: crypto.randomUUID(),
     user_id: userId,
     book_id: bookId,
+    conversation_id: conversationId,
     role: 'me',
     content,
   })
@@ -183,6 +185,7 @@ export const createCloudDiscussion = async (
 export const createCloudDiscussionMessages = async (
   userId: string,
   bookId: string,
+  conversationId: string,
   messages: Array<{
     role: 'me' | 'syzygy'
     content: string
@@ -197,15 +200,16 @@ export const createCloudDiscussionMessages = async (
     throw new Error('Missing bookId for discussion insert.')
   }
   const now = Date.now()
-const payload = messages.map((message, index) => ({
-  id: crypto.randomUUID(),
-  user_id: userId,
-  book_id: bookId,
-  role: message.role,
-  content: message.content,
-  metadata: message.role === 'syzygy' ? message.metadata ?? null : null,
-  created_at: new Date(now + index).toISOString(),
-}))
+  const payload = messages.map((message, index) => ({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    book_id: bookId,
+    conversation_id: conversationId,
+    role: message.role,
+    content: message.content,
+    metadata: message.role === 'syzygy' ? message.metadata ?? null : null,
+    created_at: new Date(now + index).toISOString(),
+  }))
 
   const { error } = await client.from('discussions').insert(payload)
 
@@ -242,6 +246,79 @@ export const deleteCloudDiscussionsByBook = async (
     .delete()
     .eq('user_id', userId)
     .eq('book_id', bookId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const deleteCloudDiscussionsByConversation = async (
+  userId: string,
+  conversationId: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('discussions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('conversation_id', conversationId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const createConversation = async (
+  userId: string,
+  bookId: string,
+  title: string,
+): Promise<string> => {
+  const client = ensureClient()
+  const id = crypto.randomUUID()
+  const now = new Date().toISOString()
+  const { error } = await client.from('conversations').insert({
+    id,
+    user_id: userId,
+    book_id: bookId,
+    title,
+    created_at: now,
+    updated_at: now,
+  })
+
+  if (error) {
+    throw error
+  }
+
+  return id
+}
+
+export const updateConversationTitle = async (
+  userId: string,
+  conversationId: string,
+  title: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('conversations')
+    .update({ title, updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('id', conversationId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const deleteConversation = async (
+  userId: string,
+  conversationId: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('conversations')
+    .delete()
+    .eq('user_id', userId)
+    .eq('id', conversationId)
 
   if (error) {
     throw error

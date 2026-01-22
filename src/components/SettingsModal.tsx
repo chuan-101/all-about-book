@@ -202,7 +202,7 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         return
       }
 
-      const confirmMessage = `导入将覆盖现有数据（书籍 ${result.data.books.length} 本、书摘 ${result.data.excerpts.length} 条、打卡 ${result.data.checkIns.length} 条、讨论 ${result.data.discussions.length} 条），确定继续吗？`
+      const confirmMessage = `导入将覆盖现有数据（书籍 ${result.data.books.length} 本、书摘 ${result.data.excerpts.length} 条、打卡 ${result.data.checkIns.length} 条、对话 ${result.data.conversations.length} 个、讨论 ${result.data.discussions.length} 条），确定继续吗？`
       if (!window.confirm(confirmMessage)) return
 
       applyBackupPayload(result.data)
@@ -245,7 +245,7 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       return value
     }
     const payload = createBackupPayload()
-    const confirmMessage = `即将迁移本地数据到云端（书籍 ${payload.books.length} 本、书摘 ${payload.excerpts.length} 条、打卡 ${payload.checkIns.length} 条、讨论 ${payload.discussions.length} 条），确定继续吗？`
+    const confirmMessage = `即将迁移本地数据到云端（书籍 ${payload.books.length} 本、书摘 ${payload.excerpts.length} 条、打卡 ${payload.checkIns.length} 条、对话 ${payload.conversations.length} 个、讨论 ${payload.discussions.length} 条），确定继续吗？`
     if (!window.confirm(confirmMessage)) return
 
     setMigrationLoading(true)
@@ -299,13 +299,67 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           updated_at: sanitizeTimestamp(excerpt.updatedAt),
         }
       })
+      const conversationIdMap = new Map<string, string>()
+      const conversationsPayload = payload.conversations.map(
+        (conversation) => {
+          const normalizedBookId =
+            bookIdMap.get(conversation.bookId) ??
+            ensureUuid(conversation.bookId)
+          const normalizedConversationId = ensureUuid(conversation.id)
+          if (normalizedConversationId !== conversation.id) {
+            conversationIdMap.set(
+              conversation.id,
+              normalizedConversationId,
+            )
+          } else {
+            conversationIdMap.set(conversation.id, conversation.id)
+          }
+          return {
+            id: normalizedConversationId,
+            user_id: userId,
+            book_id: normalizedBookId,
+            title: conversation.title || '默认对话',
+            created_at: sanitizeTimestamp(conversation.createdAt),
+            updated_at: sanitizeTimestamp(conversation.updatedAt),
+          }
+        },
+      )
+      const fallbackConversationByBook = new Map<string, string>()
+      const ensureFallbackConversation = (
+        normalizedBookId: string,
+        createdAt?: string,
+      ) => {
+        const existing = fallbackConversationByBook.get(normalizedBookId)
+        if (existing) return existing
+        const fallbackId = crypto.randomUUID()
+        fallbackConversationByBook.set(normalizedBookId, fallbackId)
+        const timestamp = sanitizeTimestamp(createdAt) ?? new Date().toISOString()
+        conversationsPayload.push({
+          id: fallbackId,
+          user_id: userId,
+          book_id: normalizedBookId,
+          title: '默认对话',
+          created_at: timestamp,
+          updated_at: timestamp,
+        })
+        return fallbackId
+      }
       const discussionsPayload = payload.discussions.map((message) => {
         const normalizedBookId =
           bookIdMap.get(message.bookId) ?? ensureUuid(message.bookId)
+        const normalizedConversationId = message.conversationId
+          ? conversationIdMap.get(message.conversationId)
+          : undefined
         return {
           id: ensureUuid(message.id),
           user_id: userId,
           book_id: normalizedBookId,
+          conversation_id:
+            normalizedConversationId ??
+            ensureFallbackConversation(
+              normalizedBookId,
+              message.createdAt,
+            ),
           role: message.role,
           content: message.content,
           created_at: sanitizeTimestamp(message.createdAt),
@@ -362,6 +416,18 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           if (error) throw error
         } catch (error) {
           reportMigrationError('excerpts', error)
+          return
+        }
+      }
+
+      if (conversationsPayload.length > 0) {
+        try {
+          const { error } = await supabase
+            .from('conversations')
+            .upsert(conversationsPayload, { onConflict: 'id' })
+          if (error) throw error
+        } catch (error) {
+          reportMigrationError('conversations', error)
           return
         }
       }
