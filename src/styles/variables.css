@@ -55,42 +55,45 @@
 /* === THEME B: Retro Key Box (Claymorphism) === */
 /* Reference: Soft beige ceramic, deep inner shadows, warm gold accent */
 [data-theme="retro-keyboard"] {
-  --color-bg-main: #f2e9e4;
-  --color-bg-card: #fffaf0;
-  --color-bg-input: #ffffff;
-  --color-text-primary: #264653;
-  --color-text-secondary: #5b6156;
-  --color-text-muted: #8a8277;
+  --color-bg-main: #d4d4d4;
+  --color-bg-card: #f4f4f0;
+  --color-bg-input: #e7e7e1;
+  --color-text-primary: #2b2b2b;
+  --color-text-secondary: #5a5a5a;
+  --color-text-muted: #7a7a7a;
 
-  --color-accent-primary: #2a9d8f;
-  --color-accent-secondary: #e9c46a;
-  --color-border: #2a9d8f;
-  --color-border-subtle: rgba(42, 157, 143, 0.35);
+  --color-accent-primary: #8b0000;
+  --color-accent-hover: #6b0000;
+  --color-accent-secondary: #202050;
+  --color-border: #9c9c9c;
+  --color-border-subtle: rgba(43, 43, 43, 0.25);
   --dropdown-border: 3px solid var(--color-border);
 
   --border-radius-card: 32px;
   --border-radius-btn: 12px;
 
   /* ATOMIC PLASTIC EFFECTS */
-  --box-shadow-card: 4px 4px 0px 0px var(--color-border-subtle);
-  --box-shadow-btn: 3px 3px 0px 0px var(--color-border-subtle);
-  --box-shadow-input: inset 2px 2px 5px rgba(0, 0, 0, 0.1);
-  --separator-groove: inset 0 -2px 0 var(--color-border-subtle),
-    inset 0 2px 0 rgba(38, 70, 83, 0.08);
+  --box-shadow-card: inset -2px -2px 0 rgba(255, 255, 255, 0.7),
+    inset 2px 2px 0 rgba(43, 43, 43, 0.25),
+    inset 0 6px 12px rgba(43, 43, 43, 0.08);
+  --box-shadow-btn: 3px 3px 0px 0px rgba(43, 43, 43, 0.2);
+  --box-shadow-input: inset 2px 2px 6px rgba(43, 43, 43, 0.12);
+  --separator-groove: inset 0 -2px 0 rgba(43, 43, 43, 0.15),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45);
 
-  --bg-texture: radial-gradient(rgba(42, 157, 143, 0.18) 2px, transparent 2px);
-  --bg-size: 20px 20px;
+  --bg-texture: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  --bg-size: 18px 18px;
   --backdrop-filter: blur(12px);
   --font-family-base: 'Courier New', monospace;
 
   /* Contribution Graph Colors (Warm Gold Glow) */
-  --color-graph-l1: #efe7d3;
-  --color-graph-l2: #d9d8c3;
-  --color-graph-l3: #97c6bd;
-  --color-graph-l4: #2a9d8f;
+  --color-graph-l1: #e7e7e1;
+  --color-graph-l2: #d0d0c9;
+  --color-graph-l3: #b3b3aa;
+  --color-graph-l4: #8b0000;
 
   --color-status-reading: var(--color-accent-primary);
-  --color-status-reading-bg: rgba(42, 157, 143, 0.15);
+  --color-status-reading-bg: rgba(139, 0, 0, 0.12);
 }
 
 /* === THEME C: Pixel Dream (90s Cute Retro) === */
