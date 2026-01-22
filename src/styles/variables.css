@@ -55,45 +55,47 @@
 /* === THEME B: Retro Key Box (Claymorphism) === */
 /* Reference: Soft beige ceramic, deep inner shadows, warm gold accent */
 [data-theme="retro-keyboard"] {
-  --color-bg-main: #f0f2f5;
-  --color-bg-card: rgba(255, 255, 255, 0.85);
-  --color-bg-input: #e4e4dc;
-  --color-text-primary: #333333;
-  --color-text-secondary: #666666;
-  --color-text-muted: #8b8b8b;
+  --color-bg-main: #f3f0e6;
+  --color-bg-card: #fffcf2;
+  --color-bg-input: #e9e4d6;
+  --color-text-primary: #264653;
+  --color-text-secondary: #5b6156;
+  --color-text-muted: #8a8277;
 
-  --color-accent-primary: #e6c35c;
-  --color-accent-secondary: #333333;
-  --color-border: #ffffff;
-  --color-border-subtle: #d1d1c7;
+  --color-accent-primary: #2a9d8f;
+  --color-accent-secondary: #e76f51;
+  --color-border: #2a9d8f;
+  --color-border-subtle: rgba(42, 157, 143, 0.35);
   --dropdown-border: 2px solid var(--color-border-subtle);
 
-  --border-radius-card: 20px;
+  --border-radius-card: 24px;
   --border-radius-btn: 12px;
 
   /* CLAY EFFECTS */
-  --box-shadow-card: 8px 8px 16px rgba(163, 177, 198, 0.6),
-    -8px -8px 16px rgba(255, 255, 255, 0.5),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.5);
-  --box-shadow-btn: 6px 6px 10px #d1d1c7, -5px -5px 10px #fffff2;
+  --box-shadow-card: 8px 8px 16px rgba(231, 111, 81, 0.18),
+    -8px -8px 16px rgba(255, 252, 242, 0.75),
+    inset 0 0 0 2px rgba(42, 157, 143, 0.15);
+  --box-shadow-btn: 6px 6px 10px rgba(231, 111, 81, 0.25),
+    -5px -5px 10px rgba(255, 252, 242, 0.9);
   /* Deep Inner Shadow for inputs/lists */
-  --box-shadow-input: inset 6px 6px 12px #d1d1c7, inset -6px -6px 12px #ebebe4;
-  --separator-groove: inset 0 -1px 1px rgba(255, 255, 255, 0.5),
-    inset 0 1px 1px rgba(0, 0, 0, 0.1);
+  --box-shadow-input: inset 6px 6px 12px rgba(231, 111, 81, 0.18),
+    inset -6px -6px 12px rgba(255, 252, 242, 0.7);
+  --separator-groove: inset 0 -1px 1px rgba(255, 252, 242, 0.7),
+    inset 0 1px 1px rgba(38, 70, 83, 0.12);
 
-  --bg-texture: radial-gradient(#d1d5db 2px, transparent 2px);
+  --bg-texture: radial-gradient(rgba(42, 157, 143, 0.18) 2px, transparent 2px);
   --bg-size: 20px 20px;
   --backdrop-filter: blur(12px);
   --font-family-base: 'JetBrains Mono', monospace;
 
   /* Contribution Graph Colors (Warm Gold Glow) */
-  --color-graph-l1: #f3ebd7;
-  --color-graph-l2: #eedc9a;
-  --color-graph-l3: #e6c35c;
-  --color-graph-l4: #cfa840;
+  --color-graph-l1: #efe7d3;
+  --color-graph-l2: #d9d8c3;
+  --color-graph-l3: #97c6bd;
+  --color-graph-l4: #2a9d8f;
 
   --color-status-reading: var(--color-accent-primary);
-  --color-status-reading-bg: rgba(230, 195, 92, 0.15);
+  --color-status-reading-bg: rgba(42, 157, 143, 0.15);
 }
 
 /* === THEME C: Pixel Dream (90s Cute Retro) === */
