@@ -2248,7 +2248,7 @@ textarea {
   }
 
   .main {
-    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
     padding-top: 1.5rem;
   }
 
