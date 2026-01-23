@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import BottomNav from './BottomNav'
 import { useAppData } from '../lib/app-context'
@@ -35,6 +35,35 @@ function Layout({ onOpenSettings }: LayoutProps) {
       }),
     [],
   )
+
+  useEffect(() => {
+    const nav = document.querySelector<HTMLElement>('.bottom-nav')
+    if (!nav) return
+
+    const updateBottomNavHeight = () => {
+      const height = nav.offsetHeight ?? 0
+      document.documentElement.style.setProperty(
+        '--bottom-nav-h',
+        `${height}px`,
+      )
+    }
+
+    updateBottomNavHeight()
+
+    const handleResize = () => updateBottomNavHeight()
+    window.addEventListener('resize', handleResize)
+
+    let resizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => updateBottomNavHeight())
+      resizeObserver.observe(nav)
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      resizeObserver?.disconnect()
+    }
+  }, [])
 
   const handleTabChange = (tab: string) => {
     if (tab === 'home') {

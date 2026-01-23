@@ -382,7 +382,7 @@ textarea {
 }
 
 .main {
-  padding: 2rem 0 calc(3rem + env(safe-area-inset-bottom));
+  padding: 2rem 0 calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
   flex: 1;
   position: relative;
   z-index: 0;
@@ -2248,7 +2248,7 @@ textarea {
   }
 
   .main {
-    padding-bottom: 140px;
+    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
     padding-top: 1.5rem;
   }
 
