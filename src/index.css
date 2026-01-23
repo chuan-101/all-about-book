@@ -523,9 +523,10 @@ textarea {
 }
 
 .collapsible-panel.is-expanded {
-  max-height: 1200px;
+  max-height: 2000px;
   opacity: 1;
   pointer-events: auto;
+  overflow: visible;
 }
 
 .collapsible-content {
