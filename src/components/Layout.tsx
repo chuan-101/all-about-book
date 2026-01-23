@@ -38,7 +38,18 @@ function Layout({ onOpenSettings }: LayoutProps) {
 
   useEffect(() => {
     const nav = document.querySelector<HTMLElement>('.bottom-nav')
-    if (!nav) return
+    if (!nav) {
+      const fallbackValue = getComputedStyle(
+        document.documentElement,
+      ).getPropertyValue('--bottom-nav-h')
+      if (fallbackValue) {
+        document.documentElement.style.setProperty(
+          '--bottom-nav-h',
+          fallbackValue.trim(),
+        )
+      }
+      return
+    }
 
     const updateBottomNavHeight = () => {
       const height = nav.offsetHeight ?? 0
