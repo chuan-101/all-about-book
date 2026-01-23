@@ -1440,7 +1440,7 @@ textarea {
 
 .menu-panel.dropup {
   top: auto;
-  bottom: calc(100% + 0.4rem);
+  bottom: calc(100% + 0.2rem);
   transform-origin: bottom center;
 }
 
