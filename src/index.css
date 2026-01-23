@@ -9,6 +9,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   --tabbar-h: 64px;
+  --bottom-nav-h: calc(var(--tabbar-h) + 1rem);
   --border-color: var(--color-border);
   --radius-md: var(--border-radius-btn);
 }
@@ -2241,8 +2242,7 @@ textarea {
   }
 
   .main {
-    padding-bottom: calc(140px + env(safe-area-inset-bottom));
-    margin-bottom: 80px;
+    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
     padding-top: 1.5rem;
   }
 
