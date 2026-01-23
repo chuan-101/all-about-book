@@ -443,7 +443,7 @@ function BooksPage() {
                                   ⋯ 更多
                                 </ActionButton>
                                 {openBookMenuId === book.id ? (
-                                  <div className="menu-panel" role="menu">
+                                  <div className="menu-panel dropup" role="menu">
                                     <button
                                       className="menu-item"
                                       type="button"
