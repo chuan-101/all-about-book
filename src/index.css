@@ -1438,6 +1438,12 @@ textarea {
   z-index: 10;
 }
 
+.menu-panel.dropup {
+  top: auto;
+  bottom: calc(100% + 0.4rem);
+  transform-origin: bottom center;
+}
+
 .dropdown-container,
 .popover-content {
   animation: dropdownPop 0.15s ease-out forwards;
