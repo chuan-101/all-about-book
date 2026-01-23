@@ -130,6 +130,7 @@ function Layout({ onOpenSettings }: LayoutProps) {
           <p className="notice info">云端数据加载中...</p>
         ) : null}
         <Outlet />
+        <div className="layout-spacer" />
       </main>
       <BottomNav
         activeTab={activeTab}
