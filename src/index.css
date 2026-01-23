@@ -391,7 +391,7 @@ textarea {
 }
 
 .layout-spacer {
-  height: 160px;
+  height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
   width: 100%;
   flex-shrink: 0;
   background: transparent;
@@ -2258,7 +2258,7 @@ textarea {
   }
 
   .main {
-    padding-bottom: calc(140px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
     padding-top: 1.5rem;
   }
 
