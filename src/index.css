@@ -418,6 +418,12 @@ textarea {
   flex-wrap: wrap;
 }
 
+.page-header-actions .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .dashboard-header-text {
   display: flex;
   flex-direction: column;
@@ -2459,6 +2465,21 @@ textarea {
 
   .excerpt-textarea {
     min-height: 220px;
+  }
+
+  .excerpt-actions .menu-panel {
+    left: 50%;
+    right: auto;
+    min-width: 160px;
+    margin-left: -80px;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .excerpt-actions .menu-item {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
   }
 
   .calendar-weekdays,
