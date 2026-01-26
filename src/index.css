@@ -1422,6 +1422,8 @@ textarea {
 
 .excerpt-actions .menu {
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .excerpt-actions .menu .button {
