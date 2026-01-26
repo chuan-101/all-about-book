@@ -188,7 +188,9 @@
   --color-accent-secondary: #a2d2ff;
 
   --color-border: #ffc2d1;
-  --dropdown-border: 2px dashed var(--color-border);
+  --cc-border: rgba(120, 95, 165, 0.35);
+  --cc-card-bg: rgba(255, 255, 255, 0.88);
+  --dropdown-border: 1px solid var(--cc-border);
 
   --border-radius-card: 20px;
   --border-radius-btn: 16px;
