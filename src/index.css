@@ -196,7 +196,7 @@ body {
 [data-theme='cotton-candy'] .bookshelf-pinned,
 [data-theme='cotton-candy'] .menu-panel,
 [data-theme='cotton-candy'] .confirm-modal {
-  border: 2px dashed var(--color-border);
+  border: 1px solid var(--cc-border);
   border-radius: var(--border-radius-card);
   box-shadow: var(--box-shadow-card);
 }
@@ -232,7 +232,7 @@ body {
   content: '';
   position: absolute;
   inset: 14px;
-  border: 2px dotted var(--color-accent-secondary);
+  border: 1px solid var(--cc-border);
   border-radius: 26px;
   pointer-events: none;
 }
@@ -240,35 +240,21 @@ body {
 [data-theme='cotton-candy'] .card {
   position: relative;
   overflow: visible;
-  background-image: linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.9),
-      rgba(255, 255, 255, 0.9)
-    ),
-    repeating-linear-gradient(
-      45deg,
-      rgba(255, 158, 170, 0.12) 0 8px,
-      rgba(255, 255, 255, 0.4) 8px 16px
-    );
-  background-blend-mode: normal;
+  background: var(--cc-card-bg);
 }
 
 [data-theme='cotton-candy'] .card::before {
   content: '';
   position: absolute;
-  top: -12px;
+  top: -10px;
   left: 50%;
   transform: translateX(-50%) rotate(-2deg);
-  width: 128px;
-  height: 26px;
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.7) 0 6px,
-    rgba(162, 210, 255, 0.8) 6px 12px
-  );
-  border: 2px dashed var(--color-border);
-  border-radius: 12px;
-  box-shadow: 2px 2px 0 var(--shadow);
+  width: 120px;
+  height: 12px;
+  background: rgba(90, 140, 230, 0.55);
+  border: 1px solid rgba(90, 140, 230, 0.45);
+  border-radius: 10px;
+  box-shadow: none;
 }
 
 [data-theme='cotton-candy'] .bookshelf-section .list-item {
