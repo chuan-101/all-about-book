@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Press+Start+2P&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Playfair+Display:wght@500;600;700&family=Press+Start+2P&family=VT323&display=swap');
 
 :root {
   font-family: var(--font-family-base, var(--font-sans));
@@ -201,6 +201,76 @@ body {
   box-shadow: var(--box-shadow-card);
 }
 
+[data-theme='cotton-candy'] body {
+  background-color: var(--color-bg-main);
+  background-image: radial-gradient(
+      var(--color-accent-secondary) 20%,
+      transparent 20%
+    ),
+    radial-gradient(var(--color-accent-primary) 15%, transparent 15%);
+  background-size: 20px 20px, 40px 40px;
+  background-position: 0 0, 10px 10px;
+}
+
+[data-theme='cotton-candy'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E%E2%AD%90%3C/text%3E%3Ctext x='70' y='60' font-size='18'%3E%F0%9F%8E%80%3C/text%3E%3Ctext x='20' y='100' font-size='18'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E");
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme='cotton-candy'] .app,
+[data-theme='cotton-candy'] .container {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme='cotton-candy'] .container::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 2px dotted var(--color-accent-secondary);
+  border-radius: 26px;
+  pointer-events: none;
+}
+
+[data-theme='cotton-candy'] .card {
+  position: relative;
+  overflow: visible;
+  background-image: linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.9),
+      rgba(255, 255, 255, 0.9)
+    ),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 158, 170, 0.12) 0 8px,
+      rgba(255, 255, 255, 0.4) 8px 16px
+    );
+  background-blend-mode: normal;
+}
+
+[data-theme='cotton-candy'] .card::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 128px;
+  height: 26px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.7) 0 6px,
+    rgba(162, 210, 255, 0.8) 6px 12px
+  );
+  border: 2px dashed var(--color-border);
+  border-radius: 12px;
+  box-shadow: 2px 2px 0 var(--shadow);
+}
+
 [data-theme='cotton-candy'] .bookshelf-section .list-item {
   transform: rotate(-1deg);
   transition: transform var(--transition-speed);
@@ -212,6 +282,19 @@ body {
 
 [data-theme='cotton-candy'] .bookshelf-section .list-item:hover {
   transform: scale(1.02) rotate(0deg);
+}
+
+[data-theme='cotton-candy'] .dashboard-date {
+  font-family: 'Patrick Hand', 'Comic Sans MS', cursive;
+  letter-spacing: 0.04em;
+}
+
+[data-theme='cotton-candy'] .dashboard-divider {
+  border: 0;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg width='160' height='16' viewBox='0 0 160 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 8 C 20 2, 40 14, 60 8 S 100 2, 120 8 S 140 14, 160 8' fill='none' stroke='%23FF9EAA' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-position: center;
 }
 
 @keyframes dropdownPop {
