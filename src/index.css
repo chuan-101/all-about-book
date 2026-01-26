@@ -188,6 +188,32 @@ body {
   min-width: 0;
 }
 
+[data-theme='cotton-candy'] .card,
+[data-theme='cotton-candy'] .header,
+[data-theme='cotton-candy'] .bottom-nav,
+[data-theme='cotton-candy'] .collapsible-header,
+[data-theme='cotton-candy'] .bookshelf-search input,
+[data-theme='cotton-candy'] .bookshelf-pinned,
+[data-theme='cotton-candy'] .menu-panel,
+[data-theme='cotton-candy'] .confirm-modal {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--border-radius-card);
+  box-shadow: var(--box-shadow-card);
+}
+
+[data-theme='cotton-candy'] .bookshelf-section .list-item {
+  transform: rotate(-1deg);
+  transition: transform var(--transition-speed);
+}
+
+[data-theme='cotton-candy'] .bookshelf-section .list-item:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+[data-theme='cotton-candy'] .bookshelf-section .list-item:hover {
+  transform: scale(1.02) rotate(0deg);
+}
+
 @keyframes dropdownPop {
   0% {
     opacity: 0;
@@ -416,6 +442,12 @@ textarea {
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.page-header-actions .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dashboard-header-text {
@@ -2459,6 +2491,21 @@ textarea {
 
   .excerpt-textarea {
     min-height: 220px;
+  }
+
+  .excerpt-actions .menu-panel {
+    left: 50%;
+    right: auto;
+    min-width: 160px;
+    margin-left: -80px;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .excerpt-actions .menu-item {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
   }
 
   .calendar-weekdays,
