@@ -172,3 +172,40 @@
   --font-family-heading: 'Press Start 2P', cursive;
   --font-family-base: 'VT323', monospace;
 }
+
+/* === THEME E: Cotton Candy (Retro-Cute Maximalist) === */
+[data-theme="cotton-candy"] {
+  --color-bg-main: #fff9fb;
+  --color-bg-card: #ffffff;
+  --color-bg-input: #fff7fb;
+
+  --color-text-primary: #5d5d5d;
+  --color-text-secondary: #7a7a7a;
+  --color-text-muted: #9a9a9a;
+
+  --color-accent-primary: #ff9eaa;
+  --color-accent-hover: #ff8fa0;
+  --color-accent-secondary: #a2d2ff;
+
+  --color-border: #ffc2d1;
+  --dropdown-border: 2px dashed var(--color-border);
+
+  --border-radius-card: 20px;
+  --border-radius-btn: 16px;
+
+  --shadow: #bde0fe;
+  --box-shadow-card: 5px 5px 0px var(--shadow);
+  --box-shadow-btn: 4px 4px 0px var(--shadow);
+  --box-shadow-input: none;
+
+  --bg-texture: none;
+  --separator-groove: none;
+
+  --color-graph-l1: #ffe5ec;
+  --color-graph-l2: #ffcfe1;
+  --color-graph-l3: #ffb3d0;
+  --color-graph-l4: #ff8fa0;
+
+  --color-status-reading: var(--color-accent-primary);
+  --color-status-reading-bg: rgba(255, 158, 170, 0.2);
+}

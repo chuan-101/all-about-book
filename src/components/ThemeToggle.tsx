@@ -5,6 +5,7 @@ const themeLabels = {
   'retro-keyboard': '复古键盘',
   'pixel-dream': '像素梦境',
   'pixel-farm': '像素农场',
+  'cotton-candy': '棉花糖',
 }
 
 function ThemeToggle() {
@@ -14,6 +15,7 @@ function ThemeToggle() {
     'retro-keyboard',
     'pixel-dream',
     'pixel-farm',
+    'cotton-candy',
   ] as const
   const currentIndex = themeOrder.indexOf(theme)
   const nextTheme =
