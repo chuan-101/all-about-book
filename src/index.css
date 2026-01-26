@@ -234,6 +234,7 @@ body {
 [data-theme='cotton-candy'] .header {
   background: #ffe5ee;
   border: none;
+  border-bottom: 2px solid #ffb8d4;
   box-shadow: none;
 }
 
