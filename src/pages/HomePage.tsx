@@ -11,6 +11,25 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
+const isValidDateString = (value: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return false
+  const date = new Date(year, month - 1, day)
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  )
+}
+
+const getReadingDaysSet = (sessions: ReadingSession[]) =>
+  new Set(
+    sessions
+      .map((session) => session.date)
+      .filter((date) => isValidDateString(date)),
+  )
+
 function HomePage() {
   const { books: localBooks } = useBooks()
   const { isCloudMode, cloudBooks, cloudCheckIns, cloudLoading } =
@@ -77,17 +96,21 @@ function HomePage() {
     return { cells, monthLabels, weekColumns }
   }, [currentYear])
 
-  const checkInDates = useMemo(
-    () =>
-      new Set(
-        displayCheckIns
-          .filter((session) =>
-            session.date.startsWith(`${currentYear}-`),
-          )
-          .map((session) => session.date),
-      ),
-    [displayCheckIns, currentYear],
+  const readingDaysSet = useMemo(
+    () => getReadingDaysSet(displayCheckIns),
+    [displayCheckIns],
   )
+
+  const checkInDates = useMemo(() => {
+    const currentYearPrefix = `${currentYear}-`
+    return new Set(
+      Array.from(readingDaysSet).filter((date) =>
+        date.startsWith(currentYearPrefix),
+      ),
+    )
+  }, [currentYear, readingDaysSet])
+
+  const totalReadingDays = readingDaysSet.size
 
   return (
     <section className="stack">
@@ -118,6 +141,10 @@ function HomePage() {
         <div className="card stat">
           <span className="stat-label">已读完</span>
           <span className="stat-value">{finishedBooks.length}</span>
+        </div>
+        <div className="card stat">
+          <span className="stat-label">累计读书天数</span>
+          <span className="stat-value">{totalReadingDays}</span>
         </div>
       </div>
 
