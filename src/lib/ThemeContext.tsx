@@ -7,7 +7,12 @@ import {
   type ReactNode,
 } from 'react'
 
-type Theme = 'retro-cafe' | 'retro-keyboard' | 'pixel-dream' | 'pixel-farm'
+type Theme =
+  | 'retro-cafe'
+  | 'retro-keyboard'
+  | 'pixel-dream'
+  | 'pixel-farm'
+  | 'cotton-candy'
 
 type ThemeContextValue = {
   theme: Theme
@@ -22,6 +27,7 @@ const AVAILABLE_THEMES: Theme[] = [
   'retro-keyboard',
   'pixel-dream',
   'pixel-farm',
+  'cotton-candy',
 ]
 
 const isTheme = (value: string | null): value is Theme =>
