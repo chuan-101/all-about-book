@@ -188,6 +188,32 @@ body {
   min-width: 0;
 }
 
+[data-theme='cotton-candy'] .card,
+[data-theme='cotton-candy'] .header,
+[data-theme='cotton-candy'] .bottom-nav,
+[data-theme='cotton-candy'] .collapsible-header,
+[data-theme='cotton-candy'] .bookshelf-search input,
+[data-theme='cotton-candy'] .bookshelf-pinned,
+[data-theme='cotton-candy'] .menu-panel,
+[data-theme='cotton-candy'] .confirm-modal {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--border-radius-card);
+  box-shadow: var(--box-shadow-card);
+}
+
+[data-theme='cotton-candy'] .bookshelf-section .list-item {
+  transform: rotate(-1deg);
+  transition: transform var(--transition-speed);
+}
+
+[data-theme='cotton-candy'] .bookshelf-section .list-item:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+[data-theme='cotton-candy'] .bookshelf-section .list-item:hover {
+  transform: scale(1.02) rotate(0deg);
+}
+
 @keyframes dropdownPop {
   0% {
     opacity: 0;
