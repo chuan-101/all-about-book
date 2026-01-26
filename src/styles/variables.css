@@ -55,7 +55,7 @@
 /* === THEME B: Retro Key Box (Claymorphism) === */
 /* Reference: Soft beige ceramic, deep inner shadows, warm gold accent */
 [data-theme="retro-keyboard"] {
-  --color-bg-main: #d4d4d4;
+  --color-bg-main: #dddddd;
   --color-bg-card: #f4f4f0;
   --color-bg-input: #e7e7e1;
   --color-text-primary: #2b2b2b;
