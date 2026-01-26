@@ -204,10 +204,10 @@ body {
 [data-theme='cotton-candy'] body {
   background-color: var(--color-bg-main);
   background-image: radial-gradient(
-      var(--color-accent-secondary) 20%,
+      rgba(162, 210, 255, 0.2) 20%,
       transparent 20%
     ),
-    radial-gradient(var(--color-accent-primary) 15%, transparent 15%);
+    radial-gradient(rgba(255, 158, 170, 0.2) 15%, transparent 15%);
   background-size: 20px 20px, 40px 40px;
   background-position: 0 0, 10px 10px;
 }

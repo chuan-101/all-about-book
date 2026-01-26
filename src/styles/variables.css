@@ -175,7 +175,7 @@
 
 /* === THEME E: Cotton Candy (Retro-Cute Maximalist) === */
 [data-theme="cotton-candy"] {
-  --color-bg-main: #fff0f5;
+  --color-bg-main: #fff9fb;
   --color-bg-card: #ffffff;
   --color-bg-input: #fff7fb;
 
@@ -194,7 +194,7 @@
   --border-radius-btn: 16px;
 
   --shadow: #bde0fe;
-  --box-shadow-card: 4px 4px 0px var(--shadow);
+  --box-shadow-card: 5px 5px 0px var(--shadow);
   --box-shadow-btn: 4px 4px 0px var(--shadow);
   --box-shadow-input: none;
 
