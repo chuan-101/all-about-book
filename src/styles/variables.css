@@ -48,7 +48,7 @@
   --color-graph-l3: #a8937c;
   --color-graph-l4: #5c5550;
 
-  --color-status-reading: var(--color-accent-primary);
+  --color-status-reading: #ff8fa0;
   --color-status-reading-bg: rgba(58, 95, 72, 0.15);
 }
 
