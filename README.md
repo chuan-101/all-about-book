@@ -51,3 +51,15 @@ For GitHub Pages builds, add the following repository secrets:
 The app will be available at `http://localhost:5173`.
 
 deploy test
+
+
+## GitHub Pages base path + PWA
+This project is deployed under the GitHub Pages subpath `/all-about-book/`, so Vite `base` and PWA settings must stay aligned with that path.
+
+- Vite base is configured as `/all-about-book/`.
+- PWA manifest uses `/all-about-book/` for `start_url` and `scope`.
+- Manifest icon paths are relative (`icons/...`) so they resolve under the subpath, not domain root.
+- Workbox navigation fallback points to `/all-about-book/index.html`.
+
+If you change Service Worker or manifest settings, **unregister the existing service worker and clear site data** once in your browser before retesting.
+
