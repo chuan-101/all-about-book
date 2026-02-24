@@ -197,6 +197,7 @@ function BookDetailPage() {
   const [editingContent, setEditingContent] = useState('')
   const [cloudError, setCloudError] = useState<string | null>(null)
   const [isAskingSyzygy, setIsAskingSyzygy] = useState(false)
+  const [isSendingDiscussion, setIsSendingDiscussion] = useState(false)
   const [attachContext, setAttachContext] = useState(true)
   const [confirmingDiscussion, setConfirmingDiscussion] =
     useState<DiscussionMessage | null>(null)
@@ -858,12 +859,19 @@ function BookDetailPage() {
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault()
+    if (isSendingDiscussion || isAskingSyzygy || isStreamingReply) {
+      setCloudError('请等待当前操作完成。')
+      return
+    }
     if (!book?.id) {
       setCloudError('无法发送讨论：缺少书籍 ID。')
       return
     }
     const content = newMessageContent.trim()
-    if (!content) return
+    if (!content) {
+      setCloudError('请先输入内容再发送。')
+      return
+    }
     const conversationId = await ensureActiveConversation()
     if (!conversationId) {
       setCloudError('无法发送讨论：缺少对话信息。')
@@ -875,6 +883,7 @@ function BookDetailPage() {
         return
       }
       setCloudError(null)
+      setIsSendingDiscussion(true)
       try {
         await createCloudDiscussion(
           session.user.id,
@@ -887,6 +896,8 @@ function BookDetailPage() {
       } catch (error) {
         console.error(error)
         setCloudError('云端讨论发送失败，请稍后重试。')
+      } finally {
+        setIsSendingDiscussion(false)
       }
       return
     }
@@ -958,12 +969,19 @@ function BookDetailPage() {
   }
 
   const handleAskSyzygy = async () => {
+    if (isSendingDiscussion || isAskingSyzygy || isStreamingReply) {
+      setCloudError('请等待当前操作完成。')
+      return
+    }
     if (!book?.id) {
       setCloudError('无法发送讨论：缺少书籍 ID。')
       return
     }
     const content = newMessageContent.trim()
-    if (!content) return
+    if (!content) {
+      setCloudError('请先输入内容再让 Syzygy 回复。')
+      return
+    }
     if (!isCloudMode) {
       setCloudError('请先切换到云端模式后再使用 Syzygy。')
       return
@@ -976,7 +994,6 @@ function BookDetailPage() {
       setCloudError('Supabase 配置缺失，请稍后再试。')
       return
     }
-    if (isAskingSyzygy || isStreamingReply) return
     setCloudError(null)
     setIsAskingSyzygy(true)
     let optimisticIds: {
@@ -1184,6 +1201,13 @@ function BookDetailPage() {
       setIsStreamingReply(false)
     }
   }
+
+  const handleGenerateReplyClick = () => {
+    void handleAskSyzygy()
+  }
+
+  const isDiscussionActionLoading =
+    isSendingDiscussion || isAskingSyzygy || isStreamingReply
 
   const handleStartEdit = (excerpt: Excerpt) => {
     setEditingExcerptId(excerpt.id)
@@ -2091,18 +2115,21 @@ function BookDetailPage() {
                 </div>
               ) : null}
               <div className="form-actions">
-                <button type="submit" className="button primary">
-                  发送
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={isDiscussionActionLoading}
+                >
+                  {isSendingDiscussion ? '发送中...' : '发送'}
                 </button>
                 <button
                   type="button"
                   className="button ghost"
-                  onClick={handleAskSyzygy}
+                  onClick={() => handleGenerateReplyClick()}
                   disabled={
+                    isDiscussionActionLoading ||
                     !session?.user ||
-                    !isCloudMode ||
-                    isAskingSyzygy ||
-                    isStreamingReply
+                    !isCloudMode
                   }
                 >
                   {isAskingSyzygy || isStreamingReply
