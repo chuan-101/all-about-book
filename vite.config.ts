@@ -21,28 +21,35 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: `${base}index.html`,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/v1\/.*$/,
+            handler: 'NetworkOnly',
+            method: 'POST',
+          },
+        ],
       },
       manifest: {
         name: 'All About Book',
         short_name: 'All About Book',
-        start_url: './#/',
-        scope: './',
+        start_url: '/all-about-book/',
+        scope: '/all-about-book/',
         display: 'standalone',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         icons: [
           {
-            src: '/icons/icon-192.png',
+            src: 'icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/icons/icon-512.png',
+            src: 'icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
           },
           {
-            src: '/icons/icon-180.png',
+            src: 'icons/icon-180.png',
             sizes: '180x180',
             type: 'image/png',
             purpose: 'any',
