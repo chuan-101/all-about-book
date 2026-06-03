@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAppData } from '../lib/app-context'
 import { useBooks } from '../lib/books-context'
 import { getReadingSessions } from '../lib/reading-sessions-storage'
+import type { Book } from '../types/book'
 import type { ReadingSession } from '../types/reading-session'
 
 const formatDate = (date: Date) => {
@@ -30,6 +31,66 @@ const getReadingDaysSet = (sessions: ReadingSession[]) =>
       .filter((date) => isValidDateString(date)),
   )
 
+const getBookYear = (book: Book) => book.endDate?.slice(0, 4) ?? ''
+
+const getBookshelfGroups = (books: Book[]) => {
+  const booksByYear = new Map<string, Book[]>()
+
+  books
+    .filter(
+      (book) =>
+        book.status === 'finished' &&
+        typeof book.endDate === 'string' &&
+        isValidDateString(book.endDate),
+    )
+    .sort((a, b) => {
+      const dateCompare = (b.endDate ?? '').localeCompare(a.endDate ?? '')
+      if (dateCompare !== 0) return dateCompare
+      return a.title.localeCompare(b.title, 'zh-Hans-CN')
+    })
+    .forEach((book) => {
+      const year = getBookYear(book)
+      const yearBooks = booksByYear.get(year) ?? []
+      yearBooks.push(book)
+      booksByYear.set(year, yearBooks)
+    })
+
+  return Array.from(booksByYear.entries())
+    .sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
+    .map(([year, yearBooks]) => ({ year, books: yearBooks }))
+}
+
+function BookshelfCover({ book }: { book: Book }) {
+  const [hasCoverError, setHasCoverError] = useState(false)
+  const hasCover = Boolean(book.cover && !hasCoverError)
+  const author = book.author || '作者未知'
+  const tooltip = `${book.title} · ${author}`
+
+  return (
+    <div className="dashboard-bookshelf-book" tabIndex={0} aria-label={tooltip}>
+      <div className="dashboard-bookshelf-cover-frame">
+        {hasCover ? (
+          <img
+            src={book.cover}
+            alt={`${book.title} 封面`}
+            className="dashboard-bookshelf-cover"
+            loading="lazy"
+            onError={() => setHasCoverError(true)}
+          />
+        ) : (
+          <div className="dashboard-bookshelf-cover dashboard-bookshelf-cover-placeholder">
+            <span>{book.title}</span>
+          </div>
+        )}
+      </div>
+      <span className="dashboard-bookshelf-tooltip" role="tooltip">
+        <strong>{book.title}</strong>
+        <span>{author}</span>
+      </span>
+    </div>
+  )
+}
+
 function HomePage() {
   const { books: localBooks } = useBooks()
   const { isCloudMode, cloudBooks, cloudCheckIns, cloudLoading } =
@@ -38,13 +99,16 @@ function HomePage() {
   const totalBooks = books.length
   const readingBooks = books.filter((book) => book.status === 'reading')
   const finishedBooks = books.filter((book) => book.status === 'finished')
-  const [checkIns, setCheckIns] = useState<ReadingSession[]>([])
+  const bookshelfGroups = useMemo(() => getBookshelfGroups(books), [books])
+  const bookshelfTotal = bookshelfGroups.reduce(
+    (total, group) => total + group.books.length,
+    0,
+  )
+  const checkIns = useMemo(
+    () => (isCloudMode ? [] : getReadingSessions()),
+    [isCloudMode],
+  )
   const currentYear = new Date().getFullYear()
-
-  useEffect(() => {
-    if (isCloudMode) return
-    setCheckIns(getReadingSessions())
-  }, [isCloudMode])
 
   const displayCheckIns = isCloudMode ? cloudCheckIns : checkIns
 
@@ -172,6 +236,36 @@ function HomePage() {
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+
+      <div className="card dashboard-bookshelf-section">
+        <div className="card-header dashboard-bookshelf-header">
+          <h3>书架</h3>
+          <span className="dashboard-bookshelf-count">{bookshelfTotal} 本</span>
+        </div>
+        {bookshelfGroups.length === 0 ? (
+          <p className="muted">读完一本书后，它会出现在这里。</p>
+        ) : (
+          <div className="dashboard-bookshelf-years">
+            {bookshelfGroups.map((group) => (
+              <div key={group.year} className="dashboard-bookshelf-year-row">
+                <div className="dashboard-bookshelf-year-label">
+                  <span>{group.year}</span>
+                  <small>{group.books.length} 本</small>
+                </div>
+                <div className="dashboard-bookshelf-shelf">
+                  <div className="dashboard-bookshelf-books">
+                    {group.books.map((book) => (
+                      <BookshelfCover key={book.id} book={book} />
+                    ))}
+                  </div>
+                  <div className="dashboard-bookshelf-board" role="presentation" />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
