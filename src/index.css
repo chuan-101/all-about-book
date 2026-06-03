@@ -2265,6 +2265,8 @@ textarea {
     var(--color-bg-card) 12%
   );
   --dashboard-bookshelf-tooltip-text: var(--color-bg-card);
+  position: relative;
+  z-index: 2;
   overflow: visible;
 }
 
@@ -2309,10 +2311,14 @@ textarea {
 
 .dashboard-bookshelf-shelf {
   position: relative;
+  z-index: 1;
   padding: 0 0 0.65rem;
+  overflow: visible;
 }
 
 .dashboard-bookshelf-books {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -2410,6 +2416,7 @@ textarea {
   transform: translate(-50%, 0.25rem);
   transition: opacity var(--transition-speed), transform var(--transition-speed);
   white-space: normal;
+  z-index: 20;
 }
 
 .dashboard-bookshelf-tooltip span {
