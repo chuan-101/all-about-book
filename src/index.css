@@ -2246,6 +2246,196 @@ textarea {
   pointer-events: none;
 }
 
+.dashboard-bookshelf-section {
+  --dashboard-bookshelf-cover-width: 60px;
+  --dashboard-bookshelf-cover-height: 84px;
+  --dashboard-bookshelf-gap: 12px;
+  --dashboard-bookshelf-board-color: var(--color-border);
+  --dashboard-bookshelf-board-highlight: var(--color-accent-primary);
+  --dashboard-bookshelf-placeholder-bg: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-accent-primary), var(--color-bg-card) 72%),
+    color-mix(in srgb, var(--color-accent-secondary), var(--color-bg-input) 62%)
+  );
+  --dashboard-bookshelf-shadow: 0 8px 16px
+    color-mix(in srgb, var(--color-text-primary), transparent 82%);
+  --dashboard-bookshelf-tooltip-bg: color-mix(
+    in srgb,
+    var(--color-text-primary),
+    var(--color-bg-card) 12%
+  );
+  --dashboard-bookshelf-tooltip-text: var(--color-bg-card);
+  overflow: visible;
+}
+
+.dashboard-bookshelf-header {
+  align-items: center;
+}
+
+.dashboard-bookshelf-count {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dashboard-bookshelf-years {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.dashboard-bookshelf-year-row {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.dashboard-bookshelf-year-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--color-text-secondary);
+}
+
+.dashboard-bookshelf-year-label span {
+  color: var(--color-text-primary);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.dashboard-bookshelf-year-label small {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.dashboard-bookshelf-shelf {
+  position: relative;
+  padding: 0 0 0.65rem;
+}
+
+.dashboard-bookshelf-books {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--dashboard-bookshelf-gap);
+  min-height: var(--dashboard-bookshelf-cover-height);
+  padding: 0 0.35rem;
+}
+
+.dashboard-bookshelf-book {
+  position: relative;
+  flex: 0 0 var(--dashboard-bookshelf-cover-width);
+  width: var(--dashboard-bookshelf-cover-width);
+  outline: none;
+  transform: translateY(0);
+  transition: transform var(--transition-speed);
+  z-index: 1;
+}
+
+.dashboard-bookshelf-book:hover,
+.dashboard-bookshelf-book:focus-visible {
+  transform: translateY(-6px);
+  z-index: 3;
+}
+
+.dashboard-bookshelf-cover-frame {
+  position: relative;
+  width: var(--dashboard-bookshelf-cover-width);
+  height: var(--dashboard-bookshelf-cover-height);
+  border-radius: 3px 6px 6px 3px;
+  box-shadow: var(--dashboard-bookshelf-shadow);
+  overflow: hidden;
+  background: var(--color-bg-input);
+}
+
+.dashboard-bookshelf-cover-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-text-primary), transparent 35%),
+    color-mix(in srgb, var(--color-accent-primary), transparent 20%),
+    color-mix(in srgb, var(--color-bg-card), transparent 15%)
+  );
+  z-index: 2;
+}
+
+.dashboard-bookshelf-cover {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-bookshelf-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.35rem 0.45rem 0.6rem;
+  background: var(--dashboard-bookshelf-placeholder-bg);
+  color: var(--color-text-primary);
+  text-align: center;
+}
+
+.dashboard-bookshelf-cover-placeholder span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-bookshelf-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.55rem);
+  width: max-content;
+  max-width: 220px;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--dashboard-bookshelf-tooltip-bg);
+  color: var(--dashboard-bookshelf-tooltip-text);
+  box-shadow: var(--dashboard-bookshelf-shadow);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0.25rem);
+  transition: opacity var(--transition-speed), transform var(--transition-speed);
+  white-space: normal;
+}
+
+.dashboard-bookshelf-tooltip span {
+  color: color-mix(in srgb, var(--dashboard-bookshelf-tooltip-text), transparent 22%);
+}
+
+.dashboard-bookshelf-book:hover .dashboard-bookshelf-tooltip,
+.dashboard-bookshelf-book:focus-visible .dashboard-bookshelf-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.dashboard-bookshelf-board {
+  height: 5px;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--dashboard-bookshelf-board-color),
+    var(--dashboard-bookshelf-board-highlight),
+    var(--dashboard-bookshelf-board-color)
+  );
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--color-border), transparent 70%);
+}
+
+
 .heatmap-container {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -2519,6 +2709,34 @@ textarea {
 
   .bookshelf-section .actions {
     width: 100%;
+  }
+
+  .dashboard-bookshelf-section {
+    --dashboard-bookshelf-cover-width: 50px;
+    --dashboard-bookshelf-cover-height: 70px;
+    --dashboard-bookshelf-gap: 9px;
+    padding: 1rem;
+  }
+
+  .dashboard-bookshelf-count,
+  .dashboard-bookshelf-year-label small {
+    font-size: 0.8rem;
+  }
+
+  .dashboard-bookshelf-year-label span {
+    font-size: 0.95rem;
+  }
+
+  .dashboard-bookshelf-years {
+    gap: 1.15rem;
+  }
+
+  .dashboard-bookshelf-books {
+    padding: 0 0.2rem;
+  }
+
+  .dashboard-bookshelf-cover-placeholder span {
+    font-size: 0.62rem;
   }
 
   .discussion-form-footer {
