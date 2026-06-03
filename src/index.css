@@ -627,22 +627,28 @@ textarea {
 }
 
 .collapsible-panel {
-  max-height: 0;
+  display: grid;
+  grid-template-rows: 0fr;
   opacity: 0;
   overflow: hidden;
   pointer-events: none;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+  transition: grid-template-rows 0.3s ease, opacity 0.25s ease;
 }
 
 .collapsible-panel.is-expanded {
-  max-height: 2000px;
+  grid-template-rows: 1fr;
   opacity: 1;
   pointer-events: auto;
   overflow: visible;
 }
 
 .collapsible-content {
+  min-height: 0;
   padding-top: 0.5rem;
+}
+
+.collapsible-panel:not(.is-expanded) .collapsible-content {
+  overflow: hidden;
 }
 
 .card {
@@ -740,6 +746,25 @@ textarea {
 .bookshelf-section {
   gap: 0.75rem;
   padding: 1.25rem;
+}
+
+.bookshelf-section .list {
+  overflow: visible;
+}
+
+.bookshelf-section .list-item {
+  min-width: 0;
+  overflow: visible;
+}
+
+.bookshelf-section .list-item-main > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.bookshelf-section .list-item-main strong,
+.bookshelf-section .list-item-main p {
+  overflow-wrap: anywhere;
 }
 
 .bookshelf-section-header {
@@ -2478,6 +2503,22 @@ textarea {
   .list-item-main {
     min-width: 0;
     align-items: flex-start;
+  }
+
+  .bookshelf-section {
+    padding: 1rem;
+  }
+
+  .bookshelf-section .list {
+    padding: 0.75rem;
+  }
+
+  .bookshelf-section .list-item {
+    contain: layout style;
+  }
+
+  .bookshelf-section .actions {
+    width: 100%;
   }
 
   .discussion-form-footer {
