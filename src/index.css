@@ -1557,6 +1557,254 @@ textarea {
   width: 100%;
 }
 
+/* 书摘 / 思考 tabs */
+.note-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 0.25rem;
+}
+
+.note-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  background: transparent;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition-speed),
+    border-color var(--transition-speed);
+}
+
+.note-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.note-tab.active {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-accent, #175cd3);
+}
+
+.note-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  padding: 0 0.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: var(--color-bg-main);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.note-tab.active .note-tab-count {
+  background: #e0ecff;
+  color: #175cd3;
+}
+
+.thinking-empty {
+  padding: 0.5rem 0;
+}
+
+/* 思考 panel */
+.thinking-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chapter-input {
+  font-weight: 500;
+}
+
+.question-list {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.question-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: var(--box-shadow-card);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.question-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.question-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.question-chevron {
+  display: inline-block;
+  margin-top: 0.15rem;
+  transition: transform var(--transition-speed);
+  color: var(--color-text-secondary);
+}
+
+.question-chevron.open {
+  transform: rotate(90deg);
+}
+
+.question-text {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.question-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.question-count {
+  font-size: 0.8rem;
+}
+
+.question-meta .excerpt-date {
+  margin-left: auto;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.status-badge.status-open {
+  color: #b54708;
+  background: #fef0c7;
+  border-color: #f7c98a;
+}
+
+.status-badge.status-answered {
+  color: #067647;
+  background: #d3f8df;
+  border-color: #8fdfb0;
+}
+
+.answer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.answer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.answer-item {
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.answer-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.answer-author {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+
+.answer-body {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.answer-body p {
+  margin: 0 0 0.4rem;
+}
+
+.answer-body p:last-child {
+  margin-bottom: 0;
+}
+
+.answer-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.answer-action {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.answer-action:hover {
+  color: var(--color-text-primary);
+}
+
+.answer-action.danger {
+  color: #d92d20;
+}
+
+.answer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .menu {
   position: relative;
 }

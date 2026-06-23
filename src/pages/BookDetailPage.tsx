@@ -40,25 +40,36 @@ import { ActionButton } from '../components/ActionButton'
 import { Button } from '../components/Button'
 import {
   createConversation,
+  createCloudAnswer,
   createCloudDiscussion,
   createCloudDiscussionMessages,
   createCloudExcerpt,
+  createCloudQuestion,
   deleteConversation,
+  deleteCloudAnswer,
   deleteCloudDiscussion,
   deleteCloudDiscussionsByConversation,
   deleteCloudExcerpt,
+  deleteCloudQuestion,
   toggleCloudCheckIn,
   updateConversationTitle,
+  updateCloudAnswer,
   updateCloudExcerpt,
+  updateCloudQuestion,
+  updateCloudQuestionStatus,
 } from '../lib/cloudWrite'
 import {
   getCheckInsByBook,
   toggleCheckIn,
 } from '../lib/reading-sessions-storage'
 import {
+  fetchAnswersByQuestionIds,
   fetchConversationsByBookId,
   fetchDiscussionsByBookId,
+  fetchQuestionsByBookId,
 } from '../lib/cloudRead'
+import type { BookAnswer, BookQuestion } from '../types/question'
+import { getAnsweredByLabel } from '../types/question'
 import {
   supabase,
   supabaseAnonKey,
@@ -195,6 +206,39 @@ function BookDetailPage() {
     null,
   )
   const [editingContent, setEditingContent] = useState('')
+  const [activeNoteTab, setActiveNoteTab] = useState<
+    'excerpts' | 'thinking'
+  >('excerpts')
+  const [questions, setQuestions] = useState<BookQuestion[]>([])
+  const [answersByQuestion, setAnswersByQuestion] = useState<
+    Record<string, BookAnswer[]>
+  >({})
+  const [questionsLoading, setQuestionsLoading] = useState(false)
+  const [newQuestion, setNewQuestion] = useState('')
+  const [newQuestionChapter, setNewQuestionChapter] = useState('')
+  const [isSavingQuestion, setIsSavingQuestion] = useState(false)
+  const [expandedQuestionIds, setExpandedQuestionIds] = useState<
+    Set<string>
+  >(() => new Set())
+  const [openQuestionMenuId, setOpenQuestionMenuId] = useState<
+    string | null
+  >(null)
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(
+    null,
+  )
+  const [editingQuestionText, setEditingQuestionText] = useState('')
+  const [editingQuestionChapter, setEditingQuestionChapter] = useState('')
+  const [answerDrafts, setAnswerDrafts] = useState<Record<string, string>>(
+    {},
+  )
+  const [editingAnswerId, setEditingAnswerId] = useState<string | null>(
+    null,
+  )
+  const [editingAnswerText, setEditingAnswerText] = useState('')
+  const [confirmingDeleteQuestion, setConfirmingDeleteQuestion] =
+    useState<BookQuestion | null>(null)
+  const [confirmingDeleteAnswer, setConfirmingDeleteAnswer] =
+    useState<BookAnswer | null>(null)
   const [cloudError, setCloudError] = useState<string | null>(null)
   const [isAskingSyzygy, setIsAskingSyzygy] = useState(false)
   const [isSendingDiscussion, setIsSendingDiscussion] = useState(false)
@@ -334,6 +378,36 @@ function BookDetailPage() {
     [session],
   )
 
+  const loadThinking = useCallback(
+    async (targetBookId: string) => {
+      if (!session?.user || !targetBookId) return
+      setQuestionsLoading(true)
+      try {
+        const loadedQuestions = await fetchQuestionsByBookId(
+          session.user,
+          targetBookId,
+        )
+        const loadedAnswers = await fetchAnswersByQuestionIds(
+          loadedQuestions.map((item) => item.id),
+        )
+        const grouped: Record<string, BookAnswer[]> = {}
+        for (const answer of loadedAnswers) {
+          const list = grouped[answer.questionId] ?? []
+          list.push(answer)
+          grouped[answer.questionId] = list
+        }
+        setQuestions(loadedQuestions)
+        setAnswersByQuestion(grouped)
+      } catch (error) {
+        console.error('Failed to load thinking notes', error)
+        setCloudError('云端思考记录加载失败，请稍后重试。')
+      } finally {
+        setQuestionsLoading(false)
+      }
+    },
+    [session],
+  )
+
   useEffect(() => {
     if (!isCloudMode) {
       activeDiscussionKeyRef.current = null
@@ -360,6 +434,16 @@ function BookDetailPage() {
     setCloudDiscussionMessages([])
     void loadCloudConversations(book.id)
   }, [book?.id, isCloudMode, loadCloudConversations, session?.user])
+
+  useEffect(() => {
+    setQuestions([])
+    setAnswersByQuestion({})
+    setExpandedQuestionIds(new Set())
+    setEditingQuestionId(null)
+    setEditingAnswerId(null)
+    if (!isCloudMode || !book?.id || !session?.user) return
+    void loadThinking(book.id)
+  }, [book?.id, isCloudMode, loadThinking, session?.user])
 
   useEffect(() => {
     if (!isCloudMode) return
@@ -1269,6 +1353,206 @@ function BookDetailPage() {
     refreshExcerpts()
   }
 
+  const requireCloudUser = (): string | null => {
+    if (!isCloudMode) {
+      setCloudError('思考记录需登录后在云端使用，请先切换到云端模式。')
+      return null
+    }
+    if (!session?.user) {
+      setCloudError('请先登录后再使用思考记录。')
+      return null
+    }
+    return session.user.id
+  }
+
+  const toggleQuestionExpand = (id: string) => {
+    setExpandedQuestionIds((current) => {
+      const next = new Set(current)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const handleCreateQuestion = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault()
+    if (!book) return
+    const question = newQuestion.trim()
+    if (!question) {
+      setCloudError('请先填写困惑内容。')
+      return
+    }
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    setIsSavingQuestion(true)
+    try {
+      await createCloudQuestion(
+        userId,
+        book.id,
+        question,
+        newQuestionChapter,
+      )
+      setNewQuestion('')
+      setNewQuestionChapter('')
+      await loadThinking(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError('困惑保存失败，请稍后重试。')
+    } finally {
+      setIsSavingQuestion(false)
+    }
+  }
+
+  const handleStartEditQuestion = (question: BookQuestion) => {
+    setEditingQuestionId(question.id)
+    setEditingQuestionText(question.question)
+    setEditingQuestionChapter(question.chapter ?? '')
+    setOpenQuestionMenuId(null)
+  }
+
+  const handleCancelEditQuestion = () => {
+    setEditingQuestionId(null)
+    setEditingQuestionText('')
+    setEditingQuestionChapter('')
+  }
+
+  const handleSaveEditQuestion = async (id: string) => {
+    if (!book) return
+    const question = editingQuestionText.trim()
+    if (!question) return
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    try {
+      await updateCloudQuestion(userId, id, {
+        question,
+        chapter: editingQuestionChapter,
+      })
+      handleCancelEditQuestion()
+      await loadThinking(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError('困惑更新失败，请稍后重试。')
+    }
+  }
+
+  const handleRequestDeleteQuestion = (question: BookQuestion) => {
+    setOpenQuestionMenuId(null)
+    setConfirmingDeleteQuestion(question)
+  }
+
+  const handleConfirmDeleteQuestion = async () => {
+    if (!book || !confirmingDeleteQuestion) return
+    const target = confirmingDeleteQuestion
+    setConfirmingDeleteQuestion(null)
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    try {
+      await deleteCloudQuestion(userId, target.id)
+      await loadThinking(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError('困惑删除失败，请稍后重试。')
+    }
+  }
+
+  const reconcileQuestionStatus = async (
+    userId: string,
+    question: BookQuestion,
+    answerCount: number,
+  ) => {
+    const desired = answerCount > 0 ? 'answered' : 'open'
+    if (question.status === desired) return
+    try {
+      await updateCloudQuestionStatus(userId, question.id, desired)
+    } catch (error) {
+      console.error('Failed to sync question status', error)
+    }
+  }
+
+  const handleCreateAnswer = async (question: BookQuestion) => {
+    if (!book) return
+    const answer = (answerDrafts[question.id] ?? '').trim()
+    if (!answer) {
+      setCloudError('请先填写回答内容。')
+      return
+    }
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    const previousCount = (answersByQuestion[question.id] ?? []).length
+    try {
+      await createCloudAnswer(question.id, answer, 'chuanchuan')
+      setAnswerDrafts((current) => ({ ...current, [question.id]: '' }))
+      if (previousCount === 0) {
+        await reconcileQuestionStatus(userId, question, 1)
+      }
+      await loadThinking(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError('回答保存失败，请稍后重试。')
+    }
+  }
+
+  const handleStartEditAnswer = (answer: BookAnswer) => {
+    setEditingAnswerId(answer.id)
+    setEditingAnswerText(answer.answer)
+  }
+
+  const handleCancelEditAnswer = () => {
+    setEditingAnswerId(null)
+    setEditingAnswerText('')
+  }
+
+  const handleSaveEditAnswer = async (answer: BookAnswer) => {
+    if (!book) return
+    const content = editingAnswerText.trim()
+    if (!content) return
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    try {
+      await updateCloudAnswer(answer.id, content)
+      handleCancelEditAnswer()
+      await loadThinking(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError('回答更新失败，请稍后重试。')
+    }
+  }
+
+  const handleConfirmDeleteAnswer = async () => {
+    if (!book || !confirmingDeleteAnswer) return
+    const target = confirmingDeleteAnswer
+    setConfirmingDeleteAnswer(null)
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    const question = questions.find(
+      (item) => item.id === target.questionId,
+    )
+    const remaining = (answersByQuestion[target.questionId] ?? []).filter(
+      (item) => item.id !== target.id,
+    ).length
+    try {
+      await deleteCloudAnswer(target.id)
+      if (question && remaining === 0) {
+        await reconcileQuestionStatus(userId, question, 0)
+      }
+      await loadThinking(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError('回答删除失败，请稍后重试。')
+    }
+  }
+
   const handleRequestDeleteDiscussion = (
     message: DiscussionMessage,
   ) => {
@@ -1576,11 +1860,41 @@ function BookDetailPage() {
             点击日期即可切换打卡状态，已有打卡会显示标记。
           </p>
         </div>
-        <div className="card stack">
-          <div className="card-header">
-            <h3>书摘</h3>
-            <span className="muted">{displayExcerpts.length} 条</span>
+        <div className="card stack note-card">
+          <div
+            className="note-tabs"
+            role="tablist"
+            aria-label="书摘与思考"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeNoteTab === 'excerpts'}
+              className={`note-tab${
+                activeNoteTab === 'excerpts' ? ' active' : ''
+              }`}
+              onClick={() => setActiveNoteTab('excerpts')}
+            >
+              书摘
+              <span className="note-tab-count">
+                {displayExcerpts.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeNoteTab === 'thinking'}
+              className={`note-tab${
+                activeNoteTab === 'thinking' ? ' active' : ''
+              }`}
+              onClick={() => setActiveNoteTab('thinking')}
+            >
+              思考
+              <span className="note-tab-count">{questions.length}</span>
+            </button>
           </div>
+          {activeNoteTab === 'excerpts' ? (
+          <>
           <form className="form" onSubmit={handleCreateExcerpt}>
             <label className="field">
               <span>新增书摘</span>
@@ -1756,6 +2070,357 @@ function BookDetailPage() {
                 )
               })}
             </ul>
+          )}
+          </>
+          ) : !isCloudMode ? (
+            <p className="muted thinking-empty">
+              思考记录保存在云端，请登录后切换到云端模式使用。
+            </p>
+          ) : (
+            <div className="thinking-panel">
+              <form className="form" onSubmit={handleCreateQuestion}>
+                <label className="field">
+                  <span>新建困惑</span>
+                  <AutoResizeTextarea
+                    className="excerpt-textarea"
+                    rows={3}
+                    value={newQuestion}
+                    onChange={(event) =>
+                      setNewQuestion(event.target.value)
+                    }
+                    placeholder="写下你对这本书的困惑或问题"
+                  />
+                </label>
+                <label className="field">
+                  <span>章节（选填）</span>
+                  <input
+                    type="text"
+                    className="chapter-input"
+                    value={newQuestionChapter}
+                    onChange={(event) =>
+                      setNewQuestionChapter(event.target.value)
+                    }
+                    placeholder="如：第三章 / P42"
+                  />
+                </label>
+                <div className="form-actions">
+                  <button
+                    type="submit"
+                    className="button primary"
+                    disabled={isSavingQuestion || !newQuestion.trim()}
+                  >
+                    {isSavingQuestion ? '保存中...' : '保存'}
+                  </button>
+                </div>
+              </form>
+              {questionsLoading && questions.length === 0 ? (
+                <p className="muted">加载中...</p>
+              ) : questions.length === 0 ? (
+                <p className="muted">暂无困惑，记录下第一个疑问吧。</p>
+              ) : (
+                <ul className="list question-list">
+                  {questions.map((question) => {
+                    const answers = answersByQuestion[question.id] ?? []
+                    const isExpanded = expandedQuestionIds.has(
+                      question.id,
+                    )
+                    const isEditing = editingQuestionId === question.id
+                    const isMenuOpen =
+                      openQuestionMenuId === question.id
+                    return (
+                      <li key={question.id} className="question-card">
+                        {isEditing ? (
+                          <div className="stack question-edit">
+                            <label className="field">
+                              <span>编辑困惑</span>
+                              <AutoResizeTextarea
+                                className="excerpt-textarea"
+                                rows={3}
+                                value={editingQuestionText}
+                                onChange={(event) =>
+                                  setEditingQuestionText(
+                                    event.target.value,
+                                  )
+                                }
+                              />
+                            </label>
+                            <label className="field">
+                              <span>章节（选填）</span>
+                              <input
+                                type="text"
+                                className="chapter-input"
+                                value={editingQuestionChapter}
+                                onChange={(event) =>
+                                  setEditingQuestionChapter(
+                                    event.target.value,
+                                  )
+                                }
+                              />
+                            </label>
+                            <div className="form-actions">
+                              <Button
+                                variant="outline"
+                                type="button"
+                                onClick={() =>
+                                  handleSaveEditQuestion(question.id)
+                                }
+                              >
+                                保存
+                              </Button>
+                              <Button
+                                variant="outline"
+                                type="button"
+                                onClick={handleCancelEditQuestion}
+                              >
+                                取消
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="question-head">
+                              <button
+                                type="button"
+                                className="question-toggle"
+                                aria-expanded={isExpanded}
+                                onClick={() =>
+                                  toggleQuestionExpand(question.id)
+                                }
+                              >
+                                <span
+                                  className={`question-chevron${
+                                    isExpanded ? ' open' : ''
+                                  }`}
+                                  aria-hidden="true"
+                                >
+                                  ▸
+                                </span>
+                                <span className="question-text">
+                                  {question.question}
+                                </span>
+                              </button>
+                              <div className="menu">
+                                <ActionButton
+                                  type="button"
+                                  aria-haspopup="menu"
+                                  aria-expanded={isMenuOpen}
+                                  onClick={() =>
+                                    setOpenQuestionMenuId(
+                                      isMenuOpen ? null : question.id,
+                                    )
+                                  }
+                                >
+                                  ⋯ 更多
+                                </ActionButton>
+                                {isMenuOpen ? (
+                                  <div
+                                    className="menu-panel"
+                                    role="menu"
+                                  >
+                                    <button
+                                      className="menu-item"
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() =>
+                                        handleStartEditQuestion(
+                                          question,
+                                        )
+                                      }
+                                    >
+                                      编辑
+                                    </button>
+                                    <button
+                                      className="menu-item danger"
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() =>
+                                        handleRequestDeleteQuestion(
+                                          question,
+                                        )
+                                      }
+                                    >
+                                      删除
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="question-meta">
+                              <span
+                                className={`status-badge status-${question.status}`}
+                              >
+                                {question.status === 'answered'
+                                  ? '已解答'
+                                  : '待解答'}
+                              </span>
+                              {question.chapter ? (
+                                <span className="chip ghost">
+                                  {question.chapter}
+                                </span>
+                              ) : null}
+                              <span className="muted question-count">
+                                {answers.length} 条回答
+                              </span>
+                              <span className="excerpt-date">
+                                {formatExcerptDate(question.createdAt)}
+                              </span>
+                            </div>
+                            {isExpanded ? (
+                              <div className="answer-section">
+                                {answers.length === 0 ? (
+                                  <p className="muted">
+                                    还没有回答。
+                                  </p>
+                                ) : (
+                                  <ul className="answer-list">
+                                    {answers.map((answer) => {
+                                      const isAnswerEditing =
+                                        editingAnswerId === answer.id
+                                      return (
+                                        <li
+                                          key={answer.id}
+                                          className="answer-item"
+                                        >
+                                          {isAnswerEditing ? (
+                                            <div className="stack">
+                                              <AutoResizeTextarea
+                                                className="excerpt-textarea"
+                                                rows={2}
+                                                value={
+                                                  editingAnswerText
+                                                }
+                                                onChange={(event) =>
+                                                  setEditingAnswerText(
+                                                    event.target
+                                                      .value,
+                                                  )
+                                                }
+                                              />
+                                              <div className="form-actions">
+                                                <Button
+                                                  variant="outline"
+                                                  type="button"
+                                                  onClick={() =>
+                                                    handleSaveEditAnswer(
+                                                      answer,
+                                                    )
+                                                  }
+                                                >
+                                                  保存
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  type="button"
+                                                  onClick={
+                                                    handleCancelEditAnswer
+                                                  }
+                                                >
+                                                  取消
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <>
+                                              <div className="answer-head">
+                                                <span className="answer-author">
+                                                  {getAnsweredByLabel(
+                                                    answer.answeredBy,
+                                                  )}
+                                                </span>
+                                                <span className="excerpt-date">
+                                                  {formatExcerptDate(
+                                                    answer.createdAt,
+                                                  )}
+                                                </span>
+                                              </div>
+                                              <div className="answer-body">
+                                                <ReactMarkdown
+                                                  remarkPlugins={[
+                                                    remarkGfm,
+                                                    remarkBreaks,
+                                                  ]}
+                                                >
+                                                  {answer.answer}
+                                                </ReactMarkdown>
+                                              </div>
+                                              <div className="answer-actions">
+                                                <button
+                                                  type="button"
+                                                  className="answer-action"
+                                                  onClick={() =>
+                                                    handleStartEditAnswer(
+                                                      answer,
+                                                    )
+                                                  }
+                                                >
+                                                  编辑
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  className="answer-action danger"
+                                                  onClick={() =>
+                                                    setConfirmingDeleteAnswer(
+                                                      answer,
+                                                    )
+                                                  }
+                                                >
+                                                  删除
+                                                </button>
+                                              </div>
+                                            </>
+                                          )}
+                                        </li>
+                                      )
+                                    })}
+                                  </ul>
+                                )}
+                                <form
+                                  className="answer-form"
+                                  onSubmit={(event) => {
+                                    event.preventDefault()
+                                    void handleCreateAnswer(question)
+                                  }}
+                                >
+                                  <AutoResizeTextarea
+                                    className="excerpt-textarea"
+                                    rows={2}
+                                    value={
+                                      answerDrafts[question.id] ?? ''
+                                    }
+                                    onChange={(event) =>
+                                      setAnswerDrafts((current) => ({
+                                        ...current,
+                                        [question.id]:
+                                          event.target.value,
+                                      }))
+                                    }
+                                    placeholder="补充一条回答（以串串身份）"
+                                  />
+                                  <div className="form-actions">
+                                    <button
+                                      type="submit"
+                                      className="button primary"
+                                      disabled={
+                                        !(
+                                          answerDrafts[question.id] ??
+                                          ''
+                                        ).trim()
+                                      }
+                                    >
+                                      添加回答
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
+                            ) : null}
+                          </>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
           )}
         </div>
         <div className="card stack discussion-card">
@@ -2225,6 +2890,88 @@ function BookDetailPage() {
                 type="button"
                 className="button danger"
                 onClick={handleConfirmDeleteDiscussion}
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {confirmingDeleteQuestion ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="确认删除困惑"
+          onClick={() => setConfirmingDeleteQuestion(null)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>删除这条困惑？</h4>
+            </header>
+            <div className="stack">
+              <p>删除后将无法恢复。</p>
+              <p className="muted">
+                该困惑下的所有回答也会一并删除。
+              </p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button ghost"
+                autoFocus
+                onClick={() => setConfirmingDeleteQuestion(null)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={handleConfirmDeleteQuestion}
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {confirmingDeleteAnswer ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="确认删除回答"
+          onClick={() => setConfirmingDeleteAnswer(null)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>删除这条回答？</h4>
+            </header>
+            <div className="stack">
+              <p>删除后将无法恢复。</p>
+              <p className="muted">
+                若删除后该困惑没有任何回答，状态会回退为待解答。
+              </p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button ghost"
+                autoFocus
+                onClick={() => setConfirmingDeleteAnswer(null)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={handleConfirmDeleteAnswer}
               >
                 确认删除
               </button>

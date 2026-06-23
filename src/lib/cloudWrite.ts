@@ -1,5 +1,6 @@
 import type { Book } from '../types/book'
 import type { Excerpt } from '../types/excerpt'
+import type { AnsweredBy, QuestionStatus } from '../types/question'
 import { supabase } from './supabaseClient'
 
 const ensureClient = () => {
@@ -262,6 +263,145 @@ export const deleteCloudDiscussionsByConversation = async (
     .delete()
     .eq('user_id', userId)
     .eq('conversation_id', conversationId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const createCloudQuestion = async (
+  userId: string,
+  bookId: string,
+  question: string,
+  chapter?: string,
+): Promise<string> => {
+  const client = ensureClient()
+  if (!bookId) {
+    throw new Error('Missing bookId for question insert.')
+  }
+  const id = crypto.randomUUID()
+  const trimmedChapter = chapter?.trim()
+  const { error } = await client.from('book_questions').insert({
+    id,
+    user_id: userId,
+    book_id: bookId,
+    question,
+    chapter: trimmedChapter ? trimmedChapter : null,
+    status: 'open',
+  })
+
+  if (error) {
+    throw error
+  }
+
+  return id
+}
+
+export const updateCloudQuestion = async (
+  userId: string,
+  questionId: string,
+  fields: { question: string; chapter?: string },
+): Promise<void> => {
+  const client = ensureClient()
+  const trimmedChapter = fields.chapter?.trim()
+  const { error } = await client
+    .from('book_questions')
+    .update({
+      question: fields.question,
+      chapter: trimmedChapter ? trimmedChapter : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+    .eq('id', questionId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const updateCloudQuestionStatus = async (
+  userId: string,
+  questionId: string,
+  status: QuestionStatus,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('book_questions')
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+    .eq('id', questionId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const deleteCloudQuestion = async (
+  userId: string,
+  questionId: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('book_questions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('id', questionId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const createCloudAnswer = async (
+  questionId: string,
+  answer: string,
+  answeredBy: AnsweredBy,
+): Promise<string> => {
+  const client = ensureClient()
+  if (!questionId) {
+    throw new Error('Missing questionId for answer insert.')
+  }
+  const id = crypto.randomUUID()
+  const { error } = await client.from('book_answers').insert({
+    id,
+    question_id: questionId,
+    answer,
+    answered_by: answeredBy,
+  })
+
+  if (error) {
+    throw error
+  }
+
+  return id
+}
+
+export const updateCloudAnswer = async (
+  answerId: string,
+  answer: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('book_answers')
+    .update({ answer })
+    .eq('id', answerId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const deleteCloudAnswer = async (
+  answerId: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('book_answers')
+    .delete()
+    .eq('id', answerId)
 
   if (error) {
     throw error
