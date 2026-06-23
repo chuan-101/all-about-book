@@ -2,6 +2,12 @@ import type { User } from '@supabase/supabase-js'
 import type { Book } from '../types/book'
 import type { Conversation, DiscussionMessage } from '../types/discussion'
 import type { Excerpt } from '../types/excerpt'
+import type {
+  AnsweredBy,
+  BookAnswer,
+  BookQuestion,
+  QuestionStatus,
+} from '../types/question'
 import type { ReadingSession } from '../types/reading-session'
 import { supabase } from './supabaseClient'
 
@@ -118,6 +124,47 @@ const normalizeDiscussion = (row: SupabaseRow): DiscussionMessage => {
     content: asString(row.content),
     createdAt,
     metadata: asMetadata(row.metadata),
+  }
+}
+
+const normalizeQuestion = (row: SupabaseRow): BookQuestion => {
+  const createdAt =
+    asString(row.created_at) || asString(row.createdAt) ||
+    new Date().toISOString()
+  const status: QuestionStatus =
+    row.status === 'answered' ? 'answered' : 'open'
+  return {
+    id: asString(row.id),
+    bookId: asString(row.book_id ?? row.bookId),
+    chapter: asOptionalString(row.chapter),
+    question: asString(row.question),
+    status,
+    createdAt,
+    updatedAt: asOptionalString(row.updated_at ?? row.updatedAt),
+  }
+}
+
+const ANSWERED_BY_VALUES: AnsweredBy[] = [
+  'chuanchuan',
+  'syzygy-claude',
+  'syzygy-gpt',
+  'cli_reading_assist',
+]
+
+const normalizeAnswer = (row: SupabaseRow): BookAnswer => {
+  const createdAt =
+    asString(row.created_at) || asString(row.createdAt) ||
+    new Date().toISOString()
+  const rawAnsweredBy = asString(row.answered_by ?? row.answeredBy)
+  const answeredBy = ANSWERED_BY_VALUES.includes(rawAnsweredBy as AnsweredBy)
+    ? (rawAnsweredBy as AnsweredBy)
+    : 'chuanchuan'
+  return {
+    id: asString(row.id),
+    questionId: asString(row.question_id ?? row.questionId),
+    answer: asString(row.answer),
+    answeredBy,
+    createdAt,
   }
 }
 
@@ -270,4 +317,41 @@ export const fetchConversationsByBookId = async (
   return (data ?? []).map((row) =>
     normalizeConversation(row as SupabaseRow),
   )
+}
+
+export const fetchQuestionsByBookId = async (
+  user: User,
+  bookId: string,
+): Promise<BookQuestion[]> => {
+  const client = ensureClient()
+  const { data, error } = await client
+    .from('book_questions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('book_id', bookId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) => normalizeQuestion(row as SupabaseRow))
+}
+
+export const fetchAnswersByQuestionIds = async (
+  questionIds: string[],
+): Promise<BookAnswer[]> => {
+  if (questionIds.length === 0) return []
+  const client = ensureClient()
+  const { data, error } = await client
+    .from('book_answers')
+    .select('*')
+    .in('question_id', questionIds)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) => normalizeAnswer(row as SupabaseRow))
 }
