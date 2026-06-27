@@ -9,6 +9,7 @@ import type {
   QuestionStatus,
 } from '../types/question'
 import type { ReadingSession } from '../types/reading-session'
+import type { ExcerptResonance } from '../types/resonance'
 import { supabase } from './supabaseClient'
 
 type SupabaseRow = Record<string, unknown>
@@ -106,6 +107,21 @@ const normalizeExcerpt = (row: SupabaseRow): Excerpt => {
   return {
     id: asString(row.id),
     bookId: asString(row.book_id ?? row.bookId),
+    content: asString(row.content),
+    createdAt,
+    updatedAt: asOptionalString(row.updated_at ?? row.updatedAt),
+  }
+}
+
+const normalizeResonance = (row: SupabaseRow): ExcerptResonance => {
+  const createdAt =
+    asString(row.created_at) || asString(row.createdAt) ||
+    new Date().toISOString()
+  return {
+    id: asString(row.id),
+    excerptId: asString(row.excerpt_id ?? row.excerptId),
+    bookId: asString(row.book_id ?? row.bookId),
+    speaker: asString(row.speaker),
     content: asString(row.content),
     createdAt,
     updatedAt: asOptionalString(row.updated_at ?? row.updatedAt),
@@ -230,6 +246,27 @@ export const fetchExcerpts = async (_user: User): Promise<Excerpt[]> => {
   }
 
   return (data ?? []).map((row) => normalizeExcerpt(row as SupabaseRow))
+}
+
+export const fetchResonancesByBookId = async (
+  user: User,
+  bookId: string,
+): Promise<ExcerptResonance[]> => {
+  const client = ensureClient()
+  if (!bookId) return []
+  const { data, error } = await client
+    .from('excerpt_resonances')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('book_id', bookId)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) => normalizeResonance(row as SupabaseRow))
 }
 
 export const fetchDiscussions = async (

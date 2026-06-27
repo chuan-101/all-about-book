@@ -32,6 +32,11 @@ import {
 } from '../lib/conversation-storage'
 import { SYZYGY_DEFAULTS } from '../lib/syzygyDefaults'
 import type { Excerpt } from '../types/excerpt'
+import type { ExcerptResonance } from '../types/resonance'
+import {
+  RESONANCE_SPEAKER_OPTIONS,
+  getResonanceSpeakerLabel,
+} from '../types/resonance'
 import type { Conversation, DiscussionMessage } from '../types/discussion'
 import type { ReadingSession } from '../types/reading-session'
 import { useAppData } from '../lib/app-context'
@@ -45,6 +50,7 @@ import {
   createCloudDiscussionMessages,
   createCloudExcerpt,
   createCloudQuestion,
+  createCloudResonance,
   deleteConversation,
   deleteCloudAnswer,
   deleteCloudDiscussion,
@@ -67,6 +73,7 @@ import {
   fetchConversationsByBookId,
   fetchDiscussionsByBookId,
   fetchQuestionsByBookId,
+  fetchResonancesByBookId,
 } from '../lib/cloudRead'
 import type { BookAnswer, BookQuestion } from '../types/question'
 import { getAnsweredByLabel } from '../types/question'
@@ -179,6 +186,16 @@ function BookDetailPage() {
   const [openExcerptMenuId, setOpenExcerptMenuId] = useState<
     string | null
   >(null)
+  const [resonancesByExcerpt, setResonancesByExcerpt] = useState<
+    Record<string, ExcerptResonance[]>
+  >({})
+  const [resonanceEditorExcerptId, setResonanceEditorExcerptId] =
+    useState<string | null>(null)
+  const [resonanceDraft, setResonanceDraft] = useState('')
+  const [resonanceSpeaker, setResonanceSpeaker] = useState<string>(
+    RESONANCE_SPEAKER_OPTIONS[0],
+  )
+  const [isSavingResonance, setIsSavingResonance] = useState(false)
   const [openDiscussionMenuId, setOpenDiscussionMenuId] =
     useState<string | null>(null)
   const [isConversationMenuOpen, setIsConversationMenuOpen] =
@@ -407,6 +424,37 @@ function BookDetailPage() {
     },
     [session],
   )
+
+  const loadResonances = useCallback(
+    async (targetBookId: string) => {
+      if (!session?.user || !targetBookId) return
+      try {
+        const resonances = await fetchResonancesByBookId(
+          session.user,
+          targetBookId,
+        )
+        const grouped: Record<string, ExcerptResonance[]> = {}
+        for (const resonance of resonances) {
+          const list = grouped[resonance.excerptId] ?? []
+          list.push(resonance)
+          grouped[resonance.excerptId] = list
+        }
+        setResonancesByExcerpt(grouped)
+      } catch (error) {
+        console.error('Failed to load excerpt resonances', error)
+        setCloudError('Syzygy 留言加载失败，请稍后重试。')
+      }
+    },
+    [session],
+  )
+
+  useEffect(() => {
+    setResonancesByExcerpt({})
+    setResonanceEditorExcerptId(null)
+    setResonanceDraft('')
+    if (!isCloudMode || !book?.id || !session?.user) return
+    void loadResonances(book.id)
+  }, [book?.id, isCloudMode, loadResonances, session?.user])
 
   useEffect(() => {
     if (!isCloudMode) {
@@ -1353,6 +1401,48 @@ function BookDetailPage() {
     refreshExcerpts()
   }
 
+  const handleToggleResonanceEditor = (excerptId: string) => {
+    setResonanceEditorExcerptId((current) =>
+      current === excerptId ? null : excerptId,
+    )
+    setResonanceDraft('')
+    setResonanceSpeaker(RESONANCE_SPEAKER_OPTIONS[0])
+  }
+
+  const handleCreateResonance = async (
+    event: FormEvent<HTMLFormElement>,
+    excerpt: Excerpt,
+  ) => {
+    event.preventDefault()
+    const content = resonanceDraft.trim()
+    if (!content) return
+    if (!session?.user) {
+      setCloudError('请先登录后再新增 Syzygy 留言。')
+      return
+    }
+    setCloudError(null)
+    setIsSavingResonance(true)
+    try {
+      await createCloudResonance(
+        session.user.id,
+        excerpt.id,
+        excerpt.bookId,
+        resonanceSpeaker,
+        content,
+      )
+      setResonanceDraft('')
+      setResonanceEditorExcerptId(null)
+      if (book) {
+        await loadResonances(book.id)
+      }
+    } catch (error) {
+      console.error(error)
+      setCloudError('Syzygy 留言保存失败，请稍后重试。')
+    } finally {
+      setIsSavingResonance(false)
+    }
+  }
+
   const requireCloudUser = (): string | null => {
     if (!isCloudMode) {
       setCloudError('思考记录需登录后在云端使用，请先切换到云端模式。')
@@ -1667,6 +1757,85 @@ function BookDetailPage() {
       hour: '2-digit',
       minute: '2-digit',
     })
+
+  const renderResonances = (excerpt: Excerpt) => {
+    const resonances = resonancesByExcerpt[excerpt.id] ?? []
+    const isEditorOpen = resonanceEditorExcerptId === excerpt.id
+    return (
+      <div className="resonance-section">
+        {resonances.length > 0 ? (
+          <ul className="resonance-list">
+            {resonances.map((resonance) => (
+              <li key={resonance.id} className="resonance-item">
+                <div className="resonance-head">
+                  <span className="resonance-speaker">
+                    {getResonanceSpeakerLabel(resonance.speaker)}
+                  </span>
+                  <span className="resonance-date">
+                    {formatExcerptDate(resonance.createdAt)}
+                  </span>
+                </div>
+                <p className="resonance-content">{resonance.content}</p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="resonance-footer">
+          <button
+            type="button"
+            className="resonance-add-toggle"
+            onClick={() => handleToggleResonanceEditor(excerpt.id)}
+          >
+            {isEditorOpen
+              ? '取消'
+              : resonances.length > 0
+                ? '+ 添加旁批'
+                : '+ 添加 Syzygy 留言'}
+          </button>
+        </div>
+        {isEditorOpen ? (
+          <form
+            className="resonance-form"
+            onSubmit={(event) => handleCreateResonance(event, excerpt)}
+          >
+            <div className="resonance-form-row">
+              <label className="resonance-speaker-field">
+                <span>来源</span>
+                <select
+                  value={resonanceSpeaker}
+                  onChange={(event) =>
+                    setResonanceSpeaker(event.target.value)
+                  }
+                >
+                  {RESONANCE_SPEAKER_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {getResonanceSpeakerLabel(option)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <AutoResizeTextarea
+              className="excerpt-textarea"
+              rows={2}
+              value={resonanceDraft}
+              onChange={(event) => setResonanceDraft(event.target.value)}
+              placeholder="写下共读旁批、感想或追问"
+            />
+            <div className="form-actions">
+              <button
+                type="submit"
+                className="button primary"
+                disabled={isSavingResonance || !resonanceDraft.trim()}
+              >
+                {isSavingResonance ? '保存中...' : '保存留言'}
+              </button>
+            </div>
+          </form>
+        ) : null}
+      </div>
+    )
+  }
 
   if (!book && isCloudMode && cloudLoading) {
     return (
@@ -2005,6 +2174,9 @@ function BookDetailPage() {
                           <p className="excerpt-content">
                             {excerpt.content}
                           </p>
+                          {isCloudMode
+                            ? renderResonances(excerpt)
+                            : null}
                         </div>
                       )}
                     </div>
