@@ -1483,6 +1483,97 @@ textarea {
   color: var(--color-text-muted);
 }
 
+.resonance-section {
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resonance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resonance-item {
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+}
+
+.resonance-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.resonance-speaker {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.resonance-date {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.resonance-content {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.resonance-footer {
+  display: flex;
+}
+
+.resonance-add-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.resonance-add-toggle:hover {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+}
+
+.resonance-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resonance-speaker-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.resonance-speaker-field select {
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: inherit;
+}
+
 .cover {
   width: 60px;
   height: 80px;

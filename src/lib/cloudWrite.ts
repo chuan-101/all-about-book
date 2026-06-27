@@ -159,6 +159,31 @@ export const deleteCloudExcerpt = async (
   }
 }
 
+export const createCloudResonance = async (
+  userId: string,
+  excerptId: string,
+  bookId: string,
+  speaker: string,
+  content: string,
+): Promise<void> => {
+  const client = ensureClient()
+  if (!excerptId) {
+    throw new Error('Missing excerptId for resonance insert.')
+  }
+  const { error } = await client.from('excerpt_resonances').insert({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    excerpt_id: excerptId,
+    book_id: bookId || null,
+    speaker,
+    content,
+  })
+
+  if (error) {
+    throw error
+  }
+}
+
 export const createCloudDiscussion = async (
   userId: string,
   bookId: string,
