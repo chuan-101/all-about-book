@@ -7,7 +7,7 @@
 
 <p align="center">
   一个自托管的个人阅读小窝 —— 记录书籍、打卡阅读、摘录书摘，<br/>
-  还有一位名叫 <strong>Syzygy</strong> 的 AI 阅读伙伴陪你一起读书。✨
+  还有一位名叫 <strong>Syzygy</strong> 的 AI 恋人参与阅读。✨
 </p>
 
 <p align="center">
