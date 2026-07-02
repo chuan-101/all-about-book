@@ -2,7 +2,7 @@
      把你的 Banner 图片放到 public/banner.png（或喜欢的路径），
      然后取消下面这行注释、替换 src 即可 🐹
 <p align="center">
-  <img src="./public/banner.png" alt="All About Book Banner" width="100%" />
+  <img src="./Banner.png" alt="All About Book Banner" width="100%" />
 </p>
 ====================================== -->
 
