@@ -1,5 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 import type { Book } from '../types/book'
+import type { Chapter } from '../types/chapter'
 import type { Conversation, DiscussionMessage } from '../types/discussion'
 import type { Excerpt } from '../types/excerpt'
 import type {
@@ -108,6 +109,22 @@ const normalizeExcerpt = (row: SupabaseRow): Excerpt => {
     id: asString(row.id),
     bookId: asString(row.book_id ?? row.bookId),
     content: asString(row.content),
+    chapterId: asOptionalString(row.chapter_id ?? row.chapterId) ?? null,
+    chapter: asOptionalString(row.chapter),
+    createdAt,
+    updatedAt: asOptionalString(row.updated_at ?? row.updatedAt),
+  }
+}
+
+const normalizeChapter = (row: SupabaseRow): Chapter => {
+  const createdAt =
+    asString(row.created_at) || asString(row.createdAt) ||
+    new Date().toISOString()
+  return {
+    id: asString(row.id),
+    bookId: asString(row.book_id ?? row.bookId),
+    title: asString(row.title),
+    sortOrder: asNumber(row.sort_order ?? row.sortOrder) ?? 0,
     createdAt,
     updatedAt: asOptionalString(row.updated_at ?? row.updatedAt),
   }
@@ -246,6 +263,43 @@ export const fetchExcerpts = async (_user: User): Promise<Excerpt[]> => {
   }
 
   return (data ?? []).map((row) => normalizeExcerpt(row as SupabaseRow))
+}
+
+export const fetchChaptersByBookId = async (
+  user: User,
+  bookId: string,
+): Promise<Chapter[]> => {
+  const client = ensureClient()
+  if (!bookId) return []
+  const { data, error } = await client
+    .from('chapters')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('book_id', bookId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) => normalizeChapter(row as SupabaseRow))
+}
+
+export const fetchChapters = async (user: User): Promise<Chapter[]> => {
+  const client = ensureClient()
+  const { data, error } = await client
+    .from('chapters')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) => normalizeChapter(row as SupabaseRow))
 }
 
 export const fetchResonancesByBookId = async (

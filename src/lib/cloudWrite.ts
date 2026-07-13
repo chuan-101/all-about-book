@@ -104,10 +104,117 @@ export const toggleCloudCheckIn = async (
   }
 }
 
+export const createCloudChapter = async (
+  userId: string,
+  bookId: string,
+  title: string,
+  sortOrder: number,
+): Promise<string> => {
+  const client = ensureClient()
+  const trimmed = title.trim()
+  if (!trimmed) {
+    throw new Error('Missing chapter title.')
+  }
+
+  const { data: existing, error: findError } = await client
+    .from('chapters')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('book_id', bookId)
+    .eq('title', trimmed)
+    .maybeSingle()
+
+  if (findError) {
+    throw findError
+  }
+  if (existing?.id) {
+    return existing.id as string
+  }
+
+  const id = crypto.randomUUID()
+  const now = new Date().toISOString()
+  const { error } = await client.from('chapters').insert({
+    id,
+    user_id: userId,
+    book_id: bookId,
+    title: trimmed,
+    sort_order: sortOrder,
+    created_at: now,
+    updated_at: now,
+  })
+
+  if (error) {
+    throw error
+  }
+
+  return id
+}
+
+export const renameCloudChapter = async (
+  userId: string,
+  chapterId: string,
+  title: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const trimmed = title.trim()
+  if (!trimmed) {
+    throw new Error('Missing chapter title.')
+  }
+  const { error } = await client
+    .from('chapters')
+    .update({ title: trimmed, updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('id', chapterId)
+
+  if (error) {
+    throw error
+  }
+
+  // keep the denormalized snapshot on excerpts in sync
+  const { error: syncError } = await client
+    .from('excerpts')
+    .update({ chapter: trimmed })
+    .eq('user_id', userId)
+    .eq('chapter_id', chapterId)
+
+  if (syncError) {
+    throw syncError
+  }
+}
+
+export const deleteCloudChapter = async (
+  userId: string,
+  chapterId: string,
+): Promise<void> => {
+  const client = ensureClient()
+  // chapter_id is cleared by the FK (on delete set null); clear the
+  // denormalized title snapshot ourselves before deleting.
+  const { error: syncError } = await client
+    .from('excerpts')
+    .update({ chapter: null })
+    .eq('user_id', userId)
+    .eq('chapter_id', chapterId)
+
+  if (syncError) {
+    throw syncError
+  }
+
+  const { error } = await client
+    .from('chapters')
+    .delete()
+    .eq('user_id', userId)
+    .eq('id', chapterId)
+
+  if (error) {
+    throw error
+  }
+}
+
 export const createCloudExcerpt = async (
   userId: string,
   bookId: string,
   content: string,
+  chapter?: { id: string; title: string } | null,
 ): Promise<void> => {
   const client = ensureClient()
   const { error } = await client.from('excerpts').insert({
@@ -115,8 +222,38 @@ export const createCloudExcerpt = async (
     user_id: userId,
     book_id: bookId,
     content,
+    chapter_id: chapter?.id ?? null,
+    chapter: chapter?.title ?? null,
     created_at: new Date().toISOString(),
   })
+
+  if (error) {
+    throw error
+  }
+}
+
+export const createCloudExcerptsBatch = async (
+  userId: string,
+  bookId: string,
+  items: Array<{
+    content: string
+    chapter?: { id: string; title: string } | null
+  }>,
+): Promise<void> => {
+  if (items.length === 0) return
+  const client = ensureClient()
+  const now = Date.now()
+  const payload = items.map((item, index) => ({
+    id: crypto.randomUUID(),
+    user_id: userId,
+    book_id: bookId,
+    content: item.content,
+    chapter_id: item.chapter?.id ?? null,
+    chapter: item.chapter?.title ?? null,
+    created_at: new Date(now + index).toISOString(),
+  }))
+
+  const { error } = await client.from('excerpts').insert(payload)
 
   if (error) {
     throw error
@@ -137,6 +274,27 @@ export const updateCloudExcerpt = async (
     })
     .eq('user_id', userId)
     .eq('id', excerpt.id)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const moveCloudExcerpt = async (
+  userId: string,
+  excerptId: string,
+  chapter: { id: string; title: string } | null,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from('excerpts')
+    .update({
+      chapter_id: chapter?.id ?? null,
+      chapter: chapter?.title ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+    .eq('id', excerptId)
 
   if (error) {
     throw error

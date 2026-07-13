@@ -31,6 +31,8 @@ import {
   updateConversationTitle as updateLocalConversationTitle,
 } from '../lib/conversation-storage'
 import { SYZYGY_DEFAULTS } from '../lib/syzygyDefaults'
+import { chapterize, looksChapterized } from '../lib/chapterize'
+import type { Chapter } from '../types/chapter'
 import type { Excerpt } from '../types/excerpt'
 import type { ExcerptResonance } from '../types/resonance'
 import {
@@ -46,17 +48,22 @@ import { Button } from '../components/Button'
 import {
   createConversation,
   createCloudAnswer,
+  createCloudChapter,
   createCloudDiscussion,
   createCloudDiscussionMessages,
   createCloudExcerpt,
+  createCloudExcerptsBatch,
   createCloudQuestion,
   createCloudResonance,
   deleteConversation,
   deleteCloudAnswer,
+  deleteCloudChapter,
   deleteCloudDiscussion,
   deleteCloudDiscussionsByConversation,
   deleteCloudExcerpt,
   deleteCloudQuestion,
+  moveCloudExcerpt,
+  renameCloudChapter,
   toggleCloudCheckIn,
   updateConversationTitle,
   updateCloudAnswer,
@@ -70,6 +77,7 @@ import {
 } from '../lib/reading-sessions-storage'
 import {
   fetchAnswersByQuestionIds,
+  fetchChaptersByBookId,
   fetchConversationsByBookId,
   fetchDiscussionsByBookId,
   fetchQuestionsByBookId,
@@ -180,6 +188,23 @@ function BookDetailPage() {
   const [excerpts, setExcerpts] = useState<Excerpt[]>([])
   const [newExcerptContent, setNewExcerptContent] = useState('')
   const [isExcerptEditorOpen, setIsExcerptEditorOpen] = useState(false)
+  const [chapters, setChapters] = useState<Chapter[]>([])
+  const [expandedChapterIds, setExpandedChapterIds] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const [newExcerptChapterId, setNewExcerptChapterId] = useState('')
+  const [newChapterTitle, setNewChapterTitle] = useState('')
+  const [isAutoSplitEnabled, setIsAutoSplitEnabled] = useState(true)
+  const [isSavingExcerpt, setIsSavingExcerpt] = useState(false)
+  const [openChapterMenuId, setOpenChapterMenuId] = useState<string | null>(
+    null,
+  )
+  const [renamingChapterId, setRenamingChapterId] = useState<string | null>(
+    null,
+  )
+  const [renameChapterDraft, setRenameChapterDraft] = useState('')
+  const [movingExcerpt, setMovingExcerpt] = useState<Excerpt | null>(null)
+  const [moveTargetChapterId, setMoveTargetChapterId] = useState('')
   const fullscreenTextareaRef = useRef<HTMLTextAreaElement | null>(
     null,
   )
@@ -425,6 +450,20 @@ function BookDetailPage() {
     [session],
   )
 
+  const loadChapters = useCallback(
+    async (targetBookId: string) => {
+      if (!session?.user || !targetBookId) return
+      try {
+        const list = await fetchChaptersByBookId(session.user, targetBookId)
+        setChapters(list)
+      } catch (error) {
+        console.error('Failed to load chapters', error)
+        setCloudError('章节列表加载失败，请稍后重试。')
+      }
+    },
+    [session],
+  )
+
   const loadResonances = useCallback(
     async (targetBookId: string) => {
       if (!session?.user || !targetBookId) return
@@ -455,6 +494,18 @@ function BookDetailPage() {
     if (!isCloudMode || !book?.id || !session?.user) return
     void loadResonances(book.id)
   }, [book?.id, isCloudMode, loadResonances, session?.user])
+
+  useEffect(() => {
+    setChapters([])
+    setExpandedChapterIds(new Set())
+    setNewExcerptChapterId('')
+    setNewChapterTitle('')
+    setOpenChapterMenuId(null)
+    setRenamingChapterId(null)
+    setMovingExcerpt(null)
+    if (!isCloudMode || !book?.id || !session?.user) return
+    void loadChapters(book.id)
+  }, [book?.id, isCloudMode, loadChapters, session?.user])
 
   useEffect(() => {
     if (!isCloudMode) {
@@ -684,6 +735,60 @@ function BookDetailPage() {
       ? cloudExcerpts.filter((excerpt) => excerpt.bookId === book.id)
       : excerpts
   }, [book, cloudExcerpts, excerpts, isCloudMode])
+
+  const chapterById = useMemo(
+    () => new Map(chapters.map((chapter) => [chapter.id, chapter])),
+    [chapters],
+  )
+
+  const excerptsByChapter = useMemo(() => {
+    const grouped = new Map<string, Excerpt[]>()
+    for (const excerpt of displayExcerpts) {
+      const key = excerpt.chapterId ?? ''
+      const list = grouped.get(key) ?? []
+      list.push(excerpt)
+      grouped.set(key, list)
+    }
+    for (const list of grouped.values()) {
+      list.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      )
+    }
+    return grouped
+  }, [displayExcerpts])
+
+  const unchapteredExcerpts = useMemo(
+    () =>
+      [...(excerptsByChapter.get('') ?? [])].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ),
+    [excerptsByChapter],
+  )
+
+  const trimmedNewExcerpt = newExcerptContent.trim()
+
+  const contentLooksChapterized = useMemo(
+    () =>
+      isCloudMode && trimmedNewExcerpt
+        ? looksChapterized(trimmedNewExcerpt)
+        : false,
+    [isCloudMode, trimmedNewExcerpt],
+  )
+
+  const splitPreview = useMemo(() => {
+    if (!contentLooksChapterized || !isAutoSplitEnabled) return null
+    const pieces = chapterize(trimmedNewExcerpt)
+    const titles = Array.from(
+      new Set(
+        pieces
+          .map((piece) => piece.chapterTitle)
+          .filter((title): title is string => Boolean(title)),
+      ),
+    )
+    return { count: pieces.length, titles }
+  }, [contentLooksChapterized, isAutoSplitEnabled, trimmedNewExcerpt])
 
   const activeConversation = useMemo(
     () =>
@@ -949,6 +1054,18 @@ function BookDetailPage() {
     setConversations(getConversationsByBookId(activeConversation.bookId))
   }
 
+  const nextChapterSortOrder = () =>
+    chapters.reduce((max, chapter) => Math.max(max, chapter.sortOrder), 0) + 1
+
+  const expandChapters = (chapterIds: string[]) => {
+    if (chapterIds.length === 0) return
+    setExpandedChapterIds((current) => {
+      const next = new Set(current)
+      chapterIds.forEach((id) => next.add(id))
+      return next
+    })
+  }
+
   const handleCreateExcerpt = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
@@ -961,15 +1078,82 @@ function BookDetailPage() {
         setCloudError('请先登录后再同步云端书摘。')
         return
       }
+      if (isSavingExcerpt) return
+      if (newExcerptChapterId === '__new__' && !newChapterTitle.trim()) {
+        setCloudError('请先填写新章节名称。')
+        return
+      }
       setCloudError(null)
+      setIsSavingExcerpt(true)
       try {
-        await createCloudExcerpt(session.user.id, book.id, content)
-        await refreshCloud()
+        const userId = session.user.id
+        let sortOrder = nextChapterSortOrder()
+        const chapterIdsByTitle = new Map<string, string>()
+        chapters.forEach((chapter) =>
+          chapterIdsByTitle.set(chapter.title, chapter.id),
+        )
+        const ensureChapter = async (
+          title: string,
+        ): Promise<{ id: string; title: string }> => {
+          const existing = chapterIdsByTitle.get(title)
+          if (existing) return { id: existing, title }
+          const id = await createCloudChapter(
+            userId,
+            book.id,
+            title,
+            sortOrder,
+          )
+          sortOrder += 1
+          chapterIdsByTitle.set(title, id)
+          return { id, title }
+        }
+
+        let selectedChapter: { id: string; title: string } | null = null
+        if (newExcerptChapterId === '__new__') {
+          selectedChapter = await ensureChapter(newChapterTitle.trim())
+        } else if (newExcerptChapterId) {
+          const chapter = chapterById.get(newExcerptChapterId)
+          selectedChapter = chapter
+            ? { id: chapter.id, title: chapter.title }
+            : null
+        }
+
+        const pieces =
+          isAutoSplitEnabled && looksChapterized(content)
+            ? chapterize(content)
+            : null
+        const touchedChapterIds: string[] = []
+        if (pieces && pieces.length > 0) {
+          const items: Array<{
+            content: string
+            chapter?: { id: string; title: string } | null
+          }> = []
+          for (const piece of pieces) {
+            const chapter = piece.chapterTitle
+              ? await ensureChapter(piece.chapterTitle)
+              : selectedChapter
+            if (chapter) touchedChapterIds.push(chapter.id)
+            items.push({ content: piece.body, chapter })
+          }
+          await createCloudExcerptsBatch(userId, book.id, items)
+        } else {
+          await createCloudExcerpt(userId, book.id, content, selectedChapter)
+          if (selectedChapter) touchedChapterIds.push(selectedChapter.id)
+        }
+
+        await Promise.all([refreshCloud(), loadChapters(book.id)])
+        expandChapters(touchedChapterIds)
+        if (selectedChapter && newExcerptChapterId === '__new__') {
+          setNewExcerptChapterId(selectedChapter.id)
+          setNewChapterTitle('')
+        }
         setNewExcerptContent('')
         setIsExcerptEditorOpen(false)
       } catch (error) {
         console.error(error)
         setCloudError('云端书摘保存失败，请稍后重试。')
+      } finally {
+        setIsSavingExcerpt(false)
       }
       return
     }
@@ -1399,6 +1583,103 @@ function BookDetailPage() {
 
     deleteExcerpt(id)
     refreshExcerpts()
+  }
+
+  const toggleChapterExpand = (chapterId: string) => {
+    setExpandedChapterIds((current) => {
+      const next = new Set(current)
+      if (next.has(chapterId)) {
+        next.delete(chapterId)
+      } else {
+        next.add(chapterId)
+      }
+      return next
+    })
+  }
+
+  const handleStartRenameChapter = (chapter: Chapter) => {
+    setOpenChapterMenuId(null)
+    setRenamingChapterId(chapter.id)
+    setRenameChapterDraft(chapter.title)
+  }
+
+  const handleSaveRenameChapter = async (chapter: Chapter) => {
+    if (!book || !session?.user) return
+    const title = renameChapterDraft.trim()
+    if (!title || title === chapter.title) {
+      setRenamingChapterId(null)
+      return
+    }
+    if (chapters.some((item) => item.id !== chapter.id && item.title === title)) {
+      setCloudError('已存在同名章节，请换一个名称。')
+      return
+    }
+    setCloudError(null)
+    try {
+      await renameCloudChapter(session.user.id, chapter.id, title)
+      setRenamingChapterId(null)
+      await Promise.all([refreshCloud(), loadChapters(book.id)])
+    } catch (error) {
+      console.error(error)
+      setCloudError('章节重命名失败，请稍后重试。')
+    }
+  }
+
+  const handleDeleteChapter = async (chapter: Chapter) => {
+    setOpenChapterMenuId(null)
+    if (!book || !session?.user) return
+    const count = (excerptsByChapter.get(chapter.id) ?? []).length
+    const message =
+      count > 0
+        ? `删除章节「${chapter.title}」后，其中 ${count} 条书摘会移入未分章。确定删除吗？`
+        : `确定删除空章节「${chapter.title}」吗？`
+    if (!window.confirm(message)) return
+    setCloudError(null)
+    try {
+      await deleteCloudChapter(session.user.id, chapter.id)
+      await Promise.all([refreshCloud(), loadChapters(book.id)])
+    } catch (error) {
+      console.error(error)
+      setCloudError('章节删除失败，请稍后重试。')
+    }
+  }
+
+  const handleAddExcerptToChapter = (chapterId: string) => {
+    setOpenChapterMenuId(null)
+    setNewExcerptChapterId(chapterId)
+    setNewChapterTitle('')
+    setIsExcerptEditorOpen(true)
+  }
+
+  const handleRequestMoveExcerpt = (excerpt: Excerpt) => {
+    setOpenExcerptMenuId(null)
+    setMovingExcerpt(excerpt)
+    setMoveTargetChapterId(excerpt.chapterId ?? '')
+  }
+
+  const handleConfirmMoveExcerpt = async () => {
+    if (!book || !session?.user || !movingExcerpt) return
+    const target = moveTargetChapterId
+      ? chapterById.get(moveTargetChapterId)
+      : null
+    if ((movingExcerpt.chapterId ?? '') === (target?.id ?? '')) {
+      setMovingExcerpt(null)
+      return
+    }
+    setCloudError(null)
+    try {
+      await moveCloudExcerpt(
+        session.user.id,
+        movingExcerpt.id,
+        target ? { id: target.id, title: target.title } : null,
+      )
+      setMovingExcerpt(null)
+      await refreshCloud()
+      if (target) expandChapters([target.id])
+    } catch (error) {
+      console.error(error)
+      setCloudError('书摘移动失败，请稍后重试。')
+    }
   }
 
   const handleToggleResonanceEditor = (excerptId: string) => {
@@ -1837,6 +2118,289 @@ function BookDetailPage() {
     )
   }
 
+  const renderExcerptItem = (excerpt: Excerpt) => {
+    const isEditing = editingExcerptId === excerpt.id
+    const isMenuOpen = openExcerptMenuId === excerpt.id
+    return (
+      <li key={excerpt.id} className="list-item excerpt-card">
+        <div className="list-item-main">
+          {isEditing ? (
+            <label className="field">
+              <span>编辑书摘</span>
+              <AutoResizeTextarea
+                className="excerpt-textarea"
+                rows={3}
+                value={editingContent}
+                onChange={(event) =>
+                  setEditingContent(event.target.value)
+                }
+              />
+            </label>
+          ) : (
+            <div className="excerpt-body">
+              <div className="excerpt-meta">
+                <span className="excerpt-book-title">
+                  {book?.title ?? '未命名书籍'}
+                </span>
+                <span className="excerpt-date">
+                  {formatExcerptDate(excerpt.createdAt)}
+                </span>
+              </div>
+              <p className="excerpt-content">{excerpt.content}</p>
+              {isCloudMode ? renderResonances(excerpt) : null}
+            </div>
+          )}
+        </div>
+        <div className="excerpt-actions">
+          {isEditing ? (
+            <>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => handleSaveEdit(excerpt.id)}
+              >
+                保存
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleCancelEdit}
+              >
+                取消
+              </Button>
+            </>
+          ) : (
+            <>
+              <ActionButton
+                type="button"
+                onClick={() => handleStartEdit(excerpt)}
+              >
+                编辑
+              </ActionButton>
+              <div className="menu">
+                <ActionButton
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={isMenuOpen}
+                  onClick={() =>
+                    setOpenExcerptMenuId(
+                      isMenuOpen ? null : excerpt.id,
+                    )
+                  }
+                >
+                  ⋯ 更多
+                </ActionButton>
+                {isMenuOpen ? (
+                  <div className="menu-panel" role="menu">
+                    {isCloudMode ? (
+                      <button
+                        className="menu-item"
+                        type="button"
+                        role="menuitem"
+                        onClick={() => handleRequestMoveExcerpt(excerpt)}
+                      >
+                        移动到章节
+                      </button>
+                    ) : null}
+                    <button
+                      className="menu-item danger"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setOpenExcerptMenuId(null)
+                        handleDeleteExcerpt(excerpt.id)
+                      }}
+                    >
+                      删除
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
+        </div>
+      </li>
+    )
+  }
+
+  const renderChapterGroup = (chapter: Chapter | null) => {
+    const key = chapter?.id ?? '__none__'
+    const chapterExcerpts = chapter
+      ? excerptsByChapter.get(chapter.id) ?? []
+      : unchapteredExcerpts
+    const isExpanded = expandedChapterIds.has(key)
+    const isMenuOpen = chapter ? openChapterMenuId === chapter.id : false
+    const isRenaming = chapter ? renamingChapterId === chapter.id : false
+    return (
+      <div key={key} className="chapter-group">
+        <div className="chapter-head">
+          {isRenaming && chapter ? (
+            <div className="chapter-rename">
+              <input
+                type="text"
+                className="chapter-input"
+                value={renameChapterDraft}
+                onChange={(event) =>
+                  setRenameChapterDraft(event.target.value)
+                }
+              />
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => handleSaveRenameChapter(chapter)}
+              >
+                保存
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setRenamingChapterId(null)}
+              >
+                取消
+              </Button>
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="chapter-toggle"
+                aria-expanded={isExpanded}
+                onClick={() => toggleChapterExpand(key)}
+              >
+                <span
+                  className={`question-chevron${isExpanded ? ' open' : ''}`}
+                  aria-hidden="true"
+                >
+                  ▸
+                </span>
+                <span className="chapter-title">
+                  {chapter ? chapter.title : '未分章'}
+                </span>
+                <span className="note-tab-count">
+                  {chapterExcerpts.length}
+                </span>
+              </button>
+              {chapter ? (
+                <div className="menu">
+                  <ActionButton
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={isMenuOpen}
+                    onClick={() =>
+                      setOpenChapterMenuId(
+                        isMenuOpen ? null : chapter.id,
+                      )
+                    }
+                  >
+                    ⋯
+                  </ActionButton>
+                  {isMenuOpen ? (
+                    <div className="menu-panel" role="menu">
+                      <button
+                        className="menu-item"
+                        type="button"
+                        role="menuitem"
+                        onClick={() =>
+                          handleAddExcerptToChapter(chapter.id)
+                        }
+                      >
+                        添加书摘
+                      </button>
+                      <button
+                        className="menu-item"
+                        type="button"
+                        role="menuitem"
+                        onClick={() => handleStartRenameChapter(chapter)}
+                      >
+                        重命名
+                      </button>
+                      <button
+                        className="menu-item danger"
+                        type="button"
+                        role="menuitem"
+                        onClick={() => void handleDeleteChapter(chapter)}
+                      >
+                        删除章节
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+        {isExpanded ? (
+          chapterExcerpts.length === 0 ? (
+            <p className="muted">本章还没有书摘。</p>
+          ) : (
+            <ul className="list excerpt-list chapter-excerpt-list">
+              {chapterExcerpts.map(renderExcerptItem)}
+            </ul>
+          )
+        ) : null}
+      </div>
+    )
+  }
+
+  const renderExcerptFormControls = () =>
+    isCloudMode ? (
+      <>
+        <div className="excerpt-chapter-row">
+          <label className="resonance-speaker-field excerpt-chapter-field">
+            <span>章节</span>
+            <select
+              value={newExcerptChapterId}
+              onChange={(event) =>
+                setNewExcerptChapterId(event.target.value)
+              }
+            >
+              <option value="">未分章</option>
+              {chapters.map((chapter) => (
+                <option key={chapter.id} value={chapter.id}>
+                  {chapter.title}
+                </option>
+              ))}
+              <option value="__new__">＋ 新建章节…</option>
+            </select>
+          </label>
+          {newExcerptChapterId === '__new__' ? (
+            <label className="resonance-speaker-field excerpt-chapter-field">
+              <span>新章节名称</span>
+              <input
+                type="text"
+                className="chapter-input"
+                value={newChapterTitle}
+                onChange={(event) =>
+                  setNewChapterTitle(event.target.value)
+                }
+                placeholder="如：愚人船 / 7月13日"
+              />
+            </label>
+          ) : null}
+        </div>
+        {contentLooksChapterized ? (
+          <label className="excerpt-split-toggle">
+            <input
+              type="checkbox"
+              checked={isAutoSplitEnabled}
+              onChange={(event) =>
+                setIsAutoSplitEnabled(event.target.checked)
+              }
+            />
+            <span>
+              {splitPreview
+                ? `自动拆分：将拆出 ${splitPreview.count} 条书摘${
+                    splitPreview.titles.length > 0
+                      ? `（章节：${splitPreview.titles.join('、')}）`
+                      : ''
+                  }`
+                : '自动拆分（检测到《章节》/# 格式）'}
+            </span>
+          </label>
+        ) : null}
+      </>
+    ) : null
+
   if (!book && isCloudMode && cloudLoading) {
     return (
       <section className="stack">
@@ -2077,6 +2641,7 @@ function BookDetailPage() {
                 placeholder="记录喜欢的句子或段落"
               />
             </label>
+            {renderExcerptFormControls()}
             <div className="excerpt-editor-actions">
               <button
                 type="button"
@@ -2087,8 +2652,12 @@ function BookDetailPage() {
               </button>
             </div>
             <div className="form-actions">
-              <button type="submit" className="button primary">
-                保存书摘
+              <button
+                type="submit"
+                className="button primary"
+                disabled={isSavingExcerpt}
+              >
+                {isSavingExcerpt ? '保存中...' : '保存书摘'}
               </button>
             </div>
             {isExcerptEditorOpen ? (
@@ -2123,9 +2692,14 @@ function BookDetailPage() {
                     }
                     placeholder="记录喜欢的句子或段落"
                   />
+                  {renderExcerptFormControls()}
                   <div className="form-actions">
-                    <button type="submit" className="button primary">
-                      保存书摘
+                    <button
+                      type="submit"
+                      className="button primary"
+                      disabled={isSavingExcerpt}
+                    >
+                      {isSavingExcerpt ? '保存中...' : '保存书摘'}
                     </button>
                     <button
                       type="button"
@@ -2139,108 +2713,22 @@ function BookDetailPage() {
               </div>
             ) : null}
           </form>
-          {displayExcerpts.length === 0 ? (
+          {isCloudMode ? (
+            chapters.length === 0 && displayExcerpts.length === 0 ? (
+              <p className="muted">暂无书摘，先记录第一条吧。</p>
+            ) : (
+              <div className="stack chapter-groups">
+                {chapters.map((chapter) => renderChapterGroup(chapter))}
+                {unchapteredExcerpts.length > 0
+                  ? renderChapterGroup(null)
+                  : null}
+              </div>
+            )
+          ) : displayExcerpts.length === 0 ? (
             <p className="muted">暂无书摘，先记录第一条吧。</p>
           ) : (
             <ul className="list excerpt-list">
-              {displayExcerpts.map((excerpt) => {
-                const isEditing = editingExcerptId === excerpt.id
-                const isMenuOpen = openExcerptMenuId === excerpt.id
-                return (
-                  <li key={excerpt.id} className="list-item excerpt-card">
-                    <div className="list-item-main">
-                      {isEditing ? (
-                        <label className="field">
-                          <span>编辑书摘</span>
-                          <AutoResizeTextarea
-                            className="excerpt-textarea"
-                            rows={3}
-                            value={editingContent}
-                            onChange={(event) =>
-                              setEditingContent(event.target.value)
-                            }
-                          />
-                        </label>
-                      ) : (
-                        <div className="excerpt-body">
-                          <div className="excerpt-meta">
-                            <span className="excerpt-book-title">
-                              {book?.title ?? '未命名书籍'}
-                            </span>
-                            <span className="excerpt-date">
-                              {formatExcerptDate(excerpt.createdAt)}
-                            </span>
-                          </div>
-                          <p className="excerpt-content">
-                            {excerpt.content}
-                          </p>
-                          {isCloudMode
-                            ? renderResonances(excerpt)
-                            : null}
-                        </div>
-                      )}
-                    </div>
-                    <div className="excerpt-actions">
-                      {isEditing ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            type="button"
-                            onClick={() => handleSaveEdit(excerpt.id)}
-                          >
-                            保存
-                          </Button>
-                          <Button
-                            variant="outline"
-                            type="button"
-                            onClick={handleCancelEdit}
-                          >
-                            取消
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <ActionButton
-                            type="button"
-                            onClick={() => handleStartEdit(excerpt)}
-                          >
-                            编辑
-                          </ActionButton>
-                          <div className="menu">
-                            <ActionButton
-                              type="button"
-                              aria-haspopup="menu"
-                              aria-expanded={isMenuOpen}
-                              onClick={() =>
-                                setOpenExcerptMenuId(
-                                  isMenuOpen ? null : excerpt.id,
-                                )
-                              }
-                            >
-                              ⋯ 更多
-                            </ActionButton>
-                            {isMenuOpen ? (
-                              <div className="menu-panel" role="menu">
-                                <button
-                                  className="menu-item danger"
-                                  type="button"
-                                  role="menuitem"
-                                  onClick={() => {
-                                    setOpenExcerptMenuId(null)
-                                    handleDeleteExcerpt(excerpt.id)
-                                  }}
-                                >
-                                  删除
-                                </button>
-                              </div>
-                            ) : null}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
+              {displayExcerpts.map(renderExcerptItem)}
             </ul>
           )}
           </>
@@ -3069,6 +3557,63 @@ function BookDetailPage() {
           </div>
         </div>
       ) : null}
+      {movingExcerpt ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="移动书摘到章节"
+          onClick={() => setMovingExcerpt(null)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>移动书摘到章节</h4>
+            </header>
+            <div className="stack">
+              <p className="muted excerpt-move-preview">
+                {movingExcerpt.content.length > 60
+                  ? `${movingExcerpt.content.slice(0, 60)}…`
+                  : movingExcerpt.content}
+              </p>
+              <label className="resonance-speaker-field">
+                <span>目标章节</span>
+                <select
+                  value={moveTargetChapterId}
+                  onChange={(event) =>
+                    setMoveTargetChapterId(event.target.value)
+                  }
+                >
+                  <option value="">未分章</option>
+                  {chapters.map((chapter) => (
+                    <option key={chapter.id} value={chapter.id}>
+                      {chapter.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button ghost"
+                onClick={() => setMovingExcerpt(null)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button primary"
+                onClick={() => void handleConfirmMoveExcerpt()}
+              >
+                移动
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {confirmingDeleteQuestion ? (
         <div
           className="confirm-modal-backdrop"
@@ -3333,6 +3878,44 @@ function BookDetailPage() {
           <h2>书摘</h2>
           {displayExcerpts.length === 0 ? (
             <p className="print-muted">暂无书摘。</p>
+          ) : isCloudMode && chapters.length > 0 ? (
+            <>
+              {chapters.map((chapter) => {
+                const chapterExcerpts =
+                  excerptsByChapter.get(chapter.id) ?? []
+                if (chapterExcerpts.length === 0) return null
+                return (
+                  <div key={chapter.id} className="print-chapter">
+                    <h3>{chapter.title}</h3>
+                    <ul className="print-list">
+                      {chapterExcerpts.map((excerpt) => (
+                        <li key={excerpt.id} className="print-excerpt">
+                          <div className="print-excerpt-date">
+                            {formatExcerptDate(excerpt.createdAt)}
+                          </div>
+                          <p>{excerpt.content}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              })}
+              {unchapteredExcerpts.length > 0 ? (
+                <div className="print-chapter">
+                  <h3>未分章</h3>
+                  <ul className="print-list">
+                    {unchapteredExcerpts.map((excerpt) => (
+                      <li key={excerpt.id} className="print-excerpt">
+                        <div className="print-excerpt-date">
+                          {formatExcerptDate(excerpt.createdAt)}
+                        </div>
+                        <p>{excerpt.content}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </>
           ) : (
             <ul className="print-list">
               {displayExcerpts.map((excerpt) => (
