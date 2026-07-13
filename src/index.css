@@ -1716,6 +1716,109 @@ textarea {
   font-weight: 500;
 }
 
+.chapter-groups {
+  gap: 0.75rem;
+}
+
+.chapter-group {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: var(--box-shadow-card);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chapter-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.chapter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.chapter-title {
+  flex: 1;
+  word-break: break-word;
+}
+
+.chapter-rename {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.chapter-rename .chapter-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.chapter-excerpt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.excerpt-chapter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.excerpt-chapter-field {
+  min-width: 10rem;
+  flex: 1;
+}
+
+.excerpt-chapter-field select,
+.excerpt-chapter-field .chapter-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: inherit;
+}
+
+.excerpt-split-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.excerpt-split-toggle input {
+  margin-top: 0.15rem;
+}
+
+.excerpt-move-preview {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.print-chapter h3 {
+  margin: 1rem 0 0.5rem;
+}
+
 .question-list {
   background: transparent;
   border: none;

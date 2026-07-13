@@ -220,20 +220,27 @@ const buildContextPack = ({
   const author = book?.author?.trim() || 'Unknown author'
   const lines: string[] = [`Book: ${title} / ${author}`]
 
-  lines.push('Recent excerpts:')
+  lines.push('Recent excerpts (grouped by chapter):')
   if (excerpts.length === 0) {
     lines.push('- No excerpts yet.')
   } else {
-    excerpts.forEach((excerpt) => {
-      const content = trimContent(excerpt.content, MAX_EXCERPT_CHARS)
-      if (!content) return
-      const metaParts = []
-      if (excerpt.page) metaParts.push(`page ${excerpt.page}`)
-      if (excerpt.chapter) metaParts.push(`chapter ${excerpt.chapter}`)
-      const meta =
-        metaParts.length > 0 ? ` (${metaParts.join(', ')})` : ''
-      lines.push(`- ${content}${meta}`)
+    // fetched newest-first; regroup in reading order
+    const grouped = new Map<string, ExcerptRow[]>()
+    ;[...excerpts].reverse().forEach((excerpt) => {
+      const key = excerpt.chapter?.trim() || ''
+      const list = grouped.get(key) ?? []
+      list.push(excerpt)
+      grouped.set(key, list)
     })
+    for (const [chapter, rows] of grouped) {
+      lines.push(chapter ? `Chapter 「${chapter}」:` : 'Unfiled excerpts:')
+      rows.forEach((excerpt) => {
+        const content = trimContent(excerpt.content, MAX_EXCERPT_CHARS)
+        if (!content) return
+        const meta = excerpt.page ? ` (page ${excerpt.page})` : ''
+        lines.push(`  - ${content}${meta}`)
+      })
+    }
   }
 
   lines.push('Recent discussion transcript:')

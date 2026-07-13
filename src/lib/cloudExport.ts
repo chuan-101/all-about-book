@@ -2,6 +2,7 @@ import type { User } from '@supabase/supabase-js'
 import { BACKUP_VERSION, type BackupPayload } from './backup'
 import {
   fetchBooks,
+  fetchChapters,
   fetchCheckIns,
   fetchConversations,
   fetchDiscussions,
@@ -11,13 +12,14 @@ import {
 export const fetchCloudBackupPayload = async (
   user: User,
 ): Promise<BackupPayload> => {
-  const [books, checkIns, excerpts, conversations, discussions] =
+  const [books, checkIns, excerpts, conversations, discussions, chapters] =
     await Promise.all([
     fetchBooks(user),
     fetchCheckIns(user),
     fetchExcerpts(user),
     fetchConversations(user),
     fetchDiscussions(user),
+    fetchChapters(user),
   ])
 
   return {
@@ -30,5 +32,6 @@ export const fetchCloudBackupPayload = async (
     excerpts,
     conversations,
     discussions,
+    chapters,
   }
 }

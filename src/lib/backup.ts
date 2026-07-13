@@ -1,4 +1,5 @@
 import type { Book, BookProgress } from '../types/book'
+import type { Chapter } from '../types/chapter'
 import type { Conversation, DiscussionMessage } from '../types/discussion'
 import {
   getConversations,
@@ -25,6 +26,8 @@ export type BackupPayload = {
   excerpts: Excerpt[]
   conversations: Conversation[]
   discussions: DiscussionMessage[]
+  /** Cloud exports only: chapter tree (local mode has no chapters) */
+  chapters?: Chapter[]
 }
 
 type ParseResult =
@@ -448,8 +451,9 @@ export const buildMarkdownArchive = (
     } else {
       bookExcerpts.forEach((excerpt) => {
         const content = excerpt.content.replace(/\s+/g, ' ').trim()
+        const chapterLabel = excerpt.chapter ? `【${excerpt.chapter}】` : ''
         lines.push(
-          `- [${formatExcerptDate(excerpt.createdAt)}] ${content}`,
+          `- [${formatExcerptDate(excerpt.createdAt)}]${chapterLabel} ${content}`,
         )
       })
     }
@@ -557,7 +561,11 @@ export const buildHtmlArchive = (
                 (excerpt) =>
                   `<li><strong>${escapeHtml(
                     formatExcerptDate(excerpt.createdAt),
-                  )}</strong> ${escapeHtml(excerpt.content)}</li>`,
+                  )}</strong>${
+                    excerpt.chapter
+                      ? ` <em>【${escapeHtml(excerpt.chapter)}】</em>`
+                      : ''
+                  } ${escapeHtml(excerpt.content)}</li>`,
               )
               .join('')
 
