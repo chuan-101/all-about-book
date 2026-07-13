@@ -176,16 +176,30 @@ function HomePage() {
 
   const totalReadingDays = readingDaysSet.size
 
+  const readingStreak = useMemo(() => {
+    let streak = 0
+    const cursor = new Date()
+    if (!readingDaysSet.has(formatDate(cursor))) {
+      cursor.setDate(cursor.getDate() - 1)
+    }
+    while (readingDaysSet.has(formatDate(cursor))) {
+      streak += 1
+      cursor.setDate(cursor.getDate() - 1)
+    }
+    return streak
+  }, [readingDaysSet])
+
+  const finishedThisYear = finishedBooks.filter((book) =>
+    book.endDate?.startsWith(`${currentYear}-`),
+  ).length
+
   return (
     <section className="stack">
       <div className="page-header dashboard-header">
-        <div className="dashboard-header-text">                       
+        <div className="dashboard-header-text">
           <div className="dashboard-heading">
             <span className="dashboard-date">Reading Dashboard</span>
           </div>
-          <p className="muted">
-            记录阅读进度，管理书架。
-          </p>
           {isCloudMode && cloudLoading ? (
             <p className="notice info">云端数据加载中...</p>
           ) : null}
@@ -193,52 +207,38 @@ function HomePage() {
       </div>
       <div className="dashboard-divider" role="presentation" />
 
-      <div className="stats-grid">
-        <div className="card stat">
-          <span className="stat-label">书籍总数</span>
-          <span className="stat-value">{totalBooks}</span>
+      <div className="card stats-band">
+        <div className="stat-primary">
+          <span className="stat-value-xl">
+            {readingStreak}
+            <span className="stat-unit">天</span>
+          </span>
+          <span className="stat-label">连续读书</span>
         </div>
-        <div className="card stat">
-          <span className="stat-label">在读</span>
-          <span className="stat-value">{readingBooks.length}</span>
+        <div className="stat-primary">
+          <span className="stat-value-xl">
+            {finishedBooks.length}
+            <span className="stat-unit">本</span>
+          </span>
+          <span className="stat-label">
+            已读完{finishedThisYear > 0 ? ` · 今年 ${finishedThisYear}` : ''}
+          </span>
         </div>
-        <div className="card stat">
-          <span className="stat-label">已读完</span>
-          <span className="stat-value">{finishedBooks.length}</span>
-        </div>
-        <div className="card stat">
-          <span className="stat-label">累计读书天数</span>
-          <span className="stat-value">{totalReadingDays}</span>
+        <div className="stats-band-side">
+          <div className="stat-secondary">
+            <span>累计读书天数</span>
+            <strong>{totalReadingDays}</strong>
+          </div>
+          <div className="stat-secondary">
+            <span>在读</span>
+            <strong>{readingBooks.length}</strong>
+          </div>
+          <div className="stat-secondary">
+            <span>藏书总数</span>
+            <strong>{totalBooks}</strong>
+          </div>
         </div>
       </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h3>正在阅读</h3>
-        </div>
-        {readingBooks.length === 0 ? (
-          <p className="muted">还没有在读的书，去添加一本吧。</p>
-        ) : (
-          <ul className="list">
-            {readingBooks.map((book) => (
-              <li key={book.id} className="list-item">
-                <div>
-                  <strong>{book.title}</strong>
-                  <p className="muted">
-                    {book.author || '作者未知'}
-                  </p>
-                </div>
-                <span className="chip">
-                  {book.progress
-                    ? `${book.progress.value} ${book.progress.kind}`
-                    : '进度：待记录'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
 
       <div className="card dashboard-bookshelf-section">
         <div className="card-header dashboard-bookshelf-header">
@@ -266,6 +266,34 @@ function HomePage() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h3>正在阅读</h3>
+          <span className="muted">{readingBooks.length} 本</span>
+        </div>
+        {readingBooks.length === 0 ? (
+          <p className="muted">还没有在读的书，去添加一本吧。</p>
+        ) : (
+          <ul className="list">
+            {readingBooks.map((book) => (
+              <li key={book.id} className="list-item">
+                <div>
+                  <strong>{book.title}</strong>
+                  <p className="muted">
+                    {book.author || '作者未知'}
+                  </p>
+                </div>
+                <span className="chip">
+                  {book.progress
+                    ? `${book.progress.value} ${book.progress.kind}`
+                    : '进度：待记录'}
+                </span>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
@@ -325,9 +353,6 @@ function HomePage() {
             })}
           </div>
         </div>
-        <p className="muted">
-          年度概览显示所有书籍的打卡日期，后续可扩展查看详情。
-        </p>
       </div>
     </section>
   )
