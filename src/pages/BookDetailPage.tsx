@@ -169,6 +169,9 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
+const formatRangeDate = (value: string) =>
+  value.startsWith(`${new Date().getFullYear()}-`) ? value.slice(5) : value
+
 function BookDetailPage() {
   const { bookId } = useParams()
   const { books: localBooks } = useBooks()
@@ -185,6 +188,10 @@ function BookDetailPage() {
   const book = bookId ? books.find((item) => item.id === bookId) : undefined
   const [sessions, setSessions] = useState<ReadingSession[]>([])
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [isNotesExpanded, setIsNotesExpanded] = useState(false)
+  const [isExcerptFormOpen, setIsExcerptFormOpen] = useState(false)
+  const [isDiscussionOpen, setIsDiscussionOpen] = useState(false)
   const [excerpts, setExcerpts] = useState<Excerpt[]>([])
   const [newExcerptContent, setNewExcerptContent] = useState('')
   const [isExcerptEditorOpen, setIsExcerptEditorOpen] = useState(false)
@@ -885,6 +892,32 @@ function BookDetailPage() {
     () => new Set(displaySessions.map((session) => session.date)),
     [displaySessions],
   )
+
+  const checkInStreak = useMemo(() => {
+    let streak = 0
+    const cursor = new Date()
+    if (!checkInDates.has(formatDate(cursor))) {
+      cursor.setDate(cursor.getDate() - 1)
+    }
+    while (checkInDates.has(formatDate(cursor))) {
+      streak += 1
+      cursor.setDate(cursor.getDate() - 1)
+    }
+    return streak
+  }, [checkInDates])
+
+  const recentDays = useMemo(() => {
+    const today = new Date()
+    return Array.from(
+      { length: 21 },
+      (_, index) =>
+        new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate() - (20 - index),
+        ),
+    )
+  }, [])
 
   const handleToggleCheckIn = async (date: Date) => {
     if (!book) return
@@ -2139,9 +2172,6 @@ function BookDetailPage() {
           ) : (
             <div className="excerpt-body">
               <div className="excerpt-meta">
-                <span className="excerpt-book-title">
-                  {book?.title ?? '未命名书籍'}
-                </span>
                 <span className="excerpt-date">
                   {formatExcerptDate(excerpt.createdAt)}
                 </span>
@@ -2450,184 +2480,267 @@ function BookDetailPage() {
           </div>
         </div>
 
-        <div className="detail-grid">
-          <div className="card detail-cover">
+        <div className="card detail-hero">
+          <div className="detail-hero-cover">
             {book.cover ? (
               <img src={book.cover} alt={`${book.title} cover`} />
             ) : (
-              <div className="cover placeholder large">暂无封面</div>
+              <div className="detail-spine" aria-hidden="true">
+                {Array.from(book.title).slice(0, 6).map((char, index) => (
+                  <span key={index}>{char}</span>
+                ))}
+                {Array.from(book.title).length > 6 ? <span>…</span> : null}
+              </div>
             )}
           </div>
-          <div className="card detail-info">
-            <div className="info-row">
-              <span>状态</span>
-              <strong>{statusLabels[book.status]}</strong>
+          <div className="detail-hero-meta">
+            <div className="hero-field">
+              <span className="hero-label">状态</span>
+              <strong className="hero-value hero-accent">
+                {statusLabels[book.status]}
+              </strong>
             </div>
-            <div className="info-row">
-              <span>类型</span>
-              <strong>{book.genre || '未设置'}</strong>
+            <div className="hero-field">
+              <span className="hero-label">评分</span>
+              {book.rating ? (
+                <strong
+                  className="hero-value hero-stars"
+                  aria-label={`评分 ${book.rating} / 5`}
+                >
+                  {'★'.repeat(
+                    Math.min(5, Math.max(1, Math.round(book.rating))),
+                  )}
+                </strong>
+              ) : (
+                <strong className="hero-value hero-value-empty">
+                  未评分
+                </strong>
+              )}
             </div>
-            <div className="info-row">
-              <span>译者</span>
-              <strong>{book.translator || '未设置'}</strong>
+            <div className="hero-field">
+              <span className="hero-label">译者</span>
+              <strong className="hero-value">
+                {book.translator || '—'}
+              </strong>
             </div>
-            {book.startDate ? (
-              <div className="info-row">
-                <span>开始日期</span>
-                <strong>{book.startDate}</strong>
+            <div className="hero-field">
+              <span className="hero-label">类型</span>
+              <strong className="hero-value">{book.genre || '—'}</strong>
+            </div>
+            <div className="hero-field">
+              <span className="hero-label">起止</span>
+              <strong className="hero-value">
+                {book.startDate || book.endDate
+                  ? `${
+                      book.startDate
+                        ? formatRangeDate(book.startDate)
+                        : '…'
+                    } → ${
+                      book.endDate
+                        ? formatRangeDate(book.endDate)
+                        : '至今'
+                    }`
+                  : '—'}
+              </strong>
+            </div>
+            {book.notes ? (
+              <div className="hero-field hero-notes">
+                <span className="hero-label">笔记</span>
+                <button
+                  type="button"
+                  className={`hero-notes-text${
+                    isNotesExpanded ? ' expanded' : ''
+                  }`}
+                  aria-expanded={isNotesExpanded}
+                  title={isNotesExpanded ? '收起' : '展开全文'}
+                  onClick={() => setIsNotesExpanded((value) => !value)}
+                >
+                  {book.notes}
+                </button>
               </div>
             ) : null}
-            {book.endDate ? (
-              <div className="info-row">
-                <span>结束日期</span>
-                <strong>{book.endDate}</strong>
-              </div>
-            ) : null}
-            {book.rating ? (
-              <div className="info-row">
-                <span>评分</span>
-                <strong>{book.rating}</strong>
-              </div>
-            ) : null}
-            <div className="info-row">
-              <span>创建时间</span>
-              <strong>{new Date(book.createdAt).toLocaleString()}</strong>
-            </div>
-            <div className="info-row">
-              <span>更新时间</span>
-              <strong>{new Date(book.updatedAt).toLocaleString()}</strong>
-            </div>
           </div>
         </div>
 
-        {book.notes ? (
-          <div className="card stack">
-            <h3>笔记</h3>
-            <p>{book.notes}</p>
-          </div>
-        ) : null}
-
-        <div className="card stack">
+        <div className="card stack checkin-card">
           <div className="card-header">
             <h3>阅读打卡</h3>
-            <span className="muted">{displaySessions.length} 次</span>
+            <span className="checkin-summary">
+              <strong>{displaySessions.length}</strong> 次
+              {checkInStreak > 0 ? (
+                <>
+                  <span aria-hidden="true"> · </span>
+                  连续 <strong>{checkInStreak}</strong> 天
+                </>
+              ) : null}
+            </span>
           </div>
-          <div className="calendar-header">
-            <strong className="calendar-title">{monthLabel}</strong>
-            <div className="calendar-nav">
-              <button
-                className="button ghost"
-                type="button"
-                onClick={() =>
-                  setCurrentMonth(
-                    new Date(
-                      monthStart.getFullYear(),
-                      monthStart.getMonth() - 1,
-                      1,
-                    ),
-                  )
-                }
-              >
-                上个月
-              </button>
-              <button
-                className="button ghost"
-                type="button"
-                onClick={() =>
-                  setCurrentMonth(
-                    new Date(
-                      monthStart.getFullYear(),
-                      monthStart.getMonth() + 1,
-                      1,
-                    ),
-                  )
-                }
-              >
-                下个月
-              </button>
-              <button
-                className="button"
-                type="button"
-                onClick={() => setCurrentMonth(new Date())}
-              >
-                今天
-              </button>
-            </div>
-          </div>
-          <div className="calendar-weekdays">
-            {weekDays.map((day) => (
-              <span key={day}>{day}</span>
-            ))}
-          </div>
-          <div className="calendar-grid">
-            {calendarDays.map((date, index) => {
-              if (!date) {
-                return (
-                  <div
-                    key={`empty-${index}`}
-                    className="calendar-day empty"
-                  />
-                )
-              }
-
+          <div className="checkin-strip" role="group" aria-label="最近打卡记录">
+            {recentDays.map((date) => {
               const dateString = formatDate(date)
               const isChecked = checkInDates.has(dateString)
               const isToday = dateString === todayString
-
               return (
                 <button
                   key={dateString}
                   type="button"
-                  className={`calendar-day${isChecked ? ' checked' : ''}${
+                  className={`checkin-cell${isChecked ? ' checked' : ''}${
                     isToday ? ' today' : ''
                   }`}
+                  title={`${dateString} ${isChecked ? '已打卡' : '未打卡'}`}
+                  aria-pressed={isChecked}
                   onClick={() => handleToggleCheckIn(date)}
-                >
-                  <span className="calendar-date">{date.getDate()}</span>
-                  {isChecked ? <span className="calendar-dot" /> : null}
-                </button>
+                />
               )
             })}
           </div>
-          <p className="muted">
-            点击日期即可切换打卡状态，已有打卡会显示标记。
-          </p>
+          <div className="checkin-footer">
+            <span className="muted checkin-hint">
+              深色 = 已打卡 · 点击方块打卡或补卡
+            </span>
+            <button
+              type="button"
+              className="checkin-calendar-toggle"
+              aria-expanded={isCalendarOpen}
+              onClick={() => setIsCalendarOpen((value) => !value)}
+            >
+              {isCalendarOpen ? '收起日历 ▴' : '完整日历 ▾'}
+            </button>
+          </div>
+          {isCalendarOpen ? (
+            <div className="stack checkin-calendar">
+              <div className="calendar-header">
+                <strong className="calendar-title">{monthLabel}</strong>
+                <div className="calendar-nav">
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={() =>
+                      setCurrentMonth(
+                        new Date(
+                          monthStart.getFullYear(),
+                          monthStart.getMonth() - 1,
+                          1,
+                        ),
+                      )
+                    }
+                  >
+                    上个月
+                  </button>
+                  <button
+                    className="button ghost"
+                    type="button"
+                    onClick={() =>
+                      setCurrentMonth(
+                        new Date(
+                          monthStart.getFullYear(),
+                          monthStart.getMonth() + 1,
+                          1,
+                        ),
+                      )
+                    }
+                  >
+                    下个月
+                  </button>
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={() => setCurrentMonth(new Date())}
+                  >
+                    今天
+                  </button>
+                </div>
+              </div>
+              <div className="calendar-weekdays">
+                {weekDays.map((day) => (
+                  <span key={day}>{day}</span>
+                ))}
+              </div>
+              <div className="calendar-grid">
+                {calendarDays.map((date, index) => {
+                  if (!date) {
+                    return (
+                      <div
+                        key={`empty-${index}`}
+                        className="calendar-day empty"
+                      />
+                    )
+                  }
+
+                  const dateString = formatDate(date)
+                  const isChecked = checkInDates.has(dateString)
+                  const isToday = dateString === todayString
+
+                  return (
+                    <button
+                      key={dateString}
+                      type="button"
+                      className={`calendar-day${
+                        isChecked ? ' checked' : ''
+                      }${isToday ? ' today' : ''}`}
+                      onClick={() => handleToggleCheckIn(date)}
+                    >
+                      <span className="calendar-date">
+                        {date.getDate()}
+                      </span>
+                      {isChecked ? (
+                        <span className="calendar-dot" />
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
         <div className="card stack note-card">
-          <div
-            className="note-tabs"
-            role="tablist"
-            aria-label="书摘与思考"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeNoteTab === 'excerpts'}
-              className={`note-tab${
-                activeNoteTab === 'excerpts' ? ' active' : ''
-              }`}
-              onClick={() => setActiveNoteTab('excerpts')}
+          <div className="note-card-top">
+            <div
+              className="note-tabs"
+              role="tablist"
+              aria-label="书摘与思考"
             >
-              书摘
-              <span className="note-tab-count">
-                {displayExcerpts.length}
-              </span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeNoteTab === 'thinking'}
-              className={`note-tab${
-                activeNoteTab === 'thinking' ? ' active' : ''
-              }`}
-              onClick={() => setActiveNoteTab('thinking')}
-            >
-              思考
-              <span className="note-tab-count">{questions.length}</span>
-            </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeNoteTab === 'excerpts'}
+                className={`note-tab${
+                  activeNoteTab === 'excerpts' ? ' active' : ''
+                }`}
+                onClick={() => setActiveNoteTab('excerpts')}
+              >
+                书摘
+                <span className="note-tab-count">
+                  {displayExcerpts.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeNoteTab === 'thinking'}
+                className={`note-tab${
+                  activeNoteTab === 'thinking' ? ' active' : ''
+                }`}
+                onClick={() => setActiveNoteTab('thinking')}
+              >
+                思考
+                <span className="note-tab-count">{questions.length}</span>
+              </button>
+            </div>
+            {activeNoteTab === 'excerpts' ? (
+              <button
+                type="button"
+                className="button ghost note-add-toggle"
+                aria-expanded={isExcerptFormOpen}
+                onClick={() => setIsExcerptFormOpen((value) => !value)}
+              >
+                {isExcerptFormOpen ? '收起' : '＋ 新增'}
+              </button>
+            ) : null}
           </div>
           {activeNoteTab === 'excerpts' ? (
           <>
+          {isExcerptFormOpen || isExcerptEditorOpen ? (
           <form className="form" onSubmit={handleCreateExcerpt}>
             <label className="field">
               <span>新增书摘</span>
@@ -2713,6 +2826,7 @@ function BookDetailPage() {
               </div>
             ) : null}
           </form>
+          ) : null}
           {isCloudMode ? (
             chapters.length === 0 && displayExcerpts.length === 0 ? (
               <p className="muted">暂无书摘，先记录第一条吧。</p>
@@ -3083,15 +3197,33 @@ function BookDetailPage() {
             </div>
           )}
         </div>
+        <div className="collapsible-section discussion-section">
+          <button
+            className="collapsible-header discussion-collapse-header"
+            type="button"
+            aria-expanded={isDiscussionOpen}
+            onClick={() => setIsDiscussionOpen((value) => !value)}
+          >
+            <span className="discussion-collapse-title">
+              With Syzygy
+              <span className="discussion-collapse-count">
+                {displayDiscussions.length} 条
+              </span>
+            </span>
+            <span className="collapsible-icon" aria-hidden="true">
+              {isDiscussionOpen ? '−' : '+'}
+            </span>
+          </button>
+          <div
+            className={`collapsible-panel${
+              isDiscussionOpen ? ' is-expanded' : ''
+            }`}
+            aria-hidden={!isDiscussionOpen}
+          >
+            <div className="collapsible-content">
         <div className="card stack discussion-card">
           <div className="card-header discussion-header">
             <div className="discussion-header-main">
-              <div className="discussion-title-group">
-                <h3 className="discussion-title">With Syzygy</h3>
-                <span className="muted">
-                  {displayDiscussions.length} 条
-                </span>
-              </div>
               <div className="discussion-thread-summary">
                 <span className="muted">当前对话</span>
                 <span className="discussion-thread-name">
@@ -3164,9 +3296,6 @@ function BookDetailPage() {
             </div>
           </div>
           {modelError ? <p className="notice error">{modelError}</p> : null}
-          <p className="muted">
-            后续接入 API 后，这里会根据书摘与阅读记录生成讨论与总结。
-          </p>
           <div
             className={`discussion-conversations${
               isConversationListOpen ? ' is-open' : ''
@@ -3464,6 +3593,9 @@ function BookDetailPage() {
               </div>
             </div>
           </form>
+        </div>
+            </div>
+          </div>
         </div>
       </section>
       {infoDiscussion ? (
