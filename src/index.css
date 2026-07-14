@@ -153,16 +153,14 @@ body {
 }
 
 /* === Retro Cafe Theme: Fix Button Layouts === */
-[data-theme='retro-cafe'] .card .card-actions,
-[data-theme='retro-cafe'] .excerpt-card .button-group {
+[data-theme='retro-cafe'] .card .card-actions {
   display: flex;
   width: 100%;
   gap: 12px;
   padding-top: 8px;
 }
 
-[data-theme='pixel-farm'] .card .card-actions,
-[data-theme='pixel-farm'] .excerpt-card .button-group {
+[data-theme='pixel-farm'] .card .card-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -171,8 +169,7 @@ body {
 }
 
 [data-theme='retro-cafe'] .card .card-actions .btn,
-[data-theme='retro-cafe'] .card .card-actions a,
-[data-theme='retro-cafe'] .excerpt-card .button-group .btn {
+[data-theme='retro-cafe'] .card .card-actions a {
   flex: 1;
   justify-content: center;
   text-align: center;
@@ -180,8 +177,7 @@ body {
 }
 
 [data-theme='pixel-farm'] .card .card-actions .btn,
-[data-theme='pixel-farm'] .card .card-actions a,
-[data-theme='pixel-farm'] .excerpt-card .button-group .btn {
+[data-theme='pixel-farm'] .card .card-actions a {
   width: 100%;
   justify-content: center;
   text-align: center;
@@ -1451,42 +1447,86 @@ textarea {
   border: none;
   padding: 0;
   box-shadow: none;
+  gap: 0;
 }
 
-.excerpt-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  box-shadow: var(--box-shadow-card);
-  padding: 1rem;
+/* 单条书摘：不再包卡片边框，靠留白与装饰分隔符划分 */
+.excerpt-entry {
+  padding: 0.25rem 0.1rem;
+}
+
+.excerpt-entry + .excerpt-entry {
+  position: relative;
+  margin-top: 0.75rem;
+  padding-top: 2.2rem;
+}
+
+/* 书页式分隔符 */
+.excerpt-entry + .excerpt-entry::before {
+  content: '· · ·';
+  position: absolute;
+  top: 0.55rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  letter-spacing: 0.4em;
+  color: var(--color-text-muted);
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .excerpt-body {
   display: flex;
   flex-direction: column;
+  gap: 0.6rem;
+}
+
+.excerpt-entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 1.6rem;
+}
+
+.excerpt-edit {
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
 }
 
-.excerpt-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-}
-
-.excerpt-book-title {
-  font-weight: 700;
-}
-
 .excerpt-date {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
+  letter-spacing: 0.12em;
 }
 
+/* 安静的 ⋯ 下拉按钮（书摘、章节共用） */
+.kebab-button {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--transition-speed),
+    background-color var(--transition-speed);
+}
+
+.kebab-button:hover,
+.kebab-button[aria-expanded='true'] {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+}
+
+/* 旁批：页边批注式，缩进对齐引文正文，与书摘一一对应 */
 .resonance-section {
-  margin-top: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px dashed var(--color-border);
+  margin-left: 1.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -1502,10 +1542,16 @@ textarea {
 }
 
 .resonance-item {
-  background: var(--color-bg-main);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 0.5rem 0.65rem;
+  background: color-mix(
+    in srgb,
+    var(--color-accent-secondary) 9%,
+    var(--color-bg-card)
+  );
+  border: none;
+  border-left: 2px solid
+    color-mix(in srgb, var(--color-accent-secondary) 55%, transparent);
+  border-radius: 0 10px 10px 0;
+  padding: 0.6rem 0.9rem;
 }
 
 .resonance-head {
@@ -1517,20 +1563,25 @@ textarea {
 }
 
 .resonance-speaker {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: color-mix(
+    in srgb,
+    var(--color-accent-secondary) 65%,
+    var(--color-text-primary)
+  );
 }
 
 .resonance-date {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--color-text-muted);
 }
 
 .resonance-content {
   margin: 0;
   font-size: 0.9rem;
-  line-height: 1.5;
+  line-height: 1.6;
   white-space: pre-wrap;
 }
 
@@ -1619,35 +1670,6 @@ textarea {
   width: 100%;
 }
 
-.excerpt-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  padding-top: 12px;
-}
-
-.excerpt-actions .button {
-  width: 100%;
-  text-align: center;
-  font-size: 0.9rem;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-  box-shadow: none;
-}
-
-.excerpt-actions .menu {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.excerpt-actions .menu .button {
-  width: 100%;
-}
-
 /* 书摘 / 思考 tabs */
 .note-tabs {
   display: flex;
@@ -1717,25 +1739,24 @@ textarea {
 }
 
 .chapter-groups {
-  gap: 0.75rem;
+  gap: 2rem;
 }
 
+/* 章节：从卡片改为排版式小节标题，只留一条发丝线 */
 .chapter-group {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  box-shadow: var(--box-shadow-card);
-  padding: 0.9rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .chapter-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-border) 45%, transparent);
 }
 
 .chapter-toggle {
@@ -1743,6 +1764,7 @@ textarea {
   align-items: center;
   gap: 0.5rem;
   flex: 1;
+  min-width: 0;
   border: none;
   background: transparent;
   padding: 0;
@@ -1756,6 +1778,15 @@ textarea {
 .chapter-title {
   flex: 1;
   word-break: break-word;
+  letter-spacing: 0.04em;
+}
+
+.chapter-count {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .chapter-rename {
@@ -1773,7 +1804,8 @@ textarea {
 .chapter-excerpt-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0;
+  padding: 0;
 }
 
 .excerpt-chapter-row {
@@ -2666,25 +2698,31 @@ textarea {
 
 .excerpt-content {
   position: relative;
+  margin: 0;
   white-space: pre-wrap;
-  line-height: 1.8;
+  line-height: 1.95;
   font-family: var(--font-family-base);
   font-style: italic;
-  border-left: 3px solid var(--color-accent-primary);
-  padding: 1rem 1rem 1rem 1.6rem;
-  background-color: var(--color-bg-input);
-  border-radius: 10px;
+  padding: 1.3rem 1.4rem 1.3rem 1.75rem;
+  background-color: color-mix(
+    in srgb,
+    var(--color-accent-primary) 7%,
+    var(--color-bg-card)
+  );
+  border-radius: 4px;
 }
 
 .excerpt-content::before {
-  content: '❝';
+  content: '\201C';
   position: absolute;
-  top: -0.35rem;
+  top: 0.1rem;
   left: 0.35rem;
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 4rem;
-  color: var(--color-text-secondary);
-  opacity: 0.1;
+  font-family: 'Georgia', 'Times New Roman', var(--font-family-base), serif;
+  font-size: 3.4rem;
+  line-height: 1;
+  font-style: normal;
+  color: var(--color-accent-primary);
+  opacity: 0.28;
   pointer-events: none;
 }
 
@@ -3198,8 +3236,12 @@ textarea {
     margin-left: 0;
   }
 
-  .excerpt-card {
-    gap: 0.75rem;
+  .excerpt-content {
+    padding: 1.1rem 1rem 1.1rem 1.35rem;
+  }
+
+  .resonance-section {
+    margin-left: 1rem;
   }
 
   .excerpt-textarea {
@@ -3269,21 +3311,6 @@ textarea {
 
   .excerpt-textarea {
     min-height: 220px;
-  }
-
-  .excerpt-actions .menu-panel {
-    left: 50%;
-    right: auto;
-    min-width: 160px;
-    margin-left: -80px;
-    padding: 0.6rem 0.9rem;
-  }
-
-  .excerpt-actions .menu-item {
-    display: flex;
-    justify-content: center;
-    text-align: center;
-    width: 100%;
   }
 
   .calendar-weekdays,
