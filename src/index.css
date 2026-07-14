@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Playfair+Display:wght@500;600;700&family=Press+Start+2P&family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Playfair+Display:wght@500;600;700&family=Press+Start+2P&display=swap');
 
 :root {
   font-family: var(--font-family-base, var(--font-sans));
@@ -1461,18 +1461,15 @@ textarea {
   padding-top: 2.2rem;
 }
 
-/* 书页式分隔符 */
+/* 书页式分隔符：居中的浅色虚线 */
 .excerpt-entry + .excerpt-entry::before {
-  content: '· · ·';
+  content: '';
   position: absolute;
-  top: 0.55rem;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 0.85rem;
-  letter-spacing: 0.4em;
-  color: var(--color-text-muted);
-  opacity: 0.6;
+  top: 0.95rem;
+  left: 12%;
+  right: 12%;
+  border-top: 1px dashed
+    color-mix(in srgb, var(--color-border) 55%, transparent);
   pointer-events: none;
 }
 
@@ -1571,6 +1568,16 @@ textarea {
     var(--color-accent-secondary) 65%,
     var(--color-text-primary)
   );
+}
+
+/* 昭和咖啡主题：旁批用米黄色纸签，不用砖红 */
+[data-theme='retro-cafe'] .resonance-item {
+  background: #f4eeda;
+  border-left-color: #d8c690;
+}
+
+[data-theme='retro-cafe'] .resonance-speaker {
+  color: #8c7847;
 }
 
 .resonance-date {
