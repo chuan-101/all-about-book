@@ -2155,9 +2155,9 @@ function BookDetailPage() {
     const isEditing = editingExcerptId === excerpt.id
     const isMenuOpen = openExcerptMenuId === excerpt.id
     return (
-      <li key={excerpt.id} className="list-item excerpt-card">
-        <div className="list-item-main">
-          {isEditing ? (
+      <li key={excerpt.id} className="excerpt-entry">
+        {isEditing ? (
+          <div className="excerpt-edit">
             <label className="field">
               <span>编辑书摘</span>
               <AutoResizeTextarea
@@ -2169,21 +2169,7 @@ function BookDetailPage() {
                 }
               />
             </label>
-          ) : (
-            <div className="excerpt-body">
-              <div className="excerpt-meta">
-                <span className="excerpt-date">
-                  {formatExcerptDate(excerpt.createdAt)}
-                </span>
-              </div>
-              <p className="excerpt-content">{excerpt.content}</p>
-              {isCloudMode ? renderResonances(excerpt) : null}
-            </div>
-          )}
-        </div>
-        <div className="excerpt-actions">
-          {isEditing ? (
-            <>
+            <div className="form-actions">
               <Button
                 variant="outline"
                 type="button"
@@ -2198,30 +2184,39 @@ function BookDetailPage() {
               >
                 取消
               </Button>
-            </>
-          ) : (
-            <>
-              <ActionButton
-                type="button"
-                onClick={() => handleStartEdit(excerpt)}
-              >
-                编辑
-              </ActionButton>
+            </div>
+          </div>
+        ) : (
+          <article className="excerpt-body">
+            <header className="excerpt-entry-head">
+              <span className="excerpt-date">
+                {formatExcerptDate(excerpt.createdAt)}
+              </span>
               <div className="menu">
-                <ActionButton
+                <button
                   type="button"
+                  className="kebab-button"
                   aria-haspopup="menu"
                   aria-expanded={isMenuOpen}
+                  aria-label="书摘操作"
                   onClick={() =>
                     setOpenExcerptMenuId(
                       isMenuOpen ? null : excerpt.id,
                     )
                   }
                 >
-                  ⋯ 更多
-                </ActionButton>
+                  ⋯
+                </button>
                 {isMenuOpen ? (
                   <div className="menu-panel" role="menu">
+                    <button
+                      className="menu-item"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleStartEdit(excerpt)}
+                    >
+                      编辑
+                    </button>
                     {isCloudMode ? (
                       <button
                         className="menu-item"
@@ -2246,9 +2241,11 @@ function BookDetailPage() {
                   </div>
                 ) : null}
               </div>
-            </>
-          )}
-        </div>
+            </header>
+            <p className="excerpt-content">{excerpt.content}</p>
+            {isCloudMode ? renderResonances(excerpt) : null}
+          </article>
+        )}
       </li>
     )
   }
@@ -2306,16 +2303,18 @@ function BookDetailPage() {
                 <span className="chapter-title">
                   {chapter ? chapter.title : '未分章'}
                 </span>
-                <span className="note-tab-count">
-                  {chapterExcerpts.length}
+                <span className="chapter-count">
+                  {chapterExcerpts.length} 则
                 </span>
               </button>
               {chapter ? (
                 <div className="menu">
-                  <ActionButton
+                  <button
                     type="button"
+                    className="kebab-button"
                     aria-haspopup="menu"
                     aria-expanded={isMenuOpen}
+                    aria-label="章节操作"
                     onClick={() =>
                       setOpenChapterMenuId(
                         isMenuOpen ? null : chapter.id,
@@ -2323,7 +2322,7 @@ function BookDetailPage() {
                     }
                   >
                     ⋯
-                  </ActionButton>
+                  </button>
                   {isMenuOpen ? (
                     <div className="menu-panel" role="menu">
                       <button
