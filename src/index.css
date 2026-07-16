@@ -47,53 +47,27 @@ body {
   box-shadow: 2px 2px 0px #543675;
 }
 
-[data-theme='pixel-farm'] .card,
-[data-theme='pixel-farm'] .btn,
-[data-theme='pixel-farm'] .button,
-[data-theme='pixel-farm'] input,
-[data-theme='pixel-farm'] .bottom-nav {
-  border: 3px solid var(--color-border);
+/* === Midnight Press: 夜间报刊 —— 细线、留白、雾感灰阶 === */
+[data-theme='midnight-press'] body {
+  background-image: var(--bg-texture);
+  background-repeat: repeat;
 }
 
-[data-theme='pixel-farm'] .card {
-  background-image: linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0.03) 50%,
-      transparent 50%
-    ),
-    linear-gradient(rgba(0, 0, 0, 0.03) 50%, transparent 50%);
-  background-size: 4px 4px;
+[data-theme='midnight-press'] .header {
+  border-bottom: 3px double var(--color-border);
 }
 
-[data-theme='pixel-farm'] .header,
-[data-theme='pixel-farm'] .bottom-nav {
-  background: var(--color-border);
-  border-color: var(--color-border);
-  color: var(--color-bg-main);
+[data-theme='midnight-press'] .nav a {
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
 }
 
-[data-theme='pixel-farm'] .header-date,
-[data-theme='pixel-farm'] .title,
-[data-theme='pixel-farm'] .nav a {
-  color: var(--color-bg-main);
-}
-
-[data-theme='pixel-farm'] .nav a.active {
+[data-theme='midnight-press'] .nav a.active {
   border-bottom-color: var(--color-accent-primary);
-  color: var(--color-accent-primary);
 }
 
-[data-theme='pixel-farm'] .top-nav-button.button.ghost {
-  color: var(--color-bg-main);
-  border-color: var(--color-bg-main);
-}
-
-[data-theme='pixel-farm'] .bottom-nav-item {
-  color: rgba(255, 255, 255, 0.75);
-}
-
-[data-theme='pixel-farm'] .bottom-nav-item.active {
-  color: var(--color-accent-primary);
+[data-theme='midnight-press'] .bottom-nav {
+  background: var(--color-bg-main);
 }
 
 [data-theme='retro-cafe'] body {
@@ -160,11 +134,10 @@ body {
   padding-top: 8px;
 }
 
-[data-theme='pixel-farm'] .card .card-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+[data-theme='midnight-press'] .card .card-actions {
+  display: flex;
   width: 100%;
+  gap: 12px;
   padding-top: 8px;
 }
 
@@ -176,9 +149,9 @@ body {
   min-width: 0;
 }
 
-[data-theme='pixel-farm'] .card .card-actions .btn,
-[data-theme='pixel-farm'] .card .card-actions a {
-  width: 100%;
+[data-theme='midnight-press'] .card .card-actions .btn,
+[data-theme='midnight-press'] .card .card-actions a {
+  flex: 1;
   justify-content: center;
   text-align: center;
   min-width: 0;
@@ -877,8 +850,8 @@ textarea {
   --discussion-card-border-style: solid;
 }
 
-[data-theme='pixel-farm'] .discussion-card {
-  --discussion-card-radius: 12px;
+[data-theme='midnight-press'] .discussion-card {
+  --discussion-card-radius: 2px;
   --discussion-card-border-style: solid;
 }
 
@@ -3714,4 +3687,96 @@ textarea {
   .checkin-cell:nth-child(-n + 7) {
     display: none;
   }
+}
+
+/* ============================================================
+   Midnight Press: 深色适配 —— 共享样式中的浅色底假设在此校正。
+   语义色（成功/警告/错误）统一降饱和，保持雾感。
+   ============================================================ */
+
+[data-theme='midnight-press'] .bookshelf-pinned {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme='midnight-press'] .bookshelf-search input:focus {
+  outline: 2px solid rgba(214, 211, 204, 0.25);
+}
+
+[data-theme='midnight-press'] .chat-bubble-content code {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme='midnight-press'] .chat-bubble-content pre {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='midnight-press'] .chat-item.mine .chat-bubble .chat-bubble-content code {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='midnight-press'] .chat-item.mine .chat-bubble .chat-bubble-content pre {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='midnight-press'] .notice.success {
+  background: rgba(88, 132, 102, 0.16);
+  color: #a8c5b2;
+}
+
+[data-theme='midnight-press'] .notice.error {
+  background: rgba(178, 96, 88, 0.16);
+  color: #d2a49e;
+}
+
+[data-theme='midnight-press'] .notice.warning {
+  background: rgba(178, 146, 88, 0.14);
+  color: #cdbb98;
+}
+
+[data-theme='midnight-press'] .notice.info {
+  background: rgba(255, 255, 255, 0.06);
+  color: #b0ada6;
+}
+
+[data-theme='midnight-press'] .status-badge.status-open {
+  color: #cdbb98;
+  background: rgba(178, 146, 88, 0.12);
+  border-color: rgba(178, 146, 88, 0.35);
+}
+
+[data-theme='midnight-press'] .status-badge.status-answered {
+  color: #a8c5b2;
+  background: rgba(88, 132, 102, 0.12);
+  border-color: rgba(88, 132, 102, 0.35);
+}
+
+[data-theme='midnight-press'] .chip {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--color-text-secondary);
+}
+
+[data-theme='midnight-press'] .button.danger {
+  background: rgba(178, 96, 88, 0.16);
+  color: #d2a49e;
+  border-color: rgba(178, 96, 88, 0.4);
+}
+
+[data-theme='midnight-press'] .answer-action.danger {
+  color: #c98b84;
+}
+
+[data-theme='midnight-press'] .menu-panel {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+/* 书架搁板：亮灰高光在深色下过于醒目，压暗成雾灰 */
+[data-theme='midnight-press'] .dashboard-bookshelf-section {
+  --dashboard-bookshelf-board-highlight: #55534e;
+  --dashboard-bookshelf-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='midnight-press'] .excerpt-modal-backdrop,
+[data-theme='midnight-press'] .settings-modal-backdrop,
+[data-theme='midnight-press'] .confirm-modal-backdrop {
+  background: rgba(0, 0, 0, 0.6);
 }

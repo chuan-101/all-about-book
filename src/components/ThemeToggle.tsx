@@ -4,7 +4,7 @@ const themeLabels = {
   'retro-cafe': '昭和喫茶店',
   'retro-keyboard': '复古键盘',
   'pixel-dream': '像素梦境',
-  'pixel-farm': '像素农场',
+  'midnight-press': '午夜报亭',
   'cotton-candy': '棉花糖',
 }
 
@@ -14,7 +14,7 @@ function ThemeToggle() {
     'retro-cafe',
     'retro-keyboard',
     'pixel-dream',
-    'pixel-farm',
+    'midnight-press',
     'cotton-candy',
   ] as const
   const currentIndex = themeOrder.indexOf(theme)

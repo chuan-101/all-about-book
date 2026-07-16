@@ -137,42 +137,56 @@
   --bg-texture: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1h2v2H1V1zm4 4h2v2H5V5z' fill='%23FFCFE8' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 
-/* === THEME D: Pixel Farm (Stardew Valley Inspired) === */
-[data-theme="pixel-farm"] {
-  /* === Palette: Stardew Valley Inspired === */
+/* === THEME D: Midnight Press (夜间报刊 / 小票风) === */
+[data-theme="midnight-press"] {
+  /* === Palette: Foggy Monochrome — 雾感黑灰白，无纯黑纯白 === */
 
-  /* Background: Soft, warm, sunny earth tone */
-  --color-bg-main: #f4f1ea;
+  /* Background: Soft ink black, slightly warm */
+  --color-bg-main: #191918;
+  --color-bg-card: #201f1e;
+  --color-bg-input: #262524;
 
-  /* Card: The "Oak Wood" Panel Look */
-  --color-bg-card: #fffdf9;
-  --color-bg-input: #fffdf9;
+  /* Text: Dimmed newsprint white, hazy greys */
+  --color-text-primary: #d6d3cc;
+  --color-text-secondary: #9c9992;
+  --color-text-muted: #6f6d67;
 
-  /* Typography: Dark Coffee Brown (No black) */
-  --color-text-primary: #4a2810;
-  --color-text-secondary: #754421;
+  /* Accents: stay monochrome — pale fog for emphasis */
+  --color-accent-primary: #b8b5ae;
+  --color-accent-hover: #d6d3cc;
+  --color-accent-secondary: #85827b;
 
-  /* Accents */
-  --color-accent-primary: #ffb01f;
-  --color-accent-hover: #e6990f;
-  --color-accent-secondary: #8cc446;
+  /* Borders: hairlines only */
+  --color-border: #383734;
+  --dropdown-border: 1px solid var(--color-border);
+  --separator-groove: none;
 
-  /* Borders: Deep Bark Brown & Chunky */
-  --color-border: #5e3a24;
-  --dropdown-border: 3px solid var(--color-border);
-
-  /* Visuals: Hard Pixel Edge */
+  /* Shape: crisp print edges */
   --border-radius-card: 2px;
-  --border-radius-btn: 0px;
+  --border-radius-btn: 2px;
 
-  /* Shadows: Hard Block Shadow (Dark Brown) */
-  --box-shadow-card: 4px 4px 0px var(--color-border);
-  --box-shadow-btn: 2px 2px 0px #3e2415;
+  /* Shadows: none — whitespace and hairlines do the work */
+  --box-shadow-card: none;
+  --box-shadow-btn: none;
+  --box-shadow-input: none;
 
-  /* Fonts: pixel headings, readable serif body */
-  --font-family-heading: 'Press Start 2P', cursive;
+  /* Texture: faint grain, like newsprint under a desk lamp */
+  --bg-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+
+  /* Typography: receipt digits (mono latin) + newspaper body (serif CJK) */
+  --font-family-heading: 'Courier New', 'Noto Serif SC', 'Songti SC',
+    monospace;
   --font-family-base: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC',
     'SimSun', serif;
+
+  /* Contribution Graph: ink density steps */
+  --color-graph-l1: #32312e;
+  --color-graph-l2: #4a4844;
+  --color-graph-l3: #6e6b64;
+  --color-graph-l4: #a5a29a;
+
+  --color-status-reading: #b8b5ae;
+  --color-status-reading-bg: rgba(214, 211, 204, 0.08);
 }
 
 /* === THEME E: Cotton Candy (Retro-Cute Maximalist) === */
