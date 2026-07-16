@@ -11,7 +11,7 @@ type Theme =
   | 'retro-cafe'
   | 'retro-keyboard'
   | 'pixel-dream'
-  | 'pixel-farm'
+  | 'midnight-press'
   | 'cotton-candy'
 
 type ThemeContextValue = {
@@ -26,9 +26,14 @@ const AVAILABLE_THEMES: Theme[] = [
   'retro-cafe',
   'retro-keyboard',
   'pixel-dream',
-  'pixel-farm',
+  'midnight-press',
   'cotton-candy',
 ]
+
+/* 已下线主题 → 接替主题 */
+const LEGACY_THEME_MAP: Record<string, Theme> = {
+  'pixel-farm': 'midnight-press',
+}
 
 const isTheme = (value: string | null): value is Theme =>
   !!value && AVAILABLE_THEMES.includes(value as Theme)
@@ -39,6 +44,9 @@ const getInitialTheme = (): Theme => {
   }
 
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
+  if (stored && stored in LEGACY_THEME_MAP) {
+    return LEGACY_THEME_MAP[stored]
+  }
   return isTheme(stored) ? stored : DEFAULT_THEME
 }
 
