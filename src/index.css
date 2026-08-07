@@ -1656,6 +1656,17 @@ textarea {
   gap: 0.25rem;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 0.25rem;
+  /* 四个标签页在窄屏放不下时允许横向滑动 */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.note-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.note-tab {
+  flex-shrink: 0;
 }
 
 .note-tab {
@@ -1712,6 +1723,208 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* ---- 导读 / 总结（杂志风陪读栏目）---- */
+.companion-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.companion-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.companion-entry {
+  padding: 1.35rem 0.25rem;
+}
+
+.companion-entry + .companion-entry {
+  border-top: 1px solid var(--color-border);
+}
+
+.companion-entry-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.companion-entry-byline {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* 杂志 kicker：写入端署名，前置一段短横线 */
+.companion-writer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-hover, var(--color-accent-primary, #175cd3));
+}
+
+.companion-writer::before {
+  content: '';
+  width: 1.4em;
+  height: 2px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.companion-date {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 正文：衬线、疏朗行距，接近杂志内文 */
+.companion-entry-body {
+  font-family: Georgia, 'Times New Roman', 'Songti SC', 'Noto Serif SC',
+    serif;
+  font-size: 0.98rem;
+  line-height: 1.95;
+  letter-spacing: 0.01em;
+  color: var(--color-text-primary);
+  overflow-wrap: break-word;
+}
+
+/* 首段首字下沉，杂志开篇味道 */
+.companion-entry-body > p:first-child::first-letter {
+  float: left;
+  font-size: 3em;
+  line-height: 0.95;
+  padding: 0.04em 0.12em 0 0;
+  font-weight: 700;
+  color: var(--color-accent-hover, var(--color-accent-primary, inherit));
+}
+
+.companion-entry-body p {
+  margin: 0 0 0.9em;
+}
+
+.companion-entry-body p:last-child {
+  margin-bottom: 0;
+}
+
+.companion-entry-body h1,
+.companion-entry-body h2,
+.companion-entry-body h3,
+.companion-entry-body h4 {
+  font-family: inherit;
+  line-height: 1.4;
+  margin: 1.3em 0 0.55em;
+}
+
+.companion-entry-body h1:first-child,
+.companion-entry-body h2:first-child,
+.companion-entry-body h3:first-child {
+  margin-top: 0;
+}
+
+.companion-entry-body h1 {
+  font-size: 1.3rem;
+}
+
+.companion-entry-body h2 {
+  font-size: 1.15rem;
+}
+
+.companion-entry-body h3 {
+  font-size: 1.05rem;
+}
+
+.companion-entry-body blockquote {
+  margin: 1em 0;
+  padding: 0.2em 0 0.2em 1em;
+  border-left: 3px solid
+    var(--color-accent-primary, var(--color-border));
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.companion-entry-body blockquote p {
+  margin-bottom: 0.4em;
+}
+
+.companion-entry-body ul,
+.companion-entry-body ol {
+  margin: 0 0 0.9em;
+  padding-left: 1.5em;
+}
+
+.companion-entry-body li {
+  margin-bottom: 0.25em;
+}
+
+.companion-entry-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--color-bg-main);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+.companion-entry-body pre {
+  background: var(--color-bg-main);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  margin: 0 0 0.9em;
+}
+
+.companion-entry-body pre code {
+  background: transparent;
+  padding: 0;
+}
+
+/* 杂志式分节线：居中短横线 */
+.companion-entry-body hr {
+  border: none;
+  width: 3.5rem;
+  height: 2px;
+  background: var(--color-border);
+  margin: 1.5em auto;
+}
+
+.companion-entry-body a {
+  color: var(--color-accent-hover, var(--color-accent-primary));
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.companion-entry-body table {
+  border-collapse: collapse;
+  margin: 0 0 0.9em;
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+.companion-entry-body th,
+.companion-entry-body td {
+  border: 1px solid var(--color-border);
+  padding: 0.4em 0.7em;
+  font-size: 0.9em;
+}
+
+.companion-entry-body th {
+  background: var(--color-bg-main);
+}
+
+.companion-delete-preview {
+  overflow-wrap: break-word;
 }
 
 .chapter-input {
@@ -2441,8 +2654,12 @@ textarea {
   font-size: 1rem;
   line-height: 1.6;
   resize: vertical;
-  overflow: hidden;
+  /* overflow-y 交给 AutoResizeTextarea 按内容动态控制；
+     这里写死 hidden 会让移动端在盒子被压缩时无法上下滚动。 */
+  overflow-x: hidden;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .excerpt-textarea-full {
@@ -2490,6 +2707,15 @@ textarea {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+}
+
+/* 全屏书摘编辑弹窗的中段（textarea + 章节选择）：
+   头部与保存按钮固定，中段超高时自身滚动，保证手机端内容永远够得着。 */
+.excerpt-editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
 }
 
 .excerpt-modal-header h4 {
@@ -3242,9 +3468,15 @@ textarea {
   .excerpt-modal {
   width: 100%;
   max-height: calc(75vh - 80px);
+  /* dvh 跟随移动端浏览器地址栏伸缩，避免弹窗被动态工具栏顶出可视区 */
+  max-height: min(calc(75vh - 80px), calc(100dvh - 7rem));
   border-radius: 16px;
   padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
 }
+
+  .excerpt-textarea-full {
+    min-height: min(45vh, 45dvh);
+  }
 
   .calendar-header {
     flex-direction: column;

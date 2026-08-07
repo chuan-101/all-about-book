@@ -1,4 +1,6 @@
 import type { Book } from '../types/book'
+import type { CompanionKind } from '../types/companion'
+import { COMPANION_KIND_META } from '../types/companion'
 import type { Excerpt } from '../types/excerpt'
 import type { AnsweredBy, QuestionStatus } from '../types/question'
 import { supabase } from './supabaseClient'
@@ -585,6 +587,78 @@ export const deleteCloudAnswer = async (
     .from('book_answers')
     .delete()
     .eq('id', answerId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const createCloudCompanionEntry = async (
+  userId: string,
+  bookId: string,
+  kind: CompanionKind,
+  writtenBy: string,
+  content: string,
+): Promise<string> => {
+  const client = ensureClient()
+  if (!bookId) {
+    throw new Error('Missing bookId for companion entry insert.')
+  }
+  const writer = writtenBy.trim()
+  if (!writer) {
+    throw new Error('Missing writtenBy for companion entry insert.')
+  }
+  const id = crypto.randomUUID()
+  const { error } = await client
+    .from(COMPANION_KIND_META[kind].table)
+    .insert({
+      id,
+      user_id: userId,
+      book_id: bookId,
+      written_by: writer,
+      content,
+    })
+
+  if (error) {
+    throw error
+  }
+
+  return id
+}
+
+// 编辑只动 content 与 updated_at，created_at 保持写入时间用于排序。
+export const updateCloudCompanionEntry = async (
+  userId: string,
+  kind: CompanionKind,
+  entryId: string,
+  content: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from(COMPANION_KIND_META[kind].table)
+    .update({
+      content,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+    .eq('id', entryId)
+
+  if (error) {
+    throw error
+  }
+}
+
+export const deleteCloudCompanionEntry = async (
+  userId: string,
+  kind: CompanionKind,
+  entryId: string,
+): Promise<void> => {
+  const client = ensureClient()
+  const { error } = await client
+    .from(COMPANION_KIND_META[kind].table)
+    .delete()
+    .eq('user_id', userId)
+    .eq('id', entryId)
 
   if (error) {
     throw error

@@ -11,6 +11,8 @@ import type {
 } from '../types/question'
 import type { ReadingSession } from '../types/reading-session'
 import type { ExcerptResonance } from '../types/resonance'
+import type { CompanionEntry, CompanionKind } from '../types/companion'
+import { COMPANION_KIND_META } from '../types/companion'
 import { supabase } from './supabaseClient'
 
 type SupabaseRow = Record<string, unknown>
@@ -198,6 +200,20 @@ const normalizeAnswer = (row: SupabaseRow): BookAnswer => {
     answer: asString(row.answer),
     answeredBy,
     createdAt,
+  }
+}
+
+const normalizeCompanionEntry = (row: SupabaseRow): CompanionEntry => {
+  const createdAt =
+    asString(row.created_at) || asString(row.createdAt) ||
+    new Date().toISOString()
+  return {
+    id: asString(row.id),
+    bookId: asString(row.book_id ?? row.bookId),
+    writtenBy: asString(row.written_by ?? row.writtenBy),
+    content: asString(row.content),
+    createdAt,
+    updatedAt: asOptionalString(row.updated_at ?? row.updatedAt),
   }
 }
 
@@ -427,6 +443,31 @@ export const fetchQuestionsByBookId = async (
   }
 
   return (data ?? []).map((row) => normalizeQuestion(row as SupabaseRow))
+}
+
+// 导读 / 总结：按写入时间正序（不按修改时间），同秒并列时用 id 稳定排序。
+export const fetchCompanionEntriesByBookId = async (
+  user: User,
+  bookId: string,
+  kind: CompanionKind,
+): Promise<CompanionEntry[]> => {
+  const client = ensureClient()
+  if (!bookId) return []
+  const { data, error } = await client
+    .from(COMPANION_KIND_META[kind].table)
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('book_id', bookId)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return (data ?? []).map((row) =>
+    normalizeCompanionEntry(row as SupabaseRow),
+  )
 }
 
 export const fetchAnswersByQuestionIds = async (
