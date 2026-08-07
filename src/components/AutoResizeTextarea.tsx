@@ -37,12 +37,25 @@ const AutoResizeTextarea = forwardRef<
           : element.scrollHeight
       const nextHeight = Math.min(element.scrollHeight, max)
       element.style.height = `${nextHeight}px`
+      // 以渲染后的实际可视高度判断能否放下全部内容：弹窗限高、flex 压缩、
+      // 移动端键盘弹起等都会让盒子小于内容高度，此时必须允许内部滚动，
+      // 否则手机上超出部分完全够不到（只比较 maxHeight 会漏掉这些情况）。
       element.style.overflowY =
-        element.scrollHeight > max ? 'auto' : 'hidden'
+        element.scrollHeight > element.clientHeight + 2 ? 'auto' : 'hidden'
     }
 
     const frame = requestAnimationFrame(resize)
-    return () => cancelAnimationFrame(frame)
+    const handleViewportResize = () => resize()
+    window.addEventListener('resize', handleViewportResize)
+    window.visualViewport?.addEventListener('resize', handleViewportResize)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', handleViewportResize)
+      window.visualViewport?.removeEventListener(
+        'resize',
+        handleViewportResize,
+      )
+    }
   }, [value, maxHeight])
 
   return (

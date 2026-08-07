@@ -49,6 +49,7 @@ import {
   createConversation,
   createCloudAnswer,
   createCloudChapter,
+  createCloudCompanionEntry,
   createCloudDiscussion,
   createCloudDiscussionMessages,
   createCloudExcerpt,
@@ -58,6 +59,7 @@ import {
   deleteConversation,
   deleteCloudAnswer,
   deleteCloudChapter,
+  deleteCloudCompanionEntry,
   deleteCloudDiscussion,
   deleteCloudDiscussionsByConversation,
   deleteCloudExcerpt,
@@ -67,6 +69,7 @@ import {
   toggleCloudCheckIn,
   updateConversationTitle,
   updateCloudAnswer,
+  updateCloudCompanionEntry,
   updateCloudExcerpt,
   updateCloudQuestion,
   updateCloudQuestionStatus,
@@ -78,6 +81,7 @@ import {
 import {
   fetchAnswersByQuestionIds,
   fetchChaptersByBookId,
+  fetchCompanionEntriesByBookId,
   fetchConversationsByBookId,
   fetchDiscussionsByBookId,
   fetchQuestionsByBookId,
@@ -85,6 +89,12 @@ import {
 } from '../lib/cloudRead'
 import type { BookAnswer, BookQuestion } from '../types/question'
 import { getAnsweredByLabel } from '../types/question'
+import type { CompanionEntry, CompanionKind } from '../types/companion'
+import {
+  COMPANION_KIND_META,
+  COMPANION_WRITER_OPTIONS,
+  getCompanionWriterLabel,
+} from '../types/companion'
 import {
   supabase,
   supabaseAnonKey,
@@ -118,6 +128,21 @@ type OptimisticDiscussionMessage = {
 }
 
 type DiscussionEntry = DiscussionMessage | OptimisticDiscussionMessage
+
+// 导读/总结表单里「自定义写入端」在下拉框中的哨兵值
+const CUSTOM_WRITER_VALUE = '__custom__'
+
+type CompanionDraft = {
+  writer: string
+  customWriter: string
+  content: string
+}
+
+const emptyCompanionDraft = (): CompanionDraft => ({
+  writer: 'chuanchuan',
+  customWriter: '',
+  content: '',
+})
 
 const sortDiscussionEntries = (
   entries: DiscussionEntry[],
@@ -256,8 +281,29 @@ function BookDetailPage() {
   )
   const [editingContent, setEditingContent] = useState('')
   const [activeNoteTab, setActiveNoteTab] = useState<
-    'excerpts' | 'thinking'
+    'excerpts' | 'thinking' | 'guide' | 'summary'
   >('excerpts')
+  const [companionEntries, setCompanionEntries] = useState<
+    Record<CompanionKind, CompanionEntry[]>
+  >({ guide: [], summary: [] })
+  const [companionLoading, setCompanionLoading] = useState(false)
+  const [companionFormOpen, setCompanionFormOpen] = useState<
+    Record<CompanionKind, boolean>
+  >({ guide: false, summary: false })
+  const [companionDrafts, setCompanionDrafts] = useState<
+    Record<CompanionKind, CompanionDraft>
+  >({ guide: emptyCompanionDraft(), summary: emptyCompanionDraft() })
+  const [isSavingCompanion, setIsSavingCompanion] = useState(false)
+  const [editingCompanion, setEditingCompanion] = useState<{
+    kind: CompanionKind
+    id: string
+  } | null>(null)
+  const [editingCompanionText, setEditingCompanionText] = useState('')
+  const [openCompanionMenuId, setOpenCompanionMenuId] = useState<
+    string | null
+  >(null)
+  const [confirmingDeleteCompanion, setConfirmingDeleteCompanion] =
+    useState<{ kind: CompanionKind; entry: CompanionEntry } | null>(null)
   const [questions, setQuestions] = useState<BookQuestion[]>([])
   const [answersByQuestion, setAnswersByQuestion] = useState<
     Record<string, BookAnswer[]>
@@ -457,6 +503,30 @@ function BookDetailPage() {
     [session],
   )
 
+  const loadCompanions = useCallback(
+    async (targetBookId: string) => {
+      if (!session?.user || !targetBookId) return
+      setCompanionLoading(true)
+      try {
+        const [guides, summaries] = await Promise.all([
+          fetchCompanionEntriesByBookId(session.user, targetBookId, 'guide'),
+          fetchCompanionEntriesByBookId(
+            session.user,
+            targetBookId,
+            'summary',
+          ),
+        ])
+        setCompanionEntries({ guide: guides, summary: summaries })
+      } catch (error) {
+        console.error('Failed to load companion entries', error)
+        setCloudError('导读/总结加载失败，请稍后重试。')
+      } finally {
+        setCompanionLoading(false)
+      }
+    },
+    [session],
+  )
+
   const loadChapters = useCallback(
     async (targetBookId: string) => {
       if (!session?.user || !targetBookId) return
@@ -550,6 +620,21 @@ function BookDetailPage() {
     if (!isCloudMode || !book?.id || !session?.user) return
     void loadThinking(book.id)
   }, [book?.id, isCloudMode, loadThinking, session?.user])
+
+  useEffect(() => {
+    setCompanionEntries({ guide: [], summary: [] })
+    setCompanionFormOpen({ guide: false, summary: false })
+    setCompanionDrafts({
+      guide: emptyCompanionDraft(),
+      summary: emptyCompanionDraft(),
+    })
+    setEditingCompanion(null)
+    setEditingCompanionText('')
+    setOpenCompanionMenuId(null)
+    setConfirmingDeleteCompanion(null)
+    if (!isCloudMode || !book?.id || !session?.user) return
+    void loadCompanions(book.id)
+  }, [book?.id, isCloudMode, loadCompanions, session?.user])
 
   useEffect(() => {
     if (!isCloudMode) return
@@ -1759,11 +1844,11 @@ function BookDetailPage() {
 
   const requireCloudUser = (): string | null => {
     if (!isCloudMode) {
-      setCloudError('思考记录需登录后在云端使用，请先切换到云端模式。')
+      setCloudError('该内容需登录后在云端使用，请先切换到云端模式。')
       return null
     }
     if (!session?.user) {
-      setCloudError('请先登录后再使用思考记录。')
+      setCloudError('请先登录后再使用云端笔记。')
       return null
     }
     return session.user.id
@@ -1954,6 +2039,117 @@ function BookDetailPage() {
     } catch (error) {
       console.error(error)
       setCloudError('回答删除失败，请稍后重试。')
+    }
+  }
+
+  const updateCompanionDraft = (
+    kind: CompanionKind,
+    patch: Partial<CompanionDraft>,
+  ) => {
+    setCompanionDrafts((current) => ({
+      ...current,
+      [kind]: { ...current[kind], ...patch },
+    }))
+  }
+
+  const resolveCompanionWriter = (draft: CompanionDraft): string => {
+    const writer =
+      draft.writer === CUSTOM_WRITER_VALUE
+        ? draft.customWriter
+        : draft.writer
+    return writer.trim()
+  }
+
+  const handleCreateCompanion = async (kind: CompanionKind) => {
+    if (!book) return
+    const label = COMPANION_KIND_META[kind].label
+    const draft = companionDrafts[kind]
+    const content = draft.content.trim()
+    const writer = resolveCompanionWriter(draft)
+    if (!content) {
+      setCloudError(`请先填写${label}内容。`)
+      return
+    }
+    if (!writer) {
+      setCloudError('请填写自定义写入端名称。')
+      return
+    }
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    setIsSavingCompanion(true)
+    try {
+      await createCloudCompanionEntry(userId, book.id, kind, writer, content)
+      updateCompanionDraft(kind, { content: '' })
+      setCompanionFormOpen((current) => ({ ...current, [kind]: false }))
+      await loadCompanions(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError(`${label}保存失败，请稍后重试。`)
+    } finally {
+      setIsSavingCompanion(false)
+    }
+  }
+
+  const handleStartEditCompanion = (
+    kind: CompanionKind,
+    entry: CompanionEntry,
+  ) => {
+    setOpenCompanionMenuId(null)
+    setEditingCompanion({ kind, id: entry.id })
+    setEditingCompanionText(entry.content)
+  }
+
+  const handleCancelEditCompanion = () => {
+    setEditingCompanion(null)
+    setEditingCompanionText('')
+  }
+
+  const handleSaveEditCompanion = async () => {
+    if (!book || !editingCompanion) return
+    const label = COMPANION_KIND_META[editingCompanion.kind].label
+    const content = editingCompanionText.trim()
+    if (!content) return
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    try {
+      await updateCloudCompanionEntry(
+        userId,
+        editingCompanion.kind,
+        editingCompanion.id,
+        content,
+      )
+      handleCancelEditCompanion()
+      await loadCompanions(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError(`${label}更新失败，请稍后重试。`)
+    }
+  }
+
+  const handleRequestDeleteCompanion = (
+    kind: CompanionKind,
+    entry: CompanionEntry,
+  ) => {
+    setOpenCompanionMenuId(null)
+    setConfirmingDeleteCompanion({ kind, entry })
+  }
+
+  const handleConfirmDeleteCompanion = async () => {
+    if (!book || !confirmingDeleteCompanion) return
+    const target = confirmingDeleteCompanion
+    const label = COMPANION_KIND_META[target.kind].label
+    setConfirmingDeleteCompanion(null)
+    const userId = requireCloudUser()
+    if (!userId) return
+    setCloudError(null)
+    try {
+      await deleteCloudCompanionEntry(userId, target.kind, target.entry.id)
+      await loadCompanions(book.id)
+    } catch (error) {
+      console.error(error)
+      setCloudError(`${label}删除失败，请稍后重试。`)
     }
   }
 
@@ -2430,6 +2626,200 @@ function BookDetailPage() {
       </>
     ) : null
 
+  const renderCompanionEntry = (
+    kind: CompanionKind,
+    entry: CompanionEntry,
+  ) => {
+    const isEditing =
+      editingCompanion?.kind === kind && editingCompanion.id === entry.id
+    const isMenuOpen = openCompanionMenuId === entry.id
+    return (
+      <article key={entry.id} className="companion-entry">
+        <header className="companion-entry-head">
+          <div className="companion-entry-byline">
+            <span className="companion-writer">
+              {getCompanionWriterLabel(entry.writtenBy)}
+            </span>
+            <span className="companion-date">
+              {formatExcerptDate(entry.createdAt)}
+            </span>
+          </div>
+          <div className="menu">
+            <button
+              type="button"
+              className="kebab-button"
+              aria-haspopup="menu"
+              aria-expanded={isMenuOpen}
+              aria-label={`${COMPANION_KIND_META[kind].label}操作`}
+              onClick={() =>
+                setOpenCompanionMenuId(isMenuOpen ? null : entry.id)
+              }
+            >
+              ⋯
+            </button>
+            {isMenuOpen ? (
+              <div className="menu-panel" role="menu">
+                <button
+                  className="menu-item"
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleStartEditCompanion(kind, entry)}
+                >
+                  编辑
+                </button>
+                <button
+                  className="menu-item danger"
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleRequestDeleteCompanion(kind, entry)}
+                >
+                  删除
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </header>
+        {isEditing ? (
+          <div className="stack">
+            <AutoResizeTextarea
+              className="excerpt-textarea"
+              rows={4}
+              value={editingCompanionText}
+              onChange={(event) =>
+                setEditingCompanionText(event.target.value)
+              }
+            />
+            <div className="form-actions">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => void handleSaveEditCompanion()}
+              >
+                保存
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleCancelEditCompanion}
+              >
+                取消
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="companion-entry-body">
+            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+              {entry.content}
+            </ReactMarkdown>
+          </div>
+        )}
+      </article>
+    )
+  }
+
+  const renderCompanionPanel = (kind: CompanionKind) => {
+    const label = COMPANION_KIND_META[kind].label
+    if (!isCloudMode) {
+      return (
+        <p className="muted thinking-empty">
+          {label}保存在云端，请登录后切换到云端模式使用。
+        </p>
+      )
+    }
+    const entries = companionEntries[kind]
+    const draft = companionDrafts[kind]
+    const isFormOpen = companionFormOpen[kind]
+    const emptyHint =
+      kind === 'guide'
+        ? '还没有导读。开新书前，先请写入端们留下一份阅读辅助吧。'
+        : '还没有总结。合上书之后，写下你们的感想吧。'
+    return (
+      <div className="companion-panel">
+        {isFormOpen ? (
+          <form
+            className="form companion-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleCreateCompanion(kind)
+            }}
+          >
+            <div className="resonance-form-row">
+              <label className="resonance-speaker-field">
+                <span>写入端</span>
+                <select
+                  value={draft.writer}
+                  onChange={(event) =>
+                    updateCompanionDraft(kind, {
+                      writer: event.target.value,
+                    })
+                  }
+                >
+                  {COMPANION_WRITER_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {getCompanionWriterLabel(option)}
+                    </option>
+                  ))}
+                  <option value={CUSTOM_WRITER_VALUE}>自定义…</option>
+                </select>
+              </label>
+              {draft.writer === CUSTOM_WRITER_VALUE ? (
+                <label className="resonance-speaker-field">
+                  <span>自定义写入端</span>
+                  <input
+                    type="text"
+                    value={draft.customWriter}
+                    onChange={(event) =>
+                      updateCompanionDraft(kind, {
+                        customWriter: event.target.value,
+                      })
+                    }
+                    placeholder="如 syzygy-gemini"
+                  />
+                </label>
+              ) : null}
+            </div>
+            <label className="field">
+              <span>{`新写一篇${label}（支持 Markdown）`}</span>
+              <AutoResizeTextarea
+                className="excerpt-textarea"
+                rows={4}
+                value={draft.content}
+                onChange={(event) =>
+                  updateCompanionDraft(kind, {
+                    content: event.target.value,
+                  })
+                }
+                placeholder={
+                  kind === 'guide'
+                    ? '开书之前的阅读辅助：背景、人物表、阅读路线……'
+                    : '合上书之后：印象最深的段落、感想、想说的话……'
+                }
+              />
+            </label>
+            <div className="form-actions">
+              <button
+                type="submit"
+                className="button primary"
+                disabled={isSavingCompanion}
+              >
+                {isSavingCompanion ? '保存中...' : `保存${label}`}
+              </button>
+            </div>
+          </form>
+        ) : null}
+        {companionLoading && entries.length === 0 ? (
+          <p className="muted">加载中...</p>
+        ) : entries.length === 0 ? (
+          <p className="muted">{emptyHint}</p>
+        ) : (
+          <div className="companion-list">
+            {entries.map((entry) => renderCompanionEntry(kind, entry))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (!book && isCloudMode && cloudLoading) {
     return (
       <section className="stack">
@@ -2725,6 +3115,34 @@ function BookDetailPage() {
                 思考
                 <span className="note-tab-count">{questions.length}</span>
               </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeNoteTab === 'guide'}
+                className={`note-tab${
+                  activeNoteTab === 'guide' ? ' active' : ''
+                }`}
+                onClick={() => setActiveNoteTab('guide')}
+              >
+                导读
+                <span className="note-tab-count">
+                  {companionEntries.guide.length}
+                </span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeNoteTab === 'summary'}
+                className={`note-tab${
+                  activeNoteTab === 'summary' ? ' active' : ''
+                }`}
+                onClick={() => setActiveNoteTab('summary')}
+              >
+                总结
+                <span className="note-tab-count">
+                  {companionEntries.summary.length}
+                </span>
+              </button>
             </div>
             {activeNoteTab === 'excerpts' ? (
               <button
@@ -2735,6 +3153,22 @@ function BookDetailPage() {
               >
                 {isExcerptFormOpen ? '收起' : '＋ 新增'}
               </button>
+            ) : activeNoteTab === 'guide' || activeNoteTab === 'summary' ? (
+              isCloudMode ? (
+                <button
+                  type="button"
+                  className="button ghost note-add-toggle"
+                  aria-expanded={companionFormOpen[activeNoteTab]}
+                  onClick={() =>
+                    setCompanionFormOpen((current) => ({
+                      ...current,
+                      [activeNoteTab]: !current[activeNoteTab],
+                    }))
+                  }
+                >
+                  {companionFormOpen[activeNoteTab] ? '收起' : '＋ 新增'}
+                </button>
+              ) : null
             ) : null}
           </div>
           {activeNoteTab === 'excerpts' ? (
@@ -2794,17 +3228,19 @@ function BookDetailPage() {
                       关闭
                     </button>
                   </div>
-                  <AutoResizeTextarea
-                    ref={fullscreenTextareaRef}
-                    className="excerpt-textarea excerpt-textarea-full"
-                    value={newExcerptContent}
-                    maxHeight="60vh"
-                    onChange={(event) =>
-                      setNewExcerptContent(event.target.value)
-                    }
-                    placeholder="记录喜欢的句子或段落"
-                  />
-                  {renderExcerptFormControls()}
+                  <div className="excerpt-modal-body excerpt-editor-body">
+                    <AutoResizeTextarea
+                      ref={fullscreenTextareaRef}
+                      className="excerpt-textarea excerpt-textarea-full"
+                      value={newExcerptContent}
+                      maxHeight="60vh"
+                      onChange={(event) =>
+                        setNewExcerptContent(event.target.value)
+                      }
+                      placeholder="记录喜欢的句子或段落"
+                    />
+                    {renderExcerptFormControls()}
+                  </div>
                   <div className="form-actions">
                     <button
                       type="submit"
@@ -2845,6 +3281,8 @@ function BookDetailPage() {
             </ul>
           )}
           </>
+          ) : activeNoteTab === 'guide' || activeNoteTab === 'summary' ? (
+            renderCompanionPanel(activeNoteTab)
           ) : !isCloudMode ? (
             <p className="muted thinking-empty">
               思考记录保存在云端，请登录后切换到云端模式使用。
@@ -3820,6 +4258,63 @@ function BookDetailPage() {
                 type="button"
                 className="button danger"
                 onClick={handleConfirmDeleteAnswer}
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {confirmingDeleteCompanion ? (
+        <div
+          className="confirm-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`确认删除${
+            COMPANION_KIND_META[confirmingDeleteCompanion.kind].label
+          }`}
+          onClick={() => setConfirmingDeleteCompanion(null)}
+        >
+          <div
+            className="confirm-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="confirm-modal-header">
+              <h4>
+                {`删除这篇${
+                  COMPANION_KIND_META[confirmingDeleteCompanion.kind]
+                    .label
+                }？`}
+              </h4>
+            </header>
+            <div className="stack">
+              <p>删除后将无法恢复。</p>
+              <p className="muted companion-delete-preview">
+                {`${getCompanionWriterLabel(
+                  confirmingDeleteCompanion.entry.writtenBy,
+                )} · ${
+                  confirmingDeleteCompanion.entry.content.length > 40
+                    ? `${confirmingDeleteCompanion.entry.content.slice(
+                        0,
+                        40,
+                      )}…`
+                    : confirmingDeleteCompanion.entry.content
+                }`}
+              </p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="button ghost"
+                autoFocus
+                onClick={() => setConfirmingDeleteCompanion(null)}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="button danger"
+                onClick={handleConfirmDeleteCompanion}
               >
                 确认删除
               </button>
