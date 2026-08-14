@@ -1735,14 +1735,16 @@ textarea {
 .companion-list {
   display: flex;
   flex-direction: column;
+  gap: 0.9rem;
 }
 
+/* 每个写入端的内容独立成卡，可点击署名行收起/展开 */
 .companion-entry {
-  padding: 1.35rem 0.25rem;
-}
-
-.companion-entry + .companion-entry {
-  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: var(--box-shadow-card);
+  padding: 1rem 1.1rem;
 }
 
 .companion-entry-head {
@@ -1750,7 +1752,40 @@ textarea {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.85rem;
+}
+
+.companion-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.companion-chevron {
+  display: inline-block;
+  margin-top: 0.05rem;
+  transition: transform var(--transition-speed);
+  color: var(--color-text-secondary);
+}
+
+.companion-chevron.open {
+  transform: rotate(90deg);
+}
+
+.companion-toggle-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .companion-entry-byline {
@@ -1761,7 +1796,7 @@ textarea {
   min-width: 0;
 }
 
-/* 杂志 kicker：写入端署名，前置一段短横线 */
+/* 杂志 kicker：写入端署名（折叠箭头充当前导记号） */
 .companion-writer {
   display: inline-flex;
   align-items: center;
@@ -1773,14 +1808,6 @@ textarea {
   color: var(--color-accent-hover, var(--color-accent-primary, #175cd3));
 }
 
-.companion-writer::before {
-  content: '';
-  width: 1.4em;
-  height: 2px;
-  background: currentColor;
-  flex-shrink: 0;
-}
-
 .companion-date {
   font-size: 0.75rem;
   color: var(--color-text-secondary);
@@ -1788,8 +1815,27 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
-/* 正文：衬线、疏朗行距，接近杂志内文 */
+/* 折叠态：正文只露一行标题预览 */
+.companion-preview {
+  font-family: Georgia, 'Times New Roman', 'Songti SC', 'Noto Serif SC',
+    serif;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.companion-edit {
+  margin-top: 0.85rem;
+}
+
+/* 正文：衬线、疏朗行距，接近杂志内文；展开后与署名行以发丝线分隔 */
 .companion-entry-body {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-border);
   font-family: Georgia, 'Times New Roman', 'Songti SC', 'Noto Serif SC',
     serif;
   font-size: 0.98rem;
