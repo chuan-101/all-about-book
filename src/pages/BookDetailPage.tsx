@@ -144,6 +144,21 @@ const emptyCompanionDraft = (): CompanionDraft => ({
   content: '',
 })
 
+// 折叠态的导读/总结卡片只露一行预览：取正文第一行非空文本，
+// 剥掉 Markdown 记号，长文标题（如「Fable端导读：……」）直接当卡片题签用。
+const getCompanionPreview = (content: string): string => {
+  for (const rawLine of content.split('\n')) {
+    const line = rawLine
+      .replace(/^[#>\s]+/, '')
+      .replace(/^[-*+]\s+/, '')
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[*_`~]/g, '')
+      .trim()
+    if (line) return line
+  }
+  return ''
+}
+
 const sortDiscussionEntries = (
   entries: DiscussionEntry[],
 ): DiscussionEntry[] =>
@@ -302,6 +317,9 @@ function BookDetailPage() {
   const [openCompanionMenuId, setOpenCompanionMenuId] = useState<
     string | null
   >(null)
+  const [expandedCompanionIds, setExpandedCompanionIds] = useState<
+    Set<string>
+  >(() => new Set())
   const [confirmingDeleteCompanion, setConfirmingDeleteCompanion] =
     useState<{ kind: CompanionKind; entry: CompanionEntry } | null>(null)
   const [questions, setQuestions] = useState<BookQuestion[]>([])
@@ -631,6 +649,7 @@ function BookDetailPage() {
     setEditingCompanion(null)
     setEditingCompanionText('')
     setOpenCompanionMenuId(null)
+    setExpandedCompanionIds(new Set())
     setConfirmingDeleteCompanion(null)
     if (!isCloudMode || !book?.id || !session?.user) return
     void loadCompanions(book.id)
@@ -2091,6 +2110,18 @@ function BookDetailPage() {
     }
   }
 
+  const toggleCompanionExpand = (id: string) => {
+    setExpandedCompanionIds((current) => {
+      const next = new Set(current)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
   const handleStartEditCompanion = (
     kind: CompanionKind,
     entry: CompanionEntry,
@@ -2098,6 +2129,13 @@ function BookDetailPage() {
     setOpenCompanionMenuId(null)
     setEditingCompanion({ kind, id: entry.id })
     setEditingCompanionText(entry.content)
+    // 编辑态强制展开，保存后也维持展开，方便核对刚改完的内容
+    setExpandedCompanionIds((current) => {
+      if (current.has(entry.id)) return current
+      const next = new Set(current)
+      next.add(entry.id)
+      return next
+    })
   }
 
   const handleCancelEditCompanion = () => {
@@ -2633,17 +2671,37 @@ function BookDetailPage() {
     const isEditing =
       editingCompanion?.kind === kind && editingCompanion.id === entry.id
     const isMenuOpen = openCompanionMenuId === entry.id
+    const isExpanded = isEditing || expandedCompanionIds.has(entry.id)
+    const preview = getCompanionPreview(entry.content)
     return (
       <article key={entry.id} className="companion-entry">
         <header className="companion-entry-head">
-          <div className="companion-entry-byline">
-            <span className="companion-writer">
-              {getCompanionWriterLabel(entry.writtenBy)}
+          <button
+            type="button"
+            className="companion-toggle"
+            aria-expanded={isExpanded}
+            onClick={() => toggleCompanionExpand(entry.id)}
+          >
+            <span
+              className={`companion-chevron${isExpanded ? ' open' : ''}`}
+              aria-hidden="true"
+            >
+              ▸
             </span>
-            <span className="companion-date">
-              {formatExcerptDate(entry.createdAt)}
+            <span className="companion-toggle-main">
+              <span className="companion-entry-byline">
+                <span className="companion-writer">
+                  {getCompanionWriterLabel(entry.writtenBy)}
+                </span>
+                <span className="companion-date">
+                  {formatExcerptDate(entry.createdAt)}
+                </span>
+              </span>
+              {!isExpanded && preview ? (
+                <span className="companion-preview">{preview}</span>
+              ) : null}
             </span>
-          </div>
+          </button>
           <div className="menu">
             <button
               type="button"
@@ -2679,40 +2737,42 @@ function BookDetailPage() {
             ) : null}
           </div>
         </header>
-        {isEditing ? (
-          <div className="stack">
-            <AutoResizeTextarea
-              className="excerpt-textarea"
-              rows={4}
-              value={editingCompanionText}
-              onChange={(event) =>
-                setEditingCompanionText(event.target.value)
-              }
-            />
-            <div className="form-actions">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => void handleSaveEditCompanion()}
-              >
-                保存
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={handleCancelEditCompanion}
-              >
-                取消
-              </Button>
+        {isExpanded ? (
+          isEditing ? (
+            <div className="stack companion-edit">
+              <AutoResizeTextarea
+                className="excerpt-textarea"
+                rows={4}
+                value={editingCompanionText}
+                onChange={(event) =>
+                  setEditingCompanionText(event.target.value)
+                }
+              />
+              <div className="form-actions">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => void handleSaveEditCompanion()}
+                >
+                  保存
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={handleCancelEditCompanion}
+                >
+                  取消
+                </Button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="companion-entry-body">
-            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-              {entry.content}
-            </ReactMarkdown>
-          </div>
-        )}
+          ) : (
+            <div className="companion-entry-body">
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                {entry.content}
+              </ReactMarkdown>
+            </div>
+          )
+        ) : null}
       </article>
     )
   }
