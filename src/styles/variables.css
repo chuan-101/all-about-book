@@ -154,57 +154,55 @@
   --color-status-reading-bg: rgba(233, 150, 180, 0.18);
 }
 
-/* === THEME D: Midnight Press (夜间报刊 / 小票风) === */
-[data-theme="midnight-press"] {
-  /* === Palette: 台灯下的热敏小票 —— 炭灰桌面 + 浅一档的票面，暖白墨 === */
+/* === THEME D: Paper Press (旧报刊亭 / 做旧纸张) === */
+[data-theme="paper-press"] {
+  /* === Palette: 旧纸、褐墨、一枚红印 === */
+  --color-bg-main: #e8dfcd;
+  --color-bg-card: #f5efe2;
+  --color-bg-input: #fbf7ee;
 
-  /* Background: warm charcoal desk; receipts sit one step lighter */
-  --color-bg-main: #1c1b1a;
-  --color-bg-card: #737373;
-  --color-bg-input: #2b2927;
+  --color-text-primary: #3b322a;
+  --color-text-secondary: #6b5f52;
+  --color-text-muted: #958a7c;
 
-  /* Text: warm receipt white, higher contrast than before */
-  --color-text-primary: #f7f4ee;
-  --color-text-secondary: #e4dfd6;
-  --color-text-muted: #cdc7bc;
+  /* Accents: brick-red stamp, everything else stays ink & paper */
+  --color-accent-primary: #eadfca;
+  --color-accent-hover: #a63a2f;
+  --color-accent-secondary: #c9b79a;
 
-  /* Accents: monochrome + one faded amber, like thermal-printer ink */
-  --color-accent-primary: #c9c2b4;
-  --color-accent-hover: #f2d39c;
-  --color-accent-secondary: #8f897e;
-
-  /* Borders: dashed tear-lines do the work */
-  --color-border: #8c8c8c;
-  --mp-rule: #a8a39a;
-  --mp-amber: #f2d39c;
+  --color-border: #d3c5ab;
+  --pp-rule: #b9a98c;
+  --pp-red: #a63a2f;
   --dropdown-border: 1px solid var(--color-border);
   --separator-groove: none;
 
-  /* Shape: crisp print edges */
-  --border-radius-card: 0;
-  --border-radius-btn: 2px;
+  --border-radius-card: 2px;
+  --border-radius-btn: 3px;
 
-  --box-shadow-card: none;
+  /* Stacked sheets: two pages peeking out behind the card */
+  --box-shadow-card: 3px 3px 0 -1px #f1e9d9, 3px 3px 0 0 #d3c5ab,
+    6px 6px 0 -1px #ede4d2, 6px 6px 0 0 #d3c5ab,
+    0 10px 18px rgba(92, 70, 40, 0.12);
   --box-shadow-btn: none;
   --box-shadow-input: none;
 
-  /* Texture: faint grain, like a desk under a lamp */
-  --bg-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  /* Texture: paper fibres */
+  --bg-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.07'/%3E%3C/svg%3E");
 
-  /* Typography: receipt digits (mono latin) + serif CJK body */
-  --font-family-heading: 'Courier New', Courier, 'Noto Serif SC', 'Songti SC',
-    monospace;
+  /* Typography: serif everything, like a printed periodical */
+  --font-family-heading: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC',
+    serif;
   --font-family-base: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC',
     'SimSun', serif;
 
-  /* Contribution Graph: thermal ink density */
-  --color-graph-l1: #363330;
-  --color-graph-l2: #5a5650;
-  --color-graph-l3: #9a948a;
-  --color-graph-l4: #f2d39c;
+  /* Contribution Graph: faded ink → red stamp */
+  --color-graph-l1: #ebe1cd;
+  --color-graph-l2: #dcc6a8;
+  --color-graph-l3: #c38c72;
+  --color-graph-l4: #a63a2f;
 
-  --color-status-reading: #f2d39c;
-  --color-status-reading-bg: rgba(242, 211, 156, 0.14);
+  --color-status-reading: #a63a2f;
+  --color-status-reading-bg: rgba(166, 58, 47, 0.1);
 }
 
 /* === THEME E: Cotton Candy (Retro-Cute Maximalist) === */

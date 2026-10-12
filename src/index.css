@@ -95,7 +95,7 @@ body {
   padding-top: 8px;
 }
 
-[data-theme='midnight-press'] .card .card-actions {
+[data-theme='paper-press'] .card .card-actions {
   display: flex;
   width: 100%;
   gap: 12px;
@@ -110,8 +110,8 @@ body {
   min-width: 0;
 }
 
-[data-theme='midnight-press'] .card .card-actions .btn,
-[data-theme='midnight-press'] .card .card-actions a {
+[data-theme='paper-press'] .card .card-actions .btn,
+[data-theme='paper-press'] .card .card-actions a {
   flex: 1;
   justify-content: center;
   text-align: center;
@@ -812,7 +812,7 @@ textarea {
   --discussion-card-border-style: solid;
 }
 
-[data-theme='midnight-press'] .discussion-card {
+[data-theme='paper-press'] .discussion-card {
   --discussion-card-radius: 2px;
   --discussion-card-border-style: solid;
 }
@@ -3952,98 +3952,6 @@ textarea {
   }
 }
 
-/* ============================================================
-   Midnight Press: 深色适配 —— 共享样式中的浅色底假设在此校正。
-   语义色（成功/警告/错误）统一降饱和，保持雾感。
-   ============================================================ */
-
-[data-theme='midnight-press'] .bookshelf-pinned {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-[data-theme='midnight-press'] .bookshelf-search input:focus {
-  outline: 2px solid rgba(214, 211, 204, 0.25);
-}
-
-[data-theme='midnight-press'] .chat-bubble-content code {
-  background: rgba(255, 255, 255, 0.07);
-}
-
-[data-theme='midnight-press'] .chat-bubble-content pre {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-[data-theme='midnight-press'] .chat-item.mine .chat-bubble .chat-bubble-content code {
-  background: rgba(0, 0, 0, 0.12);
-}
-
-[data-theme='midnight-press'] .chat-item.mine .chat-bubble .chat-bubble-content pre {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-[data-theme='midnight-press'] .notice.success {
-  background: rgba(88, 132, 102, 0.16);
-  color: #a8c5b2;
-}
-
-[data-theme='midnight-press'] .notice.error {
-  background: rgba(178, 96, 88, 0.16);
-  color: #d2a49e;
-}
-
-[data-theme='midnight-press'] .notice.warning {
-  background: rgba(178, 146, 88, 0.14);
-  color: #cdbb98;
-}
-
-[data-theme='midnight-press'] .notice.info {
-  background: rgba(255, 255, 255, 0.06);
-  color: #b0ada6;
-}
-
-[data-theme='midnight-press'] .status-badge.status-open {
-  color: #cdbb98;
-  background: rgba(178, 146, 88, 0.12);
-  border-color: rgba(178, 146, 88, 0.35);
-}
-
-[data-theme='midnight-press'] .status-badge.status-answered {
-  color: #a8c5b2;
-  background: rgba(88, 132, 102, 0.12);
-  border-color: rgba(88, 132, 102, 0.35);
-}
-
-[data-theme='midnight-press'] .chip {
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--color-text-secondary);
-}
-
-[data-theme='midnight-press'] .button.danger {
-  background: rgba(178, 96, 88, 0.16);
-  color: #d2a49e;
-  border-color: rgba(178, 96, 88, 0.4);
-}
-
-[data-theme='midnight-press'] .answer-action.danger {
-  color: #c98b84;
-}
-
-[data-theme='midnight-press'] .menu-panel {
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
-}
-
-/* 书架搁板：亮灰高光在深色下过于醒目，压暗成雾灰 */
-[data-theme='midnight-press'] .dashboard-bookshelf-section {
-  --dashboard-bookshelf-board-highlight: #55534e;
-  --dashboard-bookshelf-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
-}
-
-[data-theme='midnight-press'] .excerpt-modal-backdrop,
-[data-theme='midnight-press'] .settings-modal-backdrop,
-[data-theme='midnight-press'] .confirm-modal-backdrop {
-  background: rgba(0, 0, 0, 0.6);
-}
-
 /* === Y2K Homepage: 千禧小站 —— 小窗口、凸起按钮、任务栏 === */
 [data-theme='y2k-homepage'] ::selection {
   background: #f3bfd2;
@@ -4220,120 +4128,168 @@ textarea {
   border-radius: 0;
 }
 
-/* === Midnight Press: 午夜报亭 —— 台灯下的热敏小票 === */
-[data-theme='midnight-press'] body {
+/* === Paper Press: 旧报刊亭 —— 做旧纸张、叠放的文件、红色印章 === */
+[data-theme='paper-press'] body {
   background-image: var(--bg-texture);
   background-repeat: repeat;
+  counter-reset: pp-sheet;
 }
 
-[data-theme='midnight-press'] ::selection {
-  background: rgba(226, 191, 134, 0.3);
+[data-theme='paper-press'] ::selection {
+  background: rgba(166, 58, 47, 0.18);
   color: var(--color-text-primary);
 }
 
-[data-theme='midnight-press'] .header {
-  border-bottom: 1px dashed var(--mp-rule);
+[data-theme='paper-press'] .header {
+  background: var(--color-bg-card);
+  border-bottom: 3px double var(--pp-rule);
 }
 
-[data-theme='midnight-press'] .title {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1.25rem;
+[data-theme='paper-press'] .title {
   font-style: normal;
-  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
-[data-theme='midnight-press'] .nav a {
-  font-size: 0.95rem;
+[data-theme='paper-press'] .nav a {
+  font-size: 1rem;
   letter-spacing: 0.12em;
 }
 
-[data-theme='midnight-press'] .nav a.active {
+[data-theme='paper-press'] .nav a.active {
   color: var(--color-text-primary);
-  border-bottom: 2px solid var(--mp-amber);
+  border-bottom: 2px solid var(--pp-red);
 }
 
-/* 卡片 = 一张小票：顶部虚线撕口，底部锯齿 */
-[data-theme='midnight-press'] .card {
-  border: 0;
-  border-bottom: 10px solid transparent;
-  border-radius: 0;
-  background:
-    linear-gradient(to bottom right, var(--color-bg-card) 50%, transparent 50%)
-      left bottom / 14px 10px repeat-x border-box,
-    linear-gradient(to bottom left, var(--color-bg-card) 50%, transparent 50%)
-      left bottom / 14px 10px repeat-x border-box,
-    repeating-linear-gradient(90deg, var(--mp-rule) 0 6px, transparent 6px 10px)
-      left top / 100% 1px no-repeat padding-box,
-    var(--color-bg-card) padding-box;
+/* 卡片 = 一叠纸：身后压着两张，左上角夹一枚编号的文件夹标签 */
+[data-theme='paper-press'] .card {
+  position: relative;
+  margin-top: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  background: var(--color-bg-card);
+  box-shadow: var(--box-shadow-card);
+  counter-increment: pp-sheet;
+}
+
+[data-theme='paper-press'] .card::before {
+  content: '№ ' counter(pp-sheet, decimal-leading-zero);
+  position: absolute;
+  top: -19px;
+  left: 14px;
+  height: 18px;
+  padding: 0 14px 0 10px;
+  border: 1px solid var(--color-border);
+  border-bottom: 0;
+  border-radius: 3px 10px 0 0;
+  background: var(--color-bg-card);
+  color: var(--pp-red);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 18px;
+  letter-spacing: 0.06em;
+}
+
+/* 卡片里的卡片不再挂标签、不再叠纸 */
+[data-theme='paper-press'] .card .card {
+  margin-top: 0;
+  box-shadow: none;
+  counter-increment: none;
+}
+
+[data-theme='paper-press'] .card .card::before {
+  content: none;
+}
+
+[data-theme='paper-press'] .dashboard-date {
+  font-family: 'Playfair Display', 'Noto Serif SC', 'Songti SC', serif;
+  letter-spacing: 0.12em;
+}
+
+[data-theme='paper-press'] .dashboard-date::after {
+  content: ' №';
+  color: var(--pp-red);
+  font-size: 0.6em;
+  vertical-align: super;
+}
+
+[data-theme='paper-press'] .dashboard-divider {
+  border-bottom: 3px double var(--pp-rule);
+}
+
+[data-theme='paper-press'] .button,
+[data-theme='paper-press'] .button.ghost,
+[data-theme='paper-press'] .button.outline,
+[data-theme='paper-press'] .action-button,
+[data-theme='paper-press'] .collapsible-header {
+  border: 1px solid var(--pp-rule);
+  border-radius: 3px;
+  background: var(--color-bg-input);
+  color: var(--color-text-primary);
   box-shadow: none;
 }
 
-[data-theme='midnight-press'] .dashboard-date {
-  font-size: 1.5rem;
-  color: var(--color-text-primary);
-  letter-spacing: 0.1em;
+/* 主按钮 = 红色印章 */
+[data-theme='paper-press'] .button.primary {
+  border: 1px solid #8c2f26;
+  background: var(--pp-red);
+  color: #fbf3e6;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
-[data-theme='midnight-press'] .dashboard-date::before {
-  content: '* ';
-  color: var(--color-text-muted);
+[data-theme='paper-press'] .collapsible-header {
+  border-style: dashed;
 }
 
-[data-theme='midnight-press'] .dashboard-date::after {
-  content: ' *';
-  color: var(--color-text-muted);
-}
-
-[data-theme='midnight-press'] .dashboard-divider {
-  border: 0;
-  height: 1px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--mp-rule) 0 6px,
-    transparent 6px 10px
-  );
-}
-
-[data-theme='midnight-press'] .collapsible-header,
-[data-theme='midnight-press'] .button,
-[data-theme='midnight-press'] .button.outline,
-[data-theme='midnight-press'] .action-button {
-  border: 1px dashed var(--mp-rule);
-  background: transparent;
-  color: var(--color-text-primary);
-}
-
-[data-theme='midnight-press'] .button.primary {
-  border: 1px solid var(--color-text-primary);
-  background: var(--color-text-primary);
-  color: var(--color-bg-main);
-}
-
-[data-theme='midnight-press'] .field input,
-[data-theme='midnight-press'] .field select,
-[data-theme='midnight-press'] .field textarea,
-[data-theme='midnight-press'] .bookshelf-search input {
-  border: 0;
-  border-bottom: 1px dashed var(--mp-rule);
-  border-radius: 0;
+[data-theme='paper-press'] .field input,
+[data-theme='paper-press'] .field select,
+[data-theme='paper-press'] .field textarea,
+[data-theme='paper-press'] .bookshelf-search input {
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
   background: var(--color-bg-input);
 }
 
-[data-theme='midnight-press'] .bottom-nav {
-  background: var(--color-bg-main);
-  border-top: 1px dashed var(--mp-rule);
+[data-theme='paper-press'] .bottom-nav {
+  background: var(--color-bg-card);
+  border-top: 3px double var(--pp-rule);
 }
 
-[data-theme='midnight-press'] .bottom-nav-item.active {
-  color: var(--mp-amber);
+[data-theme='paper-press'] .bottom-nav-item.active {
+  color: var(--pp-red);
 }
 
-[data-theme='midnight-press'] .detail-spine {
-  border-radius: 0;
-  background: #ebe6dc;
-  color: #2f2c29;
+/* 无封面时：红色布面书脊 */
+[data-theme='paper-press'] .detail-spine {
+  border-radius: 2px;
+  background: var(--pp-red);
+  color: #fbf3e6;
 }
 
-[data-theme='midnight-press'] .heatmap-cell {
+[data-theme='paper-press'] .heatmap-cell {
   border-radius: 1px;
+}
+
+/* 默认的蓝色小标签在旧纸上跳色，改为褐墨 */
+[data-theme='paper-press'] .chip,
+[data-theme='paper-press'] .note-tab.active .note-tab-count {
+  background: #ece2cf;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+/* 书架页折叠的「添加新书」表单不占编号、不挂标签 */
+[data-theme='paper-press'] .book-form {
+  margin-top: 0;
+  counter-increment: none;
+}
+
+[data-theme='paper-press'] .book-form::before {
+  content: none;
+}
+
+[data-theme='paper-press'] .chip.status-badge-reading {
+  background: var(--color-status-reading-bg);
+  color: var(--pp-red);
+  border-color: rgba(166, 58, 47, 0.45);
 }
