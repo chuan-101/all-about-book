@@ -10,7 +10,7 @@ import {
 type Theme =
   | 'retro-cafe'
   | 'retro-keyboard'
-  | 'pixel-dream'
+  | 'y2k-homepage'
   | 'midnight-press'
   | 'cotton-candy'
 
@@ -25,7 +25,7 @@ const DEFAULT_THEME: Theme = 'retro-cafe'
 const AVAILABLE_THEMES: Theme[] = [
   'retro-cafe',
   'retro-keyboard',
-  'pixel-dream',
+  'y2k-homepage',
   'midnight-press',
   'cotton-candy',
 ]
@@ -33,6 +33,7 @@ const AVAILABLE_THEMES: Theme[] = [
 /* 已下线主题 → 接替主题 */
 const LEGACY_THEME_MAP: Record<string, Theme> = {
   'pixel-farm': 'midnight-press',
+  'pixel-dream': 'y2k-homepage',
 }
 
 const isTheme = (value: string | null): value is Theme =>

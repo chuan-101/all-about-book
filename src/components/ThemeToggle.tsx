@@ -3,7 +3,7 @@ import { useTheme } from '../lib/ThemeContext'
 const themeLabels = {
   'retro-cafe': '昭和喫茶店',
   'retro-keyboard': '复古键盘',
-  'pixel-dream': '像素梦境',
+  'y2k-homepage': '千禧小站',
   'midnight-press': '午夜报亭',
   'cotton-candy': '棉花糖',
 }
@@ -13,7 +13,7 @@ function ThemeToggle() {
   const themeOrder = [
     'retro-cafe',
     'retro-keyboard',
-    'pixel-dream',
+    'y2k-homepage',
     'midnight-press',
     'cotton-candy',
   ] as const
