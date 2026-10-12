@@ -30,23 +30,6 @@ body {
   overflow-x: hidden;
 }
 
-[data-theme='pixel-dream'] body {
-  background-image: var(--bg-texture);
-  background-repeat: repeat;
-}
-
-[data-theme='pixel-dream'] .card,
-[data-theme='pixel-dream'] .btn,
-[data-theme='pixel-dream'] input,
-[data-theme='pixel-dream'] .bottom-nav {
-  border: 3px solid var(--color-border);
-}
-
-[data-theme='pixel-dream'] .btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px #543675;
-}
-
 /* === Midnight Press: 夜间报刊 —— 细线、留白、雾感灰阶 === */
 [data-theme='midnight-press'] body {
   background-image: var(--bg-texture);
@@ -855,8 +838,8 @@ textarea {
   --discussion-card-border-style: solid;
 }
 
-[data-theme='pixel-dream'] .discussion-card {
-  --discussion-card-radius: 8px;
+[data-theme='y2k-homepage'] .discussion-card {
+  --discussion-card-radius: 0;
   --discussion-card-border-style: solid;
 }
 
@@ -4080,4 +4063,180 @@ textarea {
 [data-theme='midnight-press'] .settings-modal-backdrop,
 [data-theme='midnight-press'] .confirm-modal-backdrop {
   background: rgba(0, 0, 0, 0.6);
+}
+
+/* === Y2K Homepage: 千禧小站 —— 小窗口、凸起按钮、任务栏 === */
+[data-theme='y2k-homepage'] ::selection {
+  background: #f3bfd2;
+  color: var(--color-text-primary);
+}
+
+[data-theme='y2k-homepage'] :focus-visible {
+  outline: 1px dotted var(--color-text-primary);
+  outline-offset: 2px;
+}
+
+[data-theme='y2k-homepage'] {
+  scrollbar-color: #efc3d3 #f6e2ea;
+}
+
+[data-theme='y2k-homepage'] ::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+[data-theme='y2k-homepage'] ::-webkit-scrollbar-track {
+  background: #f6e2ea;
+}
+
+[data-theme='y2k-homepage'] ::-webkit-scrollbar-thumb {
+  background: #f3c7d6;
+  border: 1px solid var(--y2k-bevel-darker);
+  box-shadow: var(--box-shadow-btn);
+}
+
+[data-theme='y2k-homepage'] .header {
+  background: linear-gradient(180deg, #fff7fa 0%, #f8e4ec 100%);
+  border-bottom: 1px solid var(--y2k-bevel-darker);
+  box-shadow: inset 0 -1px 0 var(--y2k-bevel-light);
+}
+
+[data-theme='y2k-homepage'] .title {
+  font-family: Georgia, 'Times New Roman', 'Noto Serif SC', serif;
+  color: #d27a9c;
+  text-shadow: 1px 1px 0 #ffffff, 2px 2px 0 #ecc6d5;
+}
+
+[data-theme='y2k-homepage'] .nav a.active {
+  color: var(--color-accent-hover);
+  border-bottom: 2px dotted var(--color-accent-hover);
+}
+
+/* 卡片 = 一扇小窗口：粉色标题栏 + 右上角三颗窗口按钮，不动内边距 */
+[data-theme='y2k-homepage'] .card {
+  border: 0;
+  border-top: var(--y2k-titlebar-h) solid transparent;
+  border-radius: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg width='46' height='14' viewBox='0 0 46 14' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fdf3f7' stroke='%23a97a8f'%3E%3Crect x='0.5' y='0.5' width='13' height='13'/%3E%3Crect x='16.5' y='0.5' width='13' height='13'/%3E%3Crect x='32.5' y='0.5' width='13' height='13'/%3E%3C/g%3E%3Cg stroke='%235b3a4b' stroke-width='1.4' fill='none'%3E%3Cpath d='M4 10h6'/%3E%3Crect x='20' y='4' width='6' height='6'/%3E%3Cpath d='M36 4l6 6M42 4l-6 6'/%3E%3C/g%3E%3C/svg%3E")
+      right 3px top 3px / 46px 14px no-repeat border-box,
+    url("data:image/svg+xml,%3Csvg width='12' height='11' viewBox='0 0 12 11' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 10.5 C2 7.5 0.5 5.5 0.5 3.4 A2.9 2.9 0 0 1 6 2.2 A2.9 2.9 0 0 1 11.5 3.4 C11.5 5.5 10 7.5 6 10.5Z' fill='%23ffffff' stroke='%23c86f93' stroke-width='0.8'/%3E%3C/svg%3E")
+      left 6px top 4px / 12px 11px no-repeat border-box,
+    var(--y2k-titlebar) left top / 100% var(--y2k-titlebar-h) no-repeat
+      border-box,
+    var(--color-bg-card) padding-box;
+  box-shadow: 0 0 0 1px var(--y2k-bevel-darker),
+    3px 3px 0 1px rgba(169, 122, 143, 0.22),
+    inset 1px 1px 0 var(--y2k-bevel-light),
+    inset -1px -1px 0 var(--y2k-bevel-dark);
+}
+
+/* 凸起按钮 */
+[data-theme='y2k-homepage'] .button,
+[data-theme='y2k-homepage'] .button.primary,
+[data-theme='y2k-homepage'] .button.ghost,
+[data-theme='y2k-homepage'] .button.outline,
+[data-theme='y2k-homepage'] .action-button,
+[data-theme='y2k-homepage'] .collapsible-header {
+  border: 1px solid var(--y2k-bevel-darker);
+  border-radius: 0;
+  background: linear-gradient(180deg, #fffafc 0%, #f8e6ee 100%);
+  color: var(--color-text-primary);
+  box-shadow: var(--box-shadow-btn);
+}
+
+[data-theme='y2k-homepage'] .button.primary {
+  background: linear-gradient(180deg, #fbe1ea 0%, #f2bfd1 100%);
+}
+
+[data-theme='y2k-homepage'] .button:active,
+[data-theme='y2k-homepage'] .action-button:active,
+[data-theme='y2k-homepage'] .collapsible-header:active {
+  transform: translate(1px, 1px);
+  box-shadow: inset 1px 1px 0 var(--y2k-bevel-dark),
+    inset -1px -1px 0 var(--y2k-bevel-light);
+}
+
+[data-theme='y2k-homepage'] .collapsible-header:hover {
+  box-shadow: var(--box-shadow-btn);
+}
+
+/* 凹陷输入框 */
+[data-theme='y2k-homepage'] .field input,
+[data-theme='y2k-homepage'] .field select,
+[data-theme='y2k-homepage'] .field textarea,
+[data-theme='y2k-homepage'] .bookshelf-search input {
+  border: 1px solid var(--y2k-bevel-darker);
+  border-radius: 0;
+  background: var(--color-bg-input);
+  box-shadow: var(--box-shadow-input);
+}
+
+[data-theme='y2k-homepage'] .menu-panel,
+[data-theme='y2k-homepage'] .confirm-modal {
+  border: 1px solid var(--y2k-bevel-darker);
+  border-radius: 0;
+  box-shadow: var(--box-shadow-card);
+}
+
+/* 底部导航 = 任务栏 */
+[data-theme='y2k-homepage'] .bottom-nav {
+  background: linear-gradient(180deg, #fbe9f0 0%, #f4d6e1 100%);
+  border-top: 1px solid var(--y2k-bevel-light);
+  box-shadow: 0 -1px 0 var(--y2k-bevel-darker);
+}
+
+[data-theme='y2k-homepage'] .bottom-nav-item {
+  border: 1px solid transparent;
+}
+
+[data-theme='y2k-homepage'] .bottom-nav-item.active {
+  color: var(--color-accent-hover);
+  background: #f9e3eb;
+  border-color: var(--y2k-bevel-darker);
+  box-shadow: inset 1px 1px 0 var(--y2k-bevel-dark),
+    inset -1px -1px 0 var(--y2k-bevel-light);
+}
+
+/* 刊头：闪闪的站名 */
+[data-theme='y2k-homepage'] .dashboard-date {
+  font-size: 1.5rem;
+  color: #c8668c;
+  letter-spacing: 0.1em;
+  text-shadow: 1px 1px 0 #ffffff, 2px 2px 0 #f0cbd8;
+}
+
+[data-theme='y2k-homepage'] .dashboard-date::before,
+[data-theme='y2k-homepage'] .dashboard-date::after {
+  color: #e9a9c0;
+  font-size: 0.8em;
+}
+
+[data-theme='y2k-homepage'] .dashboard-date::before {
+  content: '✦ ';
+}
+
+[data-theme='y2k-homepage'] .dashboard-date::after {
+  content: ' ✦';
+}
+
+/* 分隔线：一串小爱心，老网站的 divider.gif */
+[data-theme='y2k-homepage'] .dashboard-divider {
+  border: 0;
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg width='28' height='12' viewBox='0 0 28 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10.5 C3.4 7.8 2 6 2 4.1 A2.6 2.6 0 0 1 7 3 A2.6 2.6 0 0 1 12 4.1 C12 6 10.6 7.8 7 10.5Z' fill='%23efb8cb'/%3E%3Ccircle cx='21' cy='6' r='1.4' fill='%23c9dcf1'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+[data-theme='y2k-homepage'] .detail-spine {
+  border-radius: 0;
+  background: linear-gradient(160deg, #f6cddb 0%, #dccbee 100%);
+  color: var(--color-text-primary);
+  border: 1px solid var(--y2k-bevel-darker);
+  box-shadow: var(--box-shadow-btn);
+}
+
+[data-theme='y2k-homepage'] .heatmap-cell {
+  border-radius: 0;
 }

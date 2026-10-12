@@ -97,44 +97,61 @@
   --color-status-reading-bg: rgba(139, 0, 0, 0.12);
 }
 
-/* === THEME C: Pixel Dream (90s Cute Retro) === */
-[data-theme="pixel-dream"] {
-  /* Palette: Sweet Pinks, Lavenders, and contrasting chunky purples */
-  --color-bg-main: #ffecf7;
-  --color-bg-card: #ffffff;
-  --color-bg-input: #fce4f4;
+/* === THEME C: Y2K Homepage (千禧小站) === */
+/* 千禧年个人主页：小窗口、凸起按钮、星星底纹；柔粉不刺眼 */
+[data-theme="y2k-homepage"] {
+  /* Palette: dusty rose + baby blue, no neon */
+  --color-bg-main: #f9edf1;
+  --color-bg-card: #fffafc;
+  --color-bg-input: #ffffff;
 
-  --color-text-primary: #543675;
-  --color-text-secondary: #9c84b5;
+  --color-text-primary: #5b3a4b;
+  --color-text-secondary: #8c6a7b;
+  --color-text-muted: #ad91a0;
 
-  /* Accents: Vibrant Magenta & Cyan/Turquoise */
-  --color-accent-primary: #ff6ac2;
-  --color-accent-hover: #e05da6;
-  --color-accent-secondary: #5deee0;
+  --color-accent-primary: #f5cbd9;
+  --color-accent-hover: #d9779c;
+  --color-accent-secondary: #b9d4ee;
 
-  /* Borders are crucial for pixel look: Thick and Dark Purple */
-  --color-border: #7f64a6;
-
-  /* Shape & Structure: Chunky and Hard */
-  --border-radius-card: 4px;
-  --border-radius-btn: 2px;
-
-  /* Hard "Block" Shadows (No blur!) */
-  --box-shadow-card: 6px 6px 0px var(--color-border);
-  --box-shadow-btn: 4px 4px 0px #543675;
-  --box-shadow-input: inset 3px 3px 0px rgba(84, 54, 117, 0.2);
-
-  /* Separator for Clay theme compatibility (not used here, set to border) */
+  --color-border: #c995ab;
+  --dropdown-border: 1px solid var(--y2k-bevel-darker);
   --separator-groove: none;
-  --dropdown-border: 3px solid var(--color-border);
 
-  /* Typography: pixel headings, readable serif body */
-  --font-family-heading: 'Press Start 2P', cursive;
+  /* Win98-style bevels, tinted pink */
+  --y2k-bevel-light: #ffffff;
+  --y2k-bevel-dark: #dcb3c4;
+  --y2k-bevel-darker: #a97a8f;
+  --y2k-titlebar: linear-gradient(90deg, #eeb1c6 0%, #e5bdd8 55%, #cfc2ea 100%);
+  --y2k-titlebar-h: 20px;
+
+  --border-radius-card: 0;
+  --border-radius-btn: 0;
+
+  --box-shadow-card: inset 1px 1px 0 var(--y2k-bevel-light),
+    inset -1px -1px 0 var(--y2k-bevel-dark), 3px 3px 0 rgba(169, 122, 143, 0.25);
+  --box-shadow-btn: inset 1px 1px 0 var(--y2k-bevel-light),
+    inset -1px -1px 0 var(--y2k-bevel-dark);
+  --box-shadow-input: inset 1px 1px 0 var(--y2k-bevel-dark),
+    inset -1px -1px 0 var(--y2k-bevel-light);
+
+  /* Typography: Verdana latin, serif CJK */
+  --font-family-heading: Verdana, Tahoma, 'Noto Serif SC', 'Songti SC',
+    sans-serif;
   --font-family-base: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC',
     'SimSun', serif;
 
-  /* Background Texture: Cute Dithering Pattern */
-  --bg-texture: url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1h2v2H1V1zm4 4h2v2H5V5z' fill='%23FFCFE8' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+  /* Background: tiled sparkles & dots, like a 2000s homepage */
+  --bg-texture: url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 56 56' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14 8 L15.4 12.6 L20 14 L15.4 15.4 L14 20 L12.6 15.4 L8 14 L12.6 12.6 Z' fill='%23f4d0dd'/%3E%3Ccircle cx='42' cy='42' r='1.6' fill='%23cfe0f3'/%3E%3Ccircle cx='42' cy='14' r='1' fill='%23ead2e0'/%3E%3Ccircle cx='14' cy='42' r='1' fill='%23ead2e0'/%3E%3C/svg%3E");
+  --bg-size: 56px 56px;
+
+  /* Contribution Graph: rose ink */
+  --color-graph-l1: #f6dfe8;
+  --color-graph-l2: #efc0d1;
+  --color-graph-l3: #e39ab6;
+  --color-graph-l4: #c86f93;
+
+  --color-status-reading: #d9779c;
+  --color-status-reading-bg: rgba(233, 150, 180, 0.18);
 }
 
 /* === THEME D: Midnight Press (夜间报刊 / 小票风) === */
