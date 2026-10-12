@@ -159,24 +159,24 @@
   /* === Palette: 台灯下的热敏小票 —— 炭灰桌面 + 浅一档的票面，暖白墨 === */
 
   /* Background: warm charcoal desk; receipts sit one step lighter */
-  --color-bg-main: #252321;
-  --color-bg-card: #312e2b;
-  --color-bg-input: #2a2826;
+  --color-bg-main: #1c1b1a;
+  --color-bg-card: #737373;
+  --color-bg-input: #2b2927;
 
   /* Text: warm receipt white, higher contrast than before */
-  --color-text-primary: #ebe6dc;
-  --color-text-secondary: #b9b3a7;
-  --color-text-muted: #8f897e;
+  --color-text-primary: #f7f4ee;
+  --color-text-secondary: #e4dfd6;
+  --color-text-muted: #cdc7bc;
 
   /* Accents: monochrome + one faded amber, like thermal-printer ink */
   --color-accent-primary: #c9c2b4;
-  --color-accent-hover: #e2bf86;
+  --color-accent-hover: #f2d39c;
   --color-accent-secondary: #8f897e;
 
   /* Borders: dashed tear-lines do the work */
-  --color-border: #4a4641;
-  --mp-rule: #5d5851;
-  --mp-amber: #e2bf86;
+  --color-border: #8c8c8c;
+  --mp-rule: #a8a39a;
+  --mp-amber: #f2d39c;
   --dropdown-border: 1px solid var(--color-border);
   --separator-groove: none;
 
@@ -198,13 +198,13 @@
     'SimSun', serif;
 
   /* Contribution Graph: thermal ink density */
-  --color-graph-l1: #3b3834;
+  --color-graph-l1: #363330;
   --color-graph-l2: #5a5650;
   --color-graph-l3: #9a948a;
-  --color-graph-l4: #e2bf86;
+  --color-graph-l4: #f2d39c;
 
-  --color-status-reading: #e2bf86;
-  --color-status-reading-bg: rgba(226, 191, 134, 0.12);
+  --color-status-reading: #f2d39c;
+  --color-status-reading-bg: rgba(242, 211, 156, 0.14);
 }
 
 /* === THEME E: Cotton Candy (Retro-Cute Maximalist) === */
