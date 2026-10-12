@@ -2578,6 +2578,29 @@ textarea {
   font-size: 0.95rem;
 }
 
+.date-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.date-clear-button {
+  flex-shrink: 0;
+  width: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;

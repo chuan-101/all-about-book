@@ -79,6 +79,11 @@ function BookForm({
     setValues((prev) => ({ ...prev, [name]: value }))
   }
 
+  // iOS Safari 的原生日期选择器没有清空键，选过的日期需要手动清空
+  const clearField = (name: 'startDate' | 'endDate') => {
+    setValues((prev) => ({ ...prev, [name]: '' }))
+  }
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     onSubmit(values)
@@ -133,21 +138,47 @@ function BookForm({
         </label>
         <label className="field">
           <span>开始日期</span>
-          <input
-            type="date"
-            name="startDate"
-            value={values.startDate}
-            onChange={handleChange}
-          />
+          <div className="date-input-row">
+            <input
+              type="date"
+              name="startDate"
+              value={values.startDate}
+              onChange={handleChange}
+            />
+            {values.startDate ? (
+              <button
+                type="button"
+                className="date-clear-button"
+                onClick={() => clearField('startDate')}
+                aria-label="清空开始日期"
+                title="清空"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
         </label>
         <label className="field">
           <span>结束日期</span>
-          <input
-            type="date"
-            name="endDate"
-            value={values.endDate}
-            onChange={handleChange}
-          />
+          <div className="date-input-row">
+            <input
+              type="date"
+              name="endDate"
+              value={values.endDate}
+              onChange={handleChange}
+            />
+            {values.endDate ? (
+              <button
+                type="button"
+                className="date-clear-button"
+                onClick={() => clearField('endDate')}
+                aria-label="清空结束日期"
+                title="清空"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
         </label>
         <label className="field">
           <span>评分</span>
