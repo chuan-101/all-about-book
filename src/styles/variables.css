@@ -156,54 +156,55 @@
 
 /* === THEME D: Midnight Press (夜间报刊 / 小票风) === */
 [data-theme="midnight-press"] {
-  /* === Palette: Foggy Monochrome — 雾感黑灰白，无纯黑纯白 === */
+  /* === Palette: 台灯下的热敏小票 —— 炭灰桌面 + 浅一档的票面，暖白墨 === */
 
-  /* Background: Soft ink black, slightly warm */
-  --color-bg-main: #191918;
-  --color-bg-card: #201f1e;
-  --color-bg-input: #262524;
+  /* Background: warm charcoal desk; receipts sit one step lighter */
+  --color-bg-main: #252321;
+  --color-bg-card: #312e2b;
+  --color-bg-input: #2a2826;
 
-  /* Text: Dimmed newsprint white, hazy greys */
-  --color-text-primary: #d6d3cc;
-  --color-text-secondary: #9c9992;
-  --color-text-muted: #6f6d67;
+  /* Text: warm receipt white, higher contrast than before */
+  --color-text-primary: #ebe6dc;
+  --color-text-secondary: #b9b3a7;
+  --color-text-muted: #8f897e;
 
-  /* Accents: stay monochrome — pale fog for emphasis */
-  --color-accent-primary: #b8b5ae;
-  --color-accent-hover: #d6d3cc;
-  --color-accent-secondary: #85827b;
+  /* Accents: monochrome + one faded amber, like thermal-printer ink */
+  --color-accent-primary: #c9c2b4;
+  --color-accent-hover: #e2bf86;
+  --color-accent-secondary: #8f897e;
 
-  /* Borders: hairlines only */
-  --color-border: #383734;
+  /* Borders: dashed tear-lines do the work */
+  --color-border: #4a4641;
+  --mp-rule: #5d5851;
+  --mp-amber: #e2bf86;
   --dropdown-border: 1px solid var(--color-border);
   --separator-groove: none;
 
   /* Shape: crisp print edges */
-  --border-radius-card: 2px;
+  --border-radius-card: 0;
   --border-radius-btn: 2px;
 
-  /* Shadows: none — whitespace and hairlines do the work */
   --box-shadow-card: none;
   --box-shadow-btn: none;
   --box-shadow-input: none;
 
-  /* Texture: faint grain, like newsprint under a desk lamp */
+  /* Texture: faint grain, like a desk under a lamp */
   --bg-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
 
-  /* Typography: receipt digits (mono latin) + newspaper body (serif CJK) */
-  --font-family-heading: 'Courier New', 'Noto Serif SC', 'Songti SC',
+  /* Typography: receipt digits (mono latin) + serif CJK body */
+  --font-family-heading: 'Courier New', Courier, 'Noto Serif SC', 'Songti SC',
     monospace;
   --font-family-base: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC',
     'SimSun', serif;
 
-  /* Contribution Graph: ink density steps */
-  --color-graph-l1: #32312e;
-  --color-graph-l2: #4a4844;
-  --color-graph-l3: #6e6b64;
-  --color-graph-l4: #a5a29a;
+  /* Contribution Graph: thermal ink density */
+  --color-graph-l1: #3b3834;
+  --color-graph-l2: #5a5650;
+  --color-graph-l3: #9a948a;
+  --color-graph-l4: #e2bf86;
 
-  --color-status-reading: #b8b5ae;
-  --color-status-reading-bg: rgba(214, 211, 204, 0.08);
+  --color-status-reading: #e2bf86;
+  --color-status-reading-bg: rgba(226, 191, 134, 0.12);
 }
 
 /* === THEME E: Cotton Candy (Retro-Cute Maximalist) === */

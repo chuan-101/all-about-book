@@ -30,28 +30,6 @@ body {
   overflow-x: hidden;
 }
 
-/* === Midnight Press: 夜间报刊 —— 细线、留白、雾感灰阶 === */
-[data-theme='midnight-press'] body {
-  background-image: var(--bg-texture);
-  background-repeat: repeat;
-}
-
-[data-theme='midnight-press'] .header {
-  border-bottom: 3px double var(--color-border);
-}
-
-[data-theme='midnight-press'] .nav a {
-  font-size: 0.95rem;
-  letter-spacing: 0.12em;
-}
-
-[data-theme='midnight-press'] .nav a.active {
-  border-bottom-color: var(--color-accent-primary);
-}
-
-[data-theme='midnight-press'] .bottom-nav {
-  background: var(--color-bg-main);
-}
 
 [data-theme='retro-cafe'] body {
   background-image: var(--bg-texture);
@@ -720,6 +698,7 @@ textarea {
 }
 
 .bookshelf-section-header {
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -4239,4 +4218,122 @@ textarea {
 
 [data-theme='y2k-homepage'] .heatmap-cell {
   border-radius: 0;
+}
+
+/* === Midnight Press: 午夜报亭 —— 台灯下的热敏小票 === */
+[data-theme='midnight-press'] body {
+  background-image: var(--bg-texture);
+  background-repeat: repeat;
+}
+
+[data-theme='midnight-press'] ::selection {
+  background: rgba(226, 191, 134, 0.3);
+  color: var(--color-text-primary);
+}
+
+[data-theme='midnight-press'] .header {
+  border-bottom: 1px dashed var(--mp-rule);
+}
+
+[data-theme='midnight-press'] .title {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.25rem;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+[data-theme='midnight-press'] .nav a {
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+}
+
+[data-theme='midnight-press'] .nav a.active {
+  color: var(--color-text-primary);
+  border-bottom: 2px solid var(--mp-amber);
+}
+
+/* 卡片 = 一张小票：顶部虚线撕口，底部锯齿 */
+[data-theme='midnight-press'] .card {
+  border: 0;
+  border-bottom: 10px solid transparent;
+  border-radius: 0;
+  background:
+    linear-gradient(to bottom right, var(--color-bg-card) 50%, transparent 50%)
+      left bottom / 14px 10px repeat-x border-box,
+    linear-gradient(to bottom left, var(--color-bg-card) 50%, transparent 50%)
+      left bottom / 14px 10px repeat-x border-box,
+    repeating-linear-gradient(90deg, var(--mp-rule) 0 6px, transparent 6px 10px)
+      left top / 100% 1px no-repeat padding-box,
+    var(--color-bg-card) padding-box;
+  box-shadow: none;
+}
+
+[data-theme='midnight-press'] .dashboard-date {
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+  letter-spacing: 0.1em;
+}
+
+[data-theme='midnight-press'] .dashboard-date::before {
+  content: '* ';
+  color: var(--color-text-muted);
+}
+
+[data-theme='midnight-press'] .dashboard-date::after {
+  content: ' *';
+  color: var(--color-text-muted);
+}
+
+[data-theme='midnight-press'] .dashboard-divider {
+  border: 0;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--mp-rule) 0 6px,
+    transparent 6px 10px
+  );
+}
+
+[data-theme='midnight-press'] .collapsible-header,
+[data-theme='midnight-press'] .button,
+[data-theme='midnight-press'] .button.outline,
+[data-theme='midnight-press'] .action-button {
+  border: 1px dashed var(--mp-rule);
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+[data-theme='midnight-press'] .button.primary {
+  border: 1px solid var(--color-text-primary);
+  background: var(--color-text-primary);
+  color: var(--color-bg-main);
+}
+
+[data-theme='midnight-press'] .field input,
+[data-theme='midnight-press'] .field select,
+[data-theme='midnight-press'] .field textarea,
+[data-theme='midnight-press'] .bookshelf-search input {
+  border: 0;
+  border-bottom: 1px dashed var(--mp-rule);
+  border-radius: 0;
+  background: var(--color-bg-input);
+}
+
+[data-theme='midnight-press'] .bottom-nav {
+  background: var(--color-bg-main);
+  border-top: 1px dashed var(--mp-rule);
+}
+
+[data-theme='midnight-press'] .bottom-nav-item.active {
+  color: var(--mp-amber);
+}
+
+[data-theme='midnight-press'] .detail-spine {
+  border-radius: 0;
+  background: #ebe6dc;
+  color: #2f2c29;
+}
+
+[data-theme='midnight-press'] .heatmap-cell {
+  border-radius: 1px;
 }
