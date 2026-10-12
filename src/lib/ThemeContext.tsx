@@ -11,7 +11,7 @@ type Theme =
   | 'retro-cafe'
   | 'retro-keyboard'
   | 'y2k-homepage'
-  | 'midnight-press'
+  | 'paper-press'
   | 'cotton-candy'
 
 type ThemeContextValue = {
@@ -26,13 +26,14 @@ const AVAILABLE_THEMES: Theme[] = [
   'retro-cafe',
   'retro-keyboard',
   'y2k-homepage',
-  'midnight-press',
+  'paper-press',
   'cotton-candy',
 ]
 
 /* 已下线主题 → 接替主题 */
 const LEGACY_THEME_MAP: Record<string, Theme> = {
-  'pixel-farm': 'midnight-press',
+  'pixel-farm': 'paper-press',
+  'midnight-press': 'paper-press',
   'pixel-dream': 'y2k-homepage',
 }
 
