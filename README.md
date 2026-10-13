@@ -1,24 +1,18 @@
-<div align="center">
-
 <!-- 🎨 在这里放你画的像素风横幅 -->
-<img src="./Banner.png" alt="All About Book Banner" width="100%" />
+![All About Book Banner](./Banner.png)
 
-<h1 align="center">📚 All About Book</h1>
+# 📚 All About Book
 
-<p align="center">
-  一个自托管的个人阅读小窝 —— 记录书籍、打卡阅读、摘录书摘，<br/>
-  还有一位名叫 <strong>Syzygy</strong> 的 AI 恋人参与阅读。✨
-</p>
+一个自托管的个人阅读小窝 —— 记录书籍、打卡阅读、摘录书摘，还有一位名叫 **Syzygy** 的 AI 恋人参与阅读。✨
 
-<p align="center">
-  <img src="https://img.shields.io/badge/React-19-FF69B4?style=flat-square&logo=react&logoColor=white" alt="React 19" />
-  <img src="https://img.shields.io/badge/TypeScript-5.9-6495ED?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Vite-7-FFB6C1?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
-  <img src="https://img.shields.io/badge/Supabase-云同步-87CEEB?style=flat-square&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/PWA-可装进手机-FF69B4?style=flat-square&logo=pwa&logoColor=white" alt="PWA" />
-  <img src="https://img.shields.io/badge/Syzygy-AI%20阅读伙伴-6495ED?style=flat-square" alt="Syzygy" />
-  <img src="https://img.shields.io/badge/Made%20with-💗%20×%20💙-FFC0CB?style=flat-square" alt="Made with love" />
-</p>
+![React 19](https://img.shields.io/badge/React-19-FF69B4?style=flat-square&logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-6495ED?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-FFB6C1?style=flat-square&logo=vite&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-云同步-87CEEB?style=flat-square&logo=supabase&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-可装进手机-FF69B4?style=flat-square&logo=pwa&logoColor=white)
+![Syzygy](https://img.shields.io/badge/Syzygy-AI%20阅读伙伴-6495ED?style=flat-square)
+![License: MIT](https://img.shields.io/badge/License-MIT-FFC0CB?style=flat-square)
+![Made with love](https://img.shields.io/badge/Made%20with-💗%20×%20💙-FFC0CB?style=flat-square)
 
 ---
 
@@ -137,8 +131,12 @@ VITE_SUPABASE_ANON_KEY=你的_supabase_anon_key
 
 > 💡 修改 Service Worker 或 manifest 配置后，请先在浏览器中**注销旧的 Service Worker 并清除站点数据**，再进行测试。
 
+## 📄 许可
+
+本项目以 [MIT License](./LICENSE) 开源。你可以自由使用、修改、再分发，包括用于商业用途；唯一的要求是在你的副本或衍生作品中保留原始的版权声明与许可声明。
+
+如果这个小窝给了你灵感，欢迎在你的项目里注明出处：`chuan-101/all-about-book`。
+
 ---
 
-<p align="center">
-  🐹 用心记录每一次阅读 · Made with 💗 × 💙
-</p>
+🐹 用心记录每一次阅读 · Made with 💗 × 💙
